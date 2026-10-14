@@ -49,12 +49,12 @@ struct ControlReading {
         if agent == "all" {
             return ControlReading(
                 text: parts.map { "\($0.0 == "codex" ? "CX" : "CL") \(pct($0.1))" }.joined(separator: " · "),
-                detail: "\(label) · reseta " + parts.map { left($0.1) }.joined(separator: " · "),
+                detail: parts.map { left($0.1) }.joined(separator: " · "),
                 symbol: symbol(top))
         }
         let (id, w) = parts[0]
         return ControlReading(text: "\(id == "codex" ? "Codex" : "Claude") \(pct(w))",
-                              detail: "\(label) · reseta \(left(w))", symbol: symbol(top))
+                              detail: "\(label) · \(left(w))", symbol: symbol(top))
     }
 
     /// O ponteiro do ícone acompanha o gasto (0, 33, 50, 67 ou 100%).
@@ -68,7 +68,7 @@ struct ControlReading {
 struct UsageValue: ControlValueProvider {
     var agent: String
     var previewValue: ControlReading { ControlReading(text: agent == "codex" ? "Codex 8%" : agent == "all" ? "CL 42% · CX 8%" : "Claude 42%",
-                                                      detail: "5h · reseta 2:40", symbol: "gauge.with.dots.needle.50percent") }
+                                                      detail: "2:40 · 0:19", symbol: "gauge.with.dots.needle.50percent") }
     func currentValue() async throws -> ControlReading { ControlReading.make(agent: agent) }
 }
 
