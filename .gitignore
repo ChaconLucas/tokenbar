@@ -7,3 +7,4 @@ server/.wrangler/
 xcuserdata/
 Config/Signing.local.xcconfig
 server/wrangler.toml
+build26/

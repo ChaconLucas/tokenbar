@@ -36,32 +36,97 @@ struct DotIcon: View {
                 .shadow(color: .black.opacity(fullBleed ? 0 : 0.45), radius: size * 0.02, y: size * 0.012)
 
             Canvas { ctx, s in
-                // Medidor genérico de uso: anel de pontos aceso no sentido horário (roxo → ciano)
-                // e um "%" de pontos no centro. Não é o símbolo de nenhuma IA.
-                let c = CGPoint(x: s.width / 2, y: s.height / 2)
-                let filled = 0.7
-                for (ring, radius, count, dot) in [(0, 0.46, 40, 0.055), (1, 0.37, 32, 0.05)] {
-                    for i in 0..<count {
-                        let f = Double(i) / Double(count)
-                        let a = f * 2 * .pi - .pi / 2
-                        let r = Double(s.width) * radius
-                        let p = CGPoint(x: c.x + CGFloat(r * cos(a)), y: c.y + CGFloat(r * sin(a)))
-                        let d = s.width * dot
-                        let lit = f < filled
-                        let color: Color = lit ? mix(f / filled) : .white.opacity(ring == 0 ? 0.10 : 0.07)
-                        ctx.fill(Path(ellipseIn: CGRect(x: p.x - d / 2, y: p.y - d / 2, width: d, height: d)), with: .color(color))
-                    }
+                let n = 17
+                let cell = s.width / CGFloat(n)
+                let dotD = cell * 0.8
+                func put(_ x: Int, _ y: Int, _ color: Color) {
+                    ctx.fill(Path(ellipseIn: CGRect(x: CGFloat(x) * cell + (cell - dotD) / 2,
+                                                    y: CGFloat(y) * cell + (cell - dotD) / 2, width: dotD, height: dotD)),
+                             with: .color(color))
                 }
-                // "%" em pontos no meio.
-                let glyph = ["##....#", "##...#.", "....#..", "...#...", "..#....", ".#...##", "#....##"]
-                let cell = s.width * 0.062
-                let ox = c.x - cell * 3.5, oy = c.y - cell * 3.5
-                for (y, row) in glyph.enumerated() {
-                    for (x, ch) in row.enumerated() where ch == "#" {
-                        let d = cell * 0.8
-                        ctx.fill(Path(ellipseIn: CGRect(x: ox + CGFloat(x) * cell + (cell - d) / 2,
-                                                        y: oy + CGFloat(y) * cell + (cell - d) / 2, width: d, height: d)),
-                                 with: .color(.white))
+                let off = Color.white.opacity(0.06)
+                switch style {
+                case "display":
+                    // Mini display do app: bloco cheio até 60% com "42%" em cima.
+                    for y in 0..<n { for x in 0..<n { put(x, y, off) } }
+                    for y in 3...13 { for x in 1...15 { put(x, y, x <= 9 ? purple.opacity(0.75) : .white.opacity(0.10)) } }
+                    let g4 = ["#..#", "#..#", "####", "...#", "...#"], g2 = ["###", "..#", "###", "#..", "###"]
+                    for (r, row) in g4.enumerated() { for (c, ch) in row.enumerated() where ch == "#" { put(3 + c, 6 + r, .white) } }
+                    for (r, row) in g2.enumerated() { for (c, ch) in row.enumerated() where ch == "#" { put(8 + c, 6 + r, .white) } }
+                    let pc = ["#..#", "..#.", ".#..", "#..#"]
+                    for (r, row) in pc.enumerated() { for (c, ch) in row.enumerated() where ch == "#" { put(12 + c, 6 + r, .white) } }
+                case "bars":
+                    // Medidor de barras (VU): colunas subindo, roxo→ciano.
+                    let heights = [4, 6, 9, 7, 11, 13, 10, 12]
+                    for y in 0..<n { for x in 0..<n { put(x, y, off) } }
+                    for (i, h) in heights.enumerated() {
+                        let x = 1 + i * 2
+                        for k in 0..<h { put(x, 15 - k, mix(Double(i) / Double(heights.count - 1))) }
+                    }
+                case "coin":
+                    // Ficha de token: círculo de pontos com um "T" no meio.
+                    let c = Double(n - 1) / 2
+                    for y in 0..<n { for x in 0..<n {
+                        let d = ((Double(x) - c) * (Double(x) - c) + (Double(y) - c) * (Double(y) - c)).squareRoot()
+                        var color = off
+                        if d <= 7.6 { color = mix(Double(y) / Double(n - 1)).opacity(d > 6.4 ? 1 : 0.35) }
+                        if (y == 4 && x >= 4 && x <= 12) || (x == 8 && y >= 4 && y <= 12) || (x == 7 && y >= 5 && y <= 12) || (x == 9 && y >= 5 && y <= 12) || (y == 5 && x >= 4 && x <= 12) { color = .white }
+                        put(x, y, color)
+                    } }
+                case "star":
+                    // Sol de raios neutro, aceso no sentido horário roxo→ciano.
+                    let c = Double(n) / 2
+                    for y in 0..<n { for x in 0..<n {
+                        let dx = Double(x) + 0.5 - c, dy = Double(y) + 0.5 - c
+                        let d = (dx * dx + dy * dy).squareRoot()
+                        var sweep = atan2(dx, -dy); if sweep < 0 { sweep += 2 * .pi }
+                        let ang = sweep.truncatingRemainder(dividingBy: .pi / 4)
+                        let onRay = min(ang, .pi / 4 - ang) * d < 0.75 && d < 8
+                        let inShape = d < 1.6 || onRay
+                        let f = sweep / (2 * .pi)
+                        put(x, y, inShape ? (f < 0.75 ? mix(f / 0.75) : .white.opacity(0.18)) : off)
+                    } }
+                case "ring":
+                    // Anel de pontos (o atual) em grade: aceso até 70%.
+                    let c = Double(n - 1) / 2
+                    for y in 0..<n { for x in 0..<n {
+                        let dx = Double(x) - c, dy = Double(y) - c
+                        let d = (dx * dx + dy * dy).squareRoot()
+                        var sweep = atan2(dx, -dy); if sweep < 0 { sweep += 2 * .pi }
+                        let f = sweep / (2 * .pi)
+                        var color = off
+                        if d > 5.6 && d < 8.2 { color = f < 0.7 ? mix(f / 0.7) : .white.opacity(0.12) }
+                        put(x, y, color)
+                    } }
+                    let glyph = ["#...#", "...#.", "..#..", ".#...", "#...#"]
+                    for (r, row) in glyph.enumerated() { for (cc, ch) in row.enumerated() where ch == "#" { put(6 + cc, 6 + r, .white) } }
+                case "battery":
+                    // Bateria deitada: corpo 13×7 com polo à direita; carga roxo→ciano até 60%.
+                    for y in 0..<n { for x in 0..<n { put(x, y, off) } }
+                    let x0 = 1, x1 = 14, y0 = 5, y1 = 11
+                    for x in x0...x1 { put(x, y0, .white); put(x, y1, .white) }
+                    for y in y0...y1 { put(x0, y, .white); put(x1, y, .white) }
+                    for y in 7...9 { put(15, y, .white) }
+                    let inner = (x0 + 2)...(x1 - 2)
+                    let full = inner.lowerBound + Int(Double(inner.count) * 0.6) - 1
+                    for x in inner { for y in (y0 + 2)...(y1 - 2) {
+                        put(x, y, x <= full ? mix(Double(x - inner.lowerBound) / Double(inner.count - 1)) : .white.opacity(0.10))
+                    } }
+                default:
+                    // Ampulheta: em cima sobra (roxo), embaixo já caiu (ciano), um fio no meio.
+                    for y in 0..<n {
+                        let half = y < n / 2 ? (n / 2 - y) : (y - n / 2)
+                        let w = max(0, min(7, half))   // meia-largura por linha
+                        for x in 0..<n {
+                            let dx = abs(x - n / 2)
+                            var color = off
+                            if y == 1 || y == n - 2 { if dx <= 7 { color = .white } }
+                            else if y > 1 && y < n - 2 && dx == w && w > 0 { color = .white.opacity(0.85) }
+                            else if y > 2 && y < n / 2 - 1 && dx < w && y >= 5 { color = purple }
+                            else if y > n / 2 + 1 && y < n - 2 && dx < w && y >= 12 { color = cyan }
+                            else if x == n / 2 && y >= n / 2 - 1 && y <= n / 2 + 3 { color = mix(0.5) }
+                            put(x, y, color)
+                        }
                     }
                 }
             }
@@ -82,6 +147,7 @@ struct DotIcon: View {
 }
 
 let out = URL(fileURLWithPath: CommandLine.arguments[1])
+let style = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "hourglass"
 MainActor.assumeIsolated {
     render(DotIcon(size: 1024, fullBleed: false), 1024, to: out.appending(path: "mac-1024.png"))
     render(DotIcon(size: 1024, fullBleed: true), 1024, to: out.appending(path: "ios-1024.png"))

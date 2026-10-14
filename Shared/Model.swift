@@ -10,12 +10,13 @@ struct UsageWindow: Codable, Hashable, Identifiable {
 
     /// Depois do reset a janela começa do zero, mesmo que ninguém tenha mandado número novo.
     func used(at now: Date = .now) -> Double {
-        if let r = resetsAt, r <= now { return 0 }
+        // Compara em segundos: o operador de Date quebrou na combinação Xcode-beta + iOS beta.
+        if let r = resetsAt, r.timeIntervalSince1970 <= now.timeIntervalSince1970 { return 0 }
         return usedPercent
     }
 
     func didReset(at now: Date = .now) -> Bool {
-        if let r = resetsAt { return r <= now }
+        if let r = resetsAt { return r.timeIntervalSince1970 <= now.timeIntervalSince1970 }
         return false
     }
 }
