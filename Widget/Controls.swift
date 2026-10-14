@@ -27,7 +27,7 @@ struct ControlReading {
 
     static func make(agent: String) -> ControlReading {
         guard let s = SharedStore.loadSnapshot(), !s.providers.isEmpty else {
-            return ControlReading(text: "Sem dados", detail: "abra o TokenBar", symbol: "gauge.with.dots.needle.0percent")
+            return ControlReading(text: "Sem dados", detail: "abra o TokenBar", symbol: "tb.ring.0")
         }
         let window = Prefs.window == "long" ? "long" : "short"
         let ids = agent == "all" ? Prefs.allProviders : [agent]
@@ -35,7 +35,7 @@ struct ControlReading {
             guard let w = Prefs.pickFrom(s.provider(id), window) else { return nil }
             return (id, w)
         }
-        guard !parts.isEmpty else { return ControlReading(text: "Sem dados", symbol: "gauge.with.dots.needle.0percent") }
+        guard !parts.isEmpty else { return ControlReading(text: "Sem dados", symbol: "tb.ring.0") }
         let label = window == "long" ? "7d" : "5h"
         func pct(_ w: UsageWindow) -> String { "\(Int(w.used().rounded()))%" }
         func left(_ w: UsageWindow) -> String {
@@ -57,10 +57,9 @@ struct ControlReading {
                               detail: "\(label) · \(left(w))", symbol: symbol(top))
     }
 
-    /// O ponteiro do ícone acompanha o gasto (0, 33, 50, 67 ou 100%).
+    /// Anel de 12 pontos de LED, aceso no sentido horário até o gasto (símbolos próprios tb.ring.0…12).
     static func symbol(_ pct: Double) -> String {
-        let step = pct < 17 ? 0 : pct < 42 ? 33 : pct < 59 ? 50 : pct < 84 ? 67 : 100
-        return "gauge.with.dots.needle.\(step)percent"
+        "tb.ring.\(min(12, max(0, Int((pct / 100 * 12).rounded()))))"
     }
 }
 
@@ -68,7 +67,7 @@ struct ControlReading {
 struct UsageValue: ControlValueProvider {
     var agent: String
     var previewValue: ControlReading { ControlReading(text: agent == "codex" ? "Codex 8%" : agent == "all" ? "CL 42% · CX 8%" : "Claude 42%",
-                                                      detail: "2:40 · 0:19", symbol: "gauge.with.dots.needle.50percent") }
+                                                      detail: "2:40 · 0:19", symbol: "tb.ring.6") }
     func currentValue() async throws -> ControlReading { ControlReading.make(agent: agent) }
 }
 
@@ -81,7 +80,7 @@ private func usageControl(kind: String, name: LocalizedStringResource, about: Lo
                 Text(r.text)
                 Text(r.detail)
             } icon: {
-                Image(systemName: r.symbol)
+                Image(r.symbol)
             }
         }
     }
