@@ -78,7 +78,12 @@ struct LEDPanel: View {
 
     /// CLAUDE → CL, CODEX → CX (o resto fica igual).
     static func abbreviate(_ s: String) -> String {
-        s.replacingOccurrences(of: "CLAUDE", with: "CL").replacingOccurrences(of: "CODEX", with: "CX")
+        var out = s.replacingOccurrences(of: "CLAUDE", with: "CL").replacingOccurrences(of: "CODEX", with: "CX")
+        // Outras IAs: o nome longo vira as duas primeiras letras.
+        if let first = out.split(separator: " ").first, first.count > 4 {
+            out = String(first.prefix(2)) + out.dropFirst(first.count)
+        }
+        return out
     }
 
     private var timeText: String {
@@ -111,9 +116,9 @@ enum WidgetItems {
             for w in picked {
                 // Uma IA só: o título é a janela. Várias: o nome da IA (+ janela se mostrar as duas).
                 let title: String
-                if ids.count == 1 && showName { title = (id == "codex" ? "CX " : "CL ") + (w?.label.uppercased() ?? "") }
+                if ids.count == 1 && showName { title = UsageStyle.abbr(id) + " " + (w?.label.uppercased() ?? "") }
                 else if ids.count == 1 { title = w?.label.uppercased() ?? UsageStyle.shortName(id) }
-                else if window == "both" { title = (id == "codex" ? "CX " : "CL ") + (w?.label.uppercased() ?? "") }
+                else if window == "both" { title = UsageStyle.abbr(id) + " " + (w?.label.uppercased() ?? "") }
                 else { title = UsageStyle.shortName(id) }
                 out.append(Item(key: "\(id)-\(w?.id ?? "none")", providerID: id, window: w, title: title))
             }

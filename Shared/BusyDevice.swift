@@ -200,7 +200,8 @@ struct BusyDevice: View {
         HStack(spacing: dot * 5) {
             ForEach(Prefs.allProviders, id: \.self) { id in
                 let on = visible.contains(id)
-                DotKey(text: UsageStyle.shortName(id), on: on, color: theme.base(id), dot: dot, round: theme.roundDots) {
+                DotKey(text: Prefs.allProviders.count > 2 ? UsageStyle.abbr(id) : UsageStyle.shortName(id),
+                       on: on, color: theme.base(id), dot: dot, round: theme.roundDots) {
                     if on { if visible.count > 1 { visible.removeAll { $0 == id } } }
                     else { visible = Prefs.allProviders.filter { visible.contains($0) || $0 == id } }
                     save()

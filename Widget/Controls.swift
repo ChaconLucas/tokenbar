@@ -48,12 +48,12 @@ struct ControlReading {
         let top = parts.map { $0.1.used() }.max() ?? 0
         if agent == "all" {
             return ControlReading(
-                text: parts.map { "\($0.0 == "codex" ? "CX" : "CL") \(pct($0.1))" }.joined(separator: " · "),
+                text: parts.map { "\(UsageStyle.abbr($0.0)) \(pct($0.1))" }.joined(separator: " · "),
                 detail: parts.map { left($0.1) }.joined(separator: " · "),
                 symbol: symbol(top))
         }
         let (id, w) = parts[0]
-        return ControlReading(text: "\(id == "codex" ? "Codex" : "Claude") \(pct(w))",
+        return ControlReading(text: "\(UsageStyle.displayName(id)) \(pct(w))",
                               detail: "\(label) · \(left(w))", symbol: symbol(top))
     }
 

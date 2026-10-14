@@ -445,18 +445,32 @@ struct DeviceBezel<Content: View>: View {
 // MARK: - Preferências: quais IAs aparecem e qual janela
 
 enum Prefs {
-    static let allProviders = ["claude", "codex"]
+    /// As IAs com dados: Claude e Codex primeiro, depois as outras na ordem em que chegaram.
+    static var allProviders: [String] {
+        let ids = SharedStore.loadSnapshot()?.providers.map(\.id) ?? []
+        let known = ["claude", "codex"]
+        let rest = ids.filter { !known.contains($0) }
+        let list = known.filter { ids.isEmpty || ids.contains($0) } + rest
+        return list.isEmpty ? known : list
+    }
     private static let visibleKey = "visibleProviders"
     private static let windowKey = "displayWindow"
 
     /// Vazio nunca: se a pessoa desligar tudo, volta a mostrar todas.
+    /// Guarda as IAs DESLIGADAS: assim uma IA nova já chega ligada.
     static var visible: [String] {
         get {
-            let v = (TB.defaults.array(forKey: visibleKey) as? [String])?.filter(allProviders.contains) ?? allProviders
-            return v.isEmpty ? allProviders : v
+            let all = allProviders
+            let hidden = Set(TB.defaults.array(forKey: hiddenKey) as? [String] ?? [])
+            let v = all.filter { !hidden.contains($0) }
+            return v.isEmpty ? all : v
         }
-        set { TB.defaults.set(newValue, forKey: visibleKey) }
+        set {
+            let all = allProviders
+            TB.defaults.set(all.filter { !newValue.contains($0) }, forKey: hiddenKey)
+        }
     }
+    private static let hiddenKey = "hiddenProviders"
 
     /// "short" = 5h, "long" = 7d.
     static var window: String {

@@ -22,10 +22,12 @@ struct UsageWindow: Codable, Hashable, Identifiable {
 }
 
 struct ProviderUsage: Codable, Hashable, Identifiable {
-    var id: String            // "claude" | "codex"
+    var id: String            // "claude", "codex" ou qualquer outra IA (~/.tokenbar/providers/*.json)
     var name: String
     var windows: [UsageWindow]
     var observedAt: Date      // quando o número foi lido na fonte
+    /// Cor da IA ("#RRGGBB"), opcional; Claude e Codex usam a do tema.
+    var color: String? = nil
 
     /// A janela curta (5h) é a que mais importa no dia a dia.
     var primary: UsageWindow? { windows.first }

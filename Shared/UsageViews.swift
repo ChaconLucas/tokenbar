@@ -51,11 +51,33 @@ enum UsageStyle {
     }
 
     static func icon(_ providerID: String) -> String {
-        providerID == "codex" ? "chevron.left.forwardslash.chevron.right" : "sparkle"
+        providerID == "codex" ? "chevron.left.forwardslash.chevron.right" : providerID == "claude" ? "sparkle" : "cpu"
     }
 
     static func shortName(_ providerID: String) -> String {
-        providerID == "codex" ? "CODEX" : "CLAUDE"
+        switch providerID {
+        case "claude": "CLAUDE"
+        case "codex": "CODEX"
+        default: String((SharedStore.loadSnapshot()?.provider(providerID)?.name ?? providerID).uppercased().prefix(8))
+        }
+    }
+
+    /// Duas letras: CL, CX; outras IAs, as duas primeiras do nome.
+    static func abbr(_ providerID: String) -> String {
+        switch providerID {
+        case "claude": "CL"
+        case "codex": "CX"
+        default: String(shortName(providerID).filter { $0 != " " }.prefix(2))
+        }
+    }
+
+    /// Nome normal: "Claude", "Codex", ou o nome que a IA mandou.
+    static func displayName(_ providerID: String) -> String {
+        switch providerID {
+        case "claude": "Claude"
+        case "codex": "Codex"
+        default: SharedStore.loadSnapshot()?.provider(providerID)?.name ?? providerID.capitalized
+        }
     }
 }
 

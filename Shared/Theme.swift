@@ -10,6 +10,13 @@ struct RGBA: Codable, Equatable, Hashable {
         self.r = r; self.g = g; self.b = b; self.a = a
     }
 
+    /// "#RRGGBB" → cor.
+    init?(hex: String) {
+        let h = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        guard h.count == 6, let v = UInt32(h, radix: 16) else { return nil }
+        self.init(Double((v >> 16) & 0xFF) / 255, Double((v >> 8) & 0xFF) / 255, Double(v & 0xFF) / 255)
+    }
+
     init(_ color: Color) {
         let c = color.resolve(in: EnvironmentValues())
         self.init(Double(c.red), Double(c.green), Double(c.blue), Double(c.opacity))
@@ -28,8 +35,18 @@ struct Theme: Codable, Equatable {
     var glow = 1.0                          // 0 = sem brilho, 2 = muito
 
     func base(_ providerID: String) -> Color {
-        (providerID == "codex" ? codex : claude).color
+        switch providerID {
+        case "claude": claude.color
+        case "codex": codex.color
+        default:
+            // Outras IAs: a cor que mandaram ("#RRGGBB") ou uma da paleta, fixa por nome.
+            if let hex = SharedStore.loadSnapshot()?.provider(providerID)?.color, let c = RGBA(hex: hex) { c.color }
+            else { Theme.palette[abs(providerID.hashValueStable) % Theme.palette.count].color }
+        }
     }
+
+    static let palette: [RGBA] = [RGBA(1.0, 0.62, 0.20), RGBA(0.35, 0.85, 0.45), RGBA(1.0, 0.85, 0.25),
+                                  RGBA(0.40, 0.60, 1.0), RGBA(1.0, 0.45, 0.65), RGBA(0.65, 0.90, 0.95)]
 
     /// A cor do bloco para este uso.
     func fill(_ providerID: String, percent: Double) -> Color {
@@ -96,3 +113,8 @@ struct ThemeEditor: View {
     }
 }
 #endif
+
+extension String {
+    /// Hash estável entre execuções (o hashValue do Swift muda a cada abertura).
+    var hashValueStable: Int { unicodeScalars.reduce(5381) { ($0 &* 33) &+ Int($1.value) } }
+}

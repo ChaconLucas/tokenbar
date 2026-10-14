@@ -117,7 +117,7 @@ struct WidgetContent: View {
     private func inline(_ items: [WidgetItems.Item]) -> String {
         items.prefix(2).map { it in
             let p = it.window.map { UsageStyle.percent($0.used(at: now)) } ?? "—"
-            return "\(it.providerID == "codex" ? "Codex" : "Claude") \(p)"
+            return "\(UsageStyle.displayName(it.providerID)) \(p)"
         }.joined(separator: " · ")
     }
 
@@ -193,7 +193,7 @@ struct AccessoryRing: View {
             VStack(spacing: -2) {
                 Text(item?.window == nil ? "—" : "\(Int(p.rounded()))")
                     .font(.system(size: 17, weight: .heavy, design: .monospaced))
-                Text(item?.providerID == "codex" ? "CX" : "CL")
+                Text(UsageStyle.abbr(item?.providerID ?? "claude"))
                     .font(.system(size: 8, weight: .bold, design: .monospaced))
                     .foregroundStyle(.secondary)
             }

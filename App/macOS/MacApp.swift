@@ -108,7 +108,7 @@ final class MacModel: ObservableObject {
     var menuTitle: String {
         let parts = snapshot.providers.filter { visible.contains($0.id) }.compactMap { p -> String? in
             guard let w = Prefs.pick(p) else { return nil }
-            return "\(p.id == "codex" ? "X" : "C") \(UsageStyle.percent(w.used()))"
+            return "\(UsageStyle.abbr(p.id)) \(UsageStyle.percent(w.used()))"
         }
         return parts.isEmpty ? "TokenBar" : parts.joined(separator: " · ")
     }

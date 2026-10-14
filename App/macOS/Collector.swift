@@ -7,7 +7,7 @@ enum Collector {
     static var claudeFile: URL { tokenbarDir.appending(path: "claude.json") }
 
     static func collect() -> UsageSnapshot {
-        let providers = [readClaude(), readCodex()].compactMap { $0 }
+        let providers = [readClaude(), readCodex()].compactMap { $0 } + readExtra()
         return UsageSnapshot(providers: providers, updatedAt: .now)
     }
 
@@ -29,6 +29,33 @@ enum Collector {
         }
         guard !windows.isEmpty else { return nil }
         return ProviderUsage(id: "claude", name: "Claude Code", windows: windows, observedAt: modified(claudeFile))
+    }
+
+    // MARK: Outras IAs
+
+    /// Qualquer IA: um JSON por arquivo em ~/.tokenbar/providers/ (formato em docs/providers.md).
+    ///   { "id": "gemini", "name": "Gemini CLI", "color": "#4285F4",
+    ///     "windows": [ { "id": "day", "label": "1d", "usedPercent": 42, "resetsAt": 1792000000 } ] }
+    static var providersDir: URL { tokenbarDir.appending(path: "providers") }
+
+    static func readExtra() -> [ProviderUsage] {
+        let files = (try? FileManager.default.contentsOfDirectory(at: providersDir, includingPropertiesForKeys: nil)) ?? []
+        return files.filter { $0.pathExtension == "json" }.sorted { $0.lastPathComponent < $1.lastPathComponent }.compactMap { url in
+            guard let data = try? Data(contentsOf: url),
+                  let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let id = o["id"] as? String, !id.isEmpty, id != "claude", id != "codex",
+                  let ws = o["windows"] as? [[String: Any]] else { return nil }
+            let windows = ws.enumerated().compactMap { i, w -> UsageWindow? in
+                guard let pct = number(w["usedPercent"]) else { return nil }
+                return UsageWindow(id: (w["id"] as? String) ?? "w\(i)", label: (w["label"] as? String) ?? "",
+                                   usedPercent: pct, resetsAt: number(w["resetsAt"]).map { Date(timeIntervalSince1970: $0) },
+                                   windowMinutes: number(w["windowMinutes"]).map(Int.init))
+            }
+            guard !windows.isEmpty else { return nil }
+            let observed = number(o["observedAt"]).map { Date(timeIntervalSince1970: $0) } ?? modified(url)
+            return ProviderUsage(id: id, name: (o["name"] as? String) ?? id, windows: Array(windows.prefix(2)),
+                                 observedAt: observed, color: o["color"] as? String)
+        }
     }
 
     // MARK: Codex
