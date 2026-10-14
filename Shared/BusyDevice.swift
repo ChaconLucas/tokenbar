@@ -12,6 +12,8 @@ struct BusyDevice: View {
     /// Com o tema editável, a tecla vira um botão "Editar" que abre o painel de aparência.
     var editableTheme: Binding<Theme>? = nil
     var onMore: (() -> Void)?
+    /// Mac: tecla FLUTUAR (sempre na frente, em todas as mesas). Nil esconde a tecla.
+    var floating: Binding<Bool>? = nil
     var onSettings: (() -> Void)?
     /// Celular: sem moldura e o display ocupando a área inteira.
     var fullBleed = false
@@ -200,6 +202,14 @@ struct BusyDevice: View {
                    on: true, color: theme.timer.color, dot: dot, round: theme.roundDots) {
                 windowChoice = windowChoice == "short" ? "long" : windowChoice == "long" ? "both" : "short"
                 save()
+            }
+            if let floating {
+                Button { floating.wrappedValue.toggle() } label: {
+                    DotKeyFace(text: "FLUTUAR", on: floating.wrappedValue, color: Arcade.cyan, dot: dot,
+                               round: theme.roundDots, highlighted: floating.wrappedValue)
+                }
+                .buttonStyle(PressDown())
+                .help(floating.wrappedValue ? "Flutuando: sempre na frente, em todas as mesas" : "Deixar flutuante")
             }
             #if !os(watchOS)
             if let binding = editableTheme {

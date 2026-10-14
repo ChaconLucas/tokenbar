@@ -241,7 +241,7 @@ struct DeviceWindow: View {
         let screen = NSScreen.main?.frame.size ?? CGSize(width: 1440, height: 900)
         let size = fullScreen ? screen : CGSize(width: width, height: width / Self.aspect)
         BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
-                   theme: model.theme, editableTheme: $model.theme, onMore: openSettings)
+                   theme: model.theme, editableTheme: $model.theme, onMore: openSettings, floating: $alwaysOnTop)
             .frame(width: size.width, height: size.height)
         .environment(\.colorScheme, .dark)
             .contextMenu {
@@ -251,7 +251,7 @@ struct DeviceWindow: View {
                 Button("Maior") { resize(1.15) }.keyboardShortcut("+")
                 Button("Menor") { resize(1 / 1.15) }.keyboardShortcut("-")
                 Button("Abrir Mini (flutuante)") { openWindow(id: "mini") }
-                Toggle("Sempre na frente", isOn: $alwaysOnTop)
+                Toggle("Flutuar (sempre na frente, em todas as mesas)", isOn: $alwaysOnTop)
                 Button(fullScreen ? "Sair da tela cheia" : "Tela cheia") { toggleFullScreen() }.keyboardShortcut("f", modifiers: [.command, .control])
                 Divider()
                 Button("Fechar aparelho") { dismissWindow(id: "main") }
@@ -280,7 +280,11 @@ struct DeviceWindow: View {
     /// Janela normal por padrão; "Sempre na frente" é escolha da pessoa.
     private func applyLevel() {
         DispatchQueue.main.async {
-            NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix("main") == true })?.level = alwaysOnTop ? .floating : .normal
+            // Flutuar = sempre na frente + vai junto para todas as mesas (e por cima de apps em tela cheia).
+            guard let w = NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix("main") == true }) else { return }
+            w.level = alwaysOnTop ? .floating : .normal
+            w.collectionBehavior = alwaysOnTop ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.managed]
+            w.hidesOnDeactivate = false
         }
     }
 
