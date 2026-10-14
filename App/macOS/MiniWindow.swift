@@ -44,53 +44,53 @@ enum MenuBarImage {
     }
 }
 
-/// Janela "Mini": compacta, sem moldura, sempre na frente e em todas as mesas.
+/// Janela "Mini": o aparelho do app em tamanho pequeno, sempre na frente e em todas as mesas.
 struct MiniWindow: View {
     @EnvironmentObject var model: MacModel
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
-    @AppStorage("miniWindowChoice") private var windowChoice = "both"
+    @State private var hover = false
 
     var body: some View {
-        let items = WidgetItems.make(model.snapshot, agent: "all", window: windowChoice)
-            .filter { model.visible.contains($0.providerID) }
-        TimelineView(.periodic(from: .now, by: 1)) { ctx in
-            VStack(spacing: 4) {
-                ForEach(items, id: \.key) { it in
-                    MiniRow(item: it, now: ctx.date, theme: model.theme)
-                        .frame(height: 24)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
+                   theme: model.theme)
+            .frame(width: 380, height: 140)
+            .overlay(alignment: .topLeading) {
+                // Fechar: aparece ao passar o mouse.
+                Button { dismissWindow(id: "mini") } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .frame(width: 18, height: 18)
+                        .background(Circle().fill(.white.opacity(0.18)))
                 }
+                .buttonStyle(.plain)
+                .padding(5)
+                .opacity(hover ? 1 : 0)
+                .animation(.easeOut(duration: 0.15), value: hover)
             }
-        }
-        .padding(6)
-        .frame(width: 300)
-        .background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.black)
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.15)))
-                .gesture(WindowDragGesture())
-        }
-        .environment(\.colorScheme, .dark)
-        .contextMenu {
-            Picker("Janela", selection: $windowChoice) {
-                Text("5 horas").tag("short"); Text("7 dias").tag("long"); Text("As duas").tag("both")
+            .onHover { hover = $0 }
+            .environment(\.colorScheme, .dark)
+            .contextMenu {
+                Button("Abrir aparelho grande") { openWindow(id: "main"); NSApp.activate() }
+                Divider()
+                Button("Fechar Mini") { dismissWindow(id: "mini") }
             }
-            Button("Abrir aparelho") { openWindow(id: "main"); NSApp.activate() }
-            Divider()
-            Button("Fechar Mini") { dismissWindow(id: "mini") }
-        }
-        .onAppear { pin(); UserDefaults.standard.set(true, forKey: "miniOpen") }
-        .onDisappear { UserDefaults.standard.set(false, forKey: "miniOpen") }
+            .onAppear { pin(); UserDefaults.standard.set(true, forKey: "miniOpen") }
+            .onDisappear { UserDefaults.standard.set(false, forKey: "miniOpen") }
     }
 
     /// Sempre na frente, em todas as mesas, inclusive sobre apps em tela cheia.
     private func pin() {
-        DispatchQueue.main.async {
-            guard let w = NSApp.windows.first(where: { $0.identifier?.rawValue == "mini" }) else { return }
-            w.level = .floating
-            w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-            w.isMovableByWindowBackground = true
-            w.hasShadow = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // O SwiftUI dá ao NSWindow um identificador "mini-…": procura pelo começo.
+            for w in NSApp.windows where w.identifier?.rawValue.hasPrefix("mini") == true {
+                w.level = .floating
+                w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+                w.isMovableByWindowBackground = true
+                w.hidesOnDeactivate = false
+                w.hasShadow = true
+            }
         }
     }
 }

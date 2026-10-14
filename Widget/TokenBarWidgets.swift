@@ -157,8 +157,8 @@ struct TokenBarWidget: Widget {
         AppIntentConfiguration(kind: "TokenBar", intent: TokenBarConfig.self, provider: ConfigProvider()) {
             EntryView(entry: $0)
         }
-        .configurationDisplayName("TokenBar")
-        .description("Quanto já foi gasto dos limites de IA e quando reseta.")
+        .configurationDisplayName("Personalizado")
+        .description("Escolha a IA e a janela (segure o widget → Editar).")
         .supportedFamilies(Self.families)
         .contentMarginsDisabled()
     }
@@ -174,9 +174,78 @@ struct TokenBarWidget: Widget {
     }
 }
 
+// MARK: - Widgets prontos (aparecem direto na galeria; empilhe e deslize entre eles)
+
+struct PresetProvider: TimelineProvider {
+    var agent: String
+    var window: String
+
+    func placeholder(in context: Context) -> UsageEntry {
+        UsageEntry(date: .now, snapshot: .preview, paired: true, agent: agent, window: window)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (UsageEntry) -> Void) {
+        let cached = SharedStore.loadSnapshot()
+        completion(UsageEntry(date: .now, snapshot: context.isPreview ? (cached ?? .preview) : (cached ?? .empty),
+                              paired: true, agent: agent, window: window))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<UsageEntry>) -> Void) {
+        let agent = agent, window = window
+        Task {
+            let snapshot = await ConfigProvider.load()
+            let now = Date.now
+            let dates = Array(([now] + snapshot.upcomingResets(after: now).filter { $0 < now.addingTimeInterval(6 * 3600) }).prefix(8))
+            let paired = SharedStore.loadPairing() != nil || !snapshot.providers.isEmpty
+            let entries = dates.map { UsageEntry(date: $0, snapshot: snapshot, paired: paired, agent: agent, window: window) }
+            completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60))))
+        }
+    }
+}
+
+private func preset(kind: String, name: String, about: String, agent: String, window: String) -> some WidgetConfiguration {
+    StaticConfiguration(kind: kind, provider: PresetProvider(agent: agent, window: window)) { EntryView(entry: $0) }
+        .configurationDisplayName(name)
+        .description(about)
+        .supportedFamilies(TokenBarWidget.families)
+        .contentMarginsDisabled()
+}
+
+struct ClaudeBothWidget: Widget {
+    var body: some WidgetConfiguration {
+        preset(kind: "TokenBarClaudeBoth", name: "Claude · 5h e 7d", about: "As duas janelas do Claude Code.",
+               agent: "claude", window: "both")
+    }
+}
+
+struct CodexBothWidget: Widget {
+    var body: some WidgetConfiguration {
+        preset(kind: "TokenBarCodexBoth", name: "Codex · 5h e 7d", about: "As duas janelas do Codex.",
+               agent: "codex", window: "both")
+    }
+}
+
+struct AllShortWidget: Widget {
+    var body: some WidgetConfiguration {
+        preset(kind: "TokenBarAllShort", name: "Todas · 5h", about: "Todas as IAs, janela de 5 horas.",
+               agent: "all", window: "short")
+    }
+}
+
+struct AllBothWidget: Widget {
+    var body: some WidgetConfiguration {
+        preset(kind: "TokenBarAllBoth", name: "Todas · 5h e 7d", about: "Todas as IAs, as duas janelas.",
+               agent: "all", window: "both")
+    }
+}
+
 @main
 struct TokenBarWidgetBundle: WidgetBundle {
     var body: some Widget {
+        AllBothWidget()
+        AllShortWidget()
+        ClaudeBothWidget()
+        CodexBothWidget()
         TokenBarWidget()
     }
 }

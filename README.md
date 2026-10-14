@@ -15,7 +15,7 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 
 ## O que ele faz
 
-- **Mac:** um "aparelho" de LED na tela (dá para aumentar, diminuir e pôr em tela cheia), mini barras de LED coloridas na barra de menu, widgets e o **Mini**: uma janelinha flutuante, sempre na frente e em todas as mesas (barra de menu → MINI).
+- **Mac:** um "aparelho" de LED na tela (dá para aumentar, diminuir e pôr em tela cheia), mini barras de LED coloridas na barra de menu, widgets e o **Mini**: o aparelho em tamanho pequeno, flutuante, sempre na frente e em todas as mesas, com × para fechar (barra de menu → MINI).
 - **iPhone:** abre deitado, em tela cheia, com a tela sempre acesa, para usar como relógio de mesa. Tem widgets na tela inicial e na tela bloqueada.
 - **Apple Watch:** um app e complicações no mostrador (anel, canto e linha). No app, a tecla **TODOS / CLAUDE / CODEX** (ou girar a coroa digital) escolhe ver todas as IAs ou só uma (com o 5H e o 7D dela), e **5H / 7D** troca a janela. As cores seguem as do iPhone.
 - **Duas IAs:** Claude Code e Codex. Você escolhe qual aparecer e arrasta para o lado para trocar.
@@ -23,7 +23,7 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 - **Personalização:** cor de cada IA, do texto e do tempo, pontos redondos ou quadrados, brilho e vermelho perto do limite.
 - **O fundo enche conforme o gasto:** 23% acende 23% do display.
 - **Avisos:** notificação (no iPhone e espelhada no relógio) ao passar de **80%** e **95%** de uma janela, e quando ela **reseta**. O iPhone atualiza em segundo plano para avisar mesmo com o app fechado (o iOS decide a frequência, em geral a cada 15–60 min).
-- **Widgets:** um widget só, configurável (segure → Editar): escolha **Todas / Claude / Codex / Uma por vez** e **5h / 7d / As duas**. Em "Uma por vez", a tecla **›** no widget troca de IA sem abrir o app (iPhone e Mac). Pequeno, médio e grande no Mac e no iPhone; tela bloqueada e mostrador do relógio (retangular, redondo, canto e linha). No relógio, as combinações aparecem prontas na lista do mostrador.
+- **Widgets:** um widget só, configurável (segure → Editar): escolha **Todas / Claude / Codex / Uma por vez** e **5h / 7d / As duas**. Em "Uma por vez", a tecla **›** no widget troca de IA sem abrir o app (iPhone e Mac). Também há widgets prontos na galeria — **Todas · 5h e 7d**, **Todas · 5h**, **Claude · 5h e 7d**, **Codex · 5h e 7d** — para empilhar no iPhone (arraste um widget sobre o outro) e deslizar entre eles. Pequeno, médio e grande no Mac e no iPhone; tela bloqueada e mostrador do relógio (retangular, redondo, canto e linha). No relógio, as combinações aparecem prontas na lista do mostrador.
 
 <p align="center">
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H e 7D juntos">

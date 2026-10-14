@@ -182,21 +182,25 @@ struct MenuContent: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 10) {
+            // O aparelho precisa de altura fixa: dentro do menu ele não tem de onde tirar o tamanho.
             BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice, theme: model.theme)
-            HStack {
+                .frame(width: 400, height: 150)
+            HStack(spacing: 6) {
                 Button("APARELHO") { openWindow(id: "main"); NSApp.activate() }
                 Button("MINI") { openWindow(id: "mini") }
                 Button("AJUSTES") { openWindow(id: "settings"); NSApp.activate() }
-                Spacer()
-                Button("ATUALIZAR") { model.refresh() }
-                Button("SAIR") { NSApp.terminate(nil) }
+                Spacer(minLength: 4)
+                Button { model.refresh() } label: { Image(systemName: "arrow.clockwise") }
+                    .help("Atualizar")
+                Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }
+                    .help("Sair do TokenBar")
             }
             .buttonStyle(ArcadeButtonStyle())
         }
-        .padding(14)
+        .padding(10)
         .frame(width: 420)
-        .background(ArcadeBackground())
+        .background(Color.black)
         .environment(\.colorScheme, .dark)
     }
 }
@@ -276,7 +280,7 @@ struct DeviceWindow: View {
     /// Janela normal por padrão; "Sempre na frente" é escolha da pessoa.
     private func applyLevel() {
         DispatchQueue.main.async {
-            NSApp.windows.first(where: { $0.identifier?.rawValue == "main" })?.level = alwaysOnTop ? .floating : .normal
+            NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix("main") == true })?.level = alwaysOnTop ? .floating : .normal
         }
     }
 
@@ -289,7 +293,7 @@ struct DeviceWindow: View {
         fullScreen.toggle()
         // A janela segue o tamanho do conteúdo; em tela cheia ela também vai para o canto.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            guard let win = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }),
+            guard let win = NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix("main") == true }),
                   let screen = win.screen ?? NSScreen.main else { return }
             if fullScreen {
                 win.setFrameOrigin(screen.frame.origin)

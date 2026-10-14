@@ -141,7 +141,7 @@ struct BusyDevice: View {
     private func installScroll() {
         guard scrollMonitor == nil else { return }
         scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { e in
-            guard e.window?.identifier?.rawValue == "main", ids.count > 1 else { return e }
+            guard (e.window?.identifier?.rawValue.hasPrefix("main") == true || e.window?.identifier?.rawValue.hasPrefix("mini") == true), ids.count > 1 else { return e }
             if !e.momentumPhase.isEmpty { return nil }
 
             if e.phase.isEmpty {
