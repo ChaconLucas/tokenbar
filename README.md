@@ -9,21 +9,23 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 
 <p align="center"><img src="docs/iphone-5h.jpg" width="720" alt="TokenBar no iPhone deitado"></p>
 
-> **English summary:** TokenBar shows how much of your Claude Code and Codex usage limits (5‑hour and weekly windows) you have used, and when they reset, on a dot‑matrix LED display for Mac (window, menu bar, widgets), iPhone (full‑screen landscape app, widgets, lock screen) and Apple Watch (app and complications). The Mac reads the numbers locally; the iPhone finds the Mac on your Wi‑Fi (Bonjour) — no account, no server. An optional free Cloudflare Worker lets you see your numbers away from home. Build instructions below are in Portuguese but the steps are the commands themselves.
+**Português** · [English](README.en.md)
 
 ---
 
 ## O que ele faz
 
-- **Mac:** um "aparelho" de LED na tela (dá para aumentar, diminuir e pôr em tela cheia), mini barras de LED coloridas na barra de menu, widgets e o **Mini**: o aparelho em tamanho pequeno, flutuante, sempre na frente e em todas as mesas, com × para fechar (barra de menu → MINI).
+- **Mac:** um "aparelho" de LED na tela (dá para aumentar, diminuir e pôr em tela cheia) e, na barra de menu, mini barras de pontos de LED coloridas, uma por IA, com a %. Clicar nelas abre um resumo com o aparelho e botões de vidro (*liquid glass* no macOS 26): Aparelho, Mini, Ajustes, atualizar e sair.
+- **Mini (Mac):** o aparelho pequeno, num painel flutuante (NSPanel) sempre na frente, inclusive de apps em tela cheia, e em todas as mesas (Spaces). Dá para redimensionar mantendo a proporção; posição e tamanho ficam salvos. Abre pelo botão **Mini** da barra de menu, pela tecla **FLUTUAR** do aparelho ou pelo controle da Central de Controle. Para fechar, o **×** que aparece ao passar o mouse, ou clique com o botão direito → Fechar Mini.
+- **Central de Controle (macOS 26 / iOS 18):** controles **TokenBar** (todas as IAs), **Claude**, **Codex**, **TokenBar flutuante** e **TokenBar aparelho**. O ícone é um anel de 12 pontos de LED que acende conforme o gasto; aumentado, o controle mostra duas linhas (a % em cima, quando reseta embaixo). A Apple só permite ícone + 2 linhas de texto, e todo controle novo entra pequeno: aumente-o uma vez para ver as linhas.
 - **iPhone:** abre deitado, em tela cheia, com a tela sempre acesa, para usar como relógio de mesa. Tem widgets na tela inicial e na tela bloqueada.
-- **Apple Watch:** um app e complicações no mostrador (anel, canto e linha). No app, a tecla **TODOS / CLAUDE / CODEX** (ou girar a coroa digital) escolhe ver todas as IAs ou só uma (com o 5H e o 7D dela), e **5H / 7D** troca a janela. As cores seguem as do iPhone.
+- **Apple Watch:** um app e complicações no mostrador (anel, canto e linha). No app, a tecla **TODOS / CLAUDE / CODEX** (ou girar a coroa digital) escolhe ver todas as IAs ou só uma (com o 5H e o 7D dela), e **5H / 7D** troca a janela. As cores seguem as do iPhone. Com o servidor opcional, o relógio busca os números sozinho, sem o iPhone por perto.
 - **Duas IAs:** Claude Code e Codex. Você escolhe qual aparecer e arrasta para o lado para trocar.
 - **Janelas:** 5 horas, 7 dias ou as duas na mesma tela.
 - **Personalização:** cor de cada IA, do texto e do tempo, pontos redondos ou quadrados, brilho e vermelho perto do limite.
 - **O fundo enche conforme o gasto:** 23% acende 23% do display.
 - **Avisos:** notificação (no iPhone e espelhada no relógio) ao passar de **80%** e **95%** de uma janela, e quando ela **reseta**. O iPhone atualiza em segundo plano para avisar mesmo com o app fechado (o iOS decide a frequência, em geral a cada 15–60 min).
-- **Widgets:** um widget só, configurável (segure → Editar): escolha **Todas / Claude / Codex / Uma por vez** e **5h / 7d / As duas**. Em "Uma por vez", tocar no widget troca de IA sem abrir o app (iPhone e Mac). Também há widgets prontos na galeria — **Todas · 5h e 7d**, **Todas · 5h**, **Claude · 5h e 7d**, **Codex · 5h e 7d** — para empilhar no iPhone (arraste um widget sobre o outro) e deslizar entre eles. Pequeno, médio e grande no Mac e no iPhone; tela bloqueada e mostrador do relógio (retangular, redondo, canto e linha). No relógio, as combinações aparecem prontas na lista do mostrador.
+- **Widgets:** quatro prontos na galeria — **Todas · 5h e 7d**, **Todas · 5h**, **Claude · 5h e 7d**, **Codex · 5h e 7d** — e o **Personalizado** (segure → Editar): escolha **Todas / Claude / Codex / Uma por vez** e **5h / 7d / As duas**. Em "Uma por vez", tocar no widget troca de IA sem abrir o app (iPhone e Mac). No iPhone, empilhe widgets (arraste um sobre o outro) e deslize entre eles. Pequeno, médio e grande no Mac e no iPhone; tela bloqueada e mostrador do relógio (retangular, redondo, canto e linha). No relógio, as combinações aparecem prontas na lista do mostrador.
 
 <p align="center">
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H e 7D juntos">
@@ -42,15 +44,15 @@ Para quem tem **Mac + celular Android + relógio Wear OS** (Galaxy Watch, Pixel 
 </p>
 
 - **Celular:** abre deitado, em tela cheia e com a tela sempre acesa. Teclas CLAUDE/CODEX e 5H/7D/5H 7D; deslizar troca de IA. Widget na tela inicial (largo = 5h e 7d de todas as IAs). Avisos de 80%, 95% e reset, com atualização em segundo plano.
-- **Relógio:** funciona **com ou sem celular**. Com celular, recebe os números dele; sozinho, digite no relógio o **código de 6 números** que o Mac mostra em *Editar → Mais ajustes* (mesmo Wi-Fi) e ele passa a buscar direto no Mac ou no servidor. Teclas TODOS/CLAUDE/CODEX e 5H/7D. Complicações no mostrador.
+- **Relógio:** funciona **com ou sem celular**. Com celular, recebe os números dele; sozinho, digite no relógio o **código de 6 números** que o Mac mostra em *Editar → Mais ajustes → RELÓGIO SEM CELULAR* (mesmo Wi-Fi). O código vale uma vez e troca a cada 10 minutos. Depois disso o relógio busca direto no Mac (Wi-Fi) ou no servidor. Teclas TODOS/CLAUDE/CODEX e 5H/7D. Complicações no mostrador.
 - **Pareamento:** no Mac, *Editar → Mais ajustes*; no Android, **ESCANEAR QR** (ou cole o link).
 - Lê o Mac pelo Wi-Fi (o mesmo anúncio Bonjour do iPhone) ou pelo servidor opcional.
 
 ### Baixar
 
-Na página de [**Releases**](https://github.com/ChaconLucas/tokenbar/releases) há `TokenBar-Android.apk` (celular) e `TokenBar-WearOS.apk` (relógio). No celular, abra o `.apk` e permita "instalar apps desconhecidos". No relógio, instale com `adb` (Ajustes → Opções do desenvolvedor → Depuração por Wi-Fi).
+Na página de [**Releases**](https://github.com/ChaconLucas/tokenbar/releases) há `TokenBar-Android.apk` (celular) e `TokenBar-WearOS.apk` (relógio). No celular, abra o `.apk` e permita "instalar apps desconhecidos"; se o Play Protect avisar, toque em **Instalar assim mesmo**. No relógio, instale com `adb` (Ajustes → Opções do desenvolvedor → Depuração por Wi-Fi). Para estar na Play Store seria preciso uma conta de desenvolvedor Google (US$ 25, paga uma vez).
 
-**Huawei:** celulares com EMUI / HarmonyOS 2–4 instalam o `.apk`, mas sem os serviços do Google o botão "Escanear QR" não funciona — cole o link. Celulares com **HarmonyOS NEXT** e relógios Huawei ainda não são suportados.
+**Huawei:** celulares com EMUI / HarmonyOS 2–4 instalam o `.apk`, mas sem os serviços do Google o botão "Escanear QR" não funciona — cole o link. Celulares com **HarmonyOS NEXT** e relógios Huawei (Watch GT, Watch 4/5, Watch Fit) ainda não são suportados: precisariam de um app próprio feito no DevEco Studio e de uma conta de desenvolvedor Huawei.
 
 ### Compilar
 
@@ -86,7 +88,7 @@ adb -s <relógio> install wear/build/outputs/apk/debug/wear-debug.apk   # no rel
 - macOS 15+ com **Xcode 26+**
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 - iPhone com iOS 17+ e, se quiser, Apple Watch com watchOS 10+
-- Uma conta Apple (a gratuita serve para rodar nos seus próprios aparelhos)
+- Uma conta Apple (a gratuita serve para rodar nos seus próprios aparelhos; veja **Distribuição**)
 - Claude Code e/ou Codex instalados no Mac
 
 ## Instalar
@@ -144,6 +146,13 @@ Para deixar o app fixo em Aplicativos, use **Product → Archive → Distribute 
 - **iPhone:** segure o dedo na tela inicial ou na tela bloqueada → **+** → TokenBar.
 - **Watch:** segure o mostrador → Editar → complicações → TokenBar.
 - **Mac:** clique com o botão direito na mesa → Editar Widgets → TokenBar.
+- **Central de Controle (macOS 26 / iOS 18):** editar a Central de Controle → adicionar controle → TokenBar. Aumente o controle uma vez para ver as duas linhas.
+
+### Distribuição
+
+- **Conta Apple gratuita:** os apps instalados no iPhone e no relógio expiram em **7 dias**. Para renovar, rode de novo pelo Xcode.
+- **Conta paga (US$ 99/ano):** dá para distribuir pelo TestFlight ou pela App Store.
+- **Android:** os `.apk` ficam nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) (veja **Android e Wear OS → Baixar**).
 
 ## Servidor opcional (ver fora de casa)
 
