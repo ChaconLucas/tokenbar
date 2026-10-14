@@ -10,6 +10,13 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
 
     override init() {
         super.init()
+        #if DEBUG
+        // -TBPairLink tokenbar://pair?... pareia ao abrir (simulador sem iPhone).
+        if let s = UserDefaults.standard.string(forKey: "TBPairLink"), let u = URL(string: s), let p = Pairing(link: u) {
+            pairing = p
+            SharedStore.savePairing(p)
+        }
+        #endif
         if WCSession.isSupported() {
             WCSession.default.delegate = self
             WCSession.default.activate()
