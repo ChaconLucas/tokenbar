@@ -84,6 +84,7 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         var ctx: [String: Any] = [:]
         if let p = pairing { ctx["pairing"] = p.link.absoluteString }
         if let data = try? JSONCoding.encoder.encode(snapshot) { ctx["snapshot"] = data }
+        if let data = try? JSONEncoder().encode(Prefs.theme) { ctx["theme"] = data }
         try? WCSession.default.updateApplicationContext(ctx)
     }
 
@@ -147,7 +148,7 @@ struct PhoneRootView: View {
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
         .sheet(isPresented: $showDetails) { PhoneDetails(theme: $theme).environmentObject(model) }
-        .onChange(of: theme) { _, t in Prefs.theme = t; WidgetCenter.shared.reloadAllTimelines() }
+        .onChange(of: theme) { _, t in Prefs.theme = t; WidgetCenter.shared.reloadAllTimelines(); model.sendToWatch() }
         .onChange(of: visible) { _, v in Prefs.visible = v; WidgetCenter.shared.reloadAllTimelines() }
         .onChange(of: windowChoice) { _, v in Prefs.window = v; WidgetCenter.shared.reloadAllTimelines() }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
