@@ -30,7 +30,7 @@ struct WidgetContent: View {
             #endif
             #if !os(watchOS)
             case .systemSmall:
-                grid(Array(items.prefix(2)), columns: 1, cols: 40, gap: 4)
+                small(items)
             case .systemMedium:
                 grid(Array(items.prefix(4)), columns: items.count == 1 ? 1 : 2, cols: items.count == 1 ? 80 : 44, gap: 5)
             case .systemLarge, .systemExtraLarge:
@@ -69,6 +69,29 @@ struct WidgetContent: View {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    /// Pequeno (um quadrado): o primeiro em destaque, os outros em faixas finas embaixo.
+    private func small(_ items: [WidgetItems.Item]) -> some View {
+        GeometryReader { geo in
+            let rest = Array(items.dropFirst().prefix(3))
+            let gap: CGFloat = 4
+            let slim: CGFloat = rest.isEmpty ? 0 : min(26, (geo.size.height * 0.42 - gap * CGFloat(rest.count)) / CGFloat(rest.count))
+            let heroH = geo.size.height - (slim + gap) * CGFloat(rest.count)
+            VStack(spacing: gap) {
+                if let first = items.first {
+                    LEDPanel(window: first.window, title: first.title, providerID: first.providerID,
+                             now: now, theme: theme, longestTitle: first.title)
+                        .frame(width: geo.size.width, height: heroH)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                ForEach(rest, id: \.key) { it in
+                    SlimRow(item: it, now: now, theme: theme, showTime: false)
+                        .frame(width: geo.size.width, height: slim)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
             }
         }

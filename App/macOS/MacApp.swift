@@ -241,7 +241,8 @@ struct DeviceWindow: View {
         let screen = NSScreen.main?.frame.size ?? CGSize(width: 1440, height: 900)
         let size = fullScreen ? screen : CGSize(width: width, height: width / Self.aspect)
         BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
-                   theme: model.theme, editableTheme: $model.theme, onMore: openSettings, floating: $alwaysOnTop)
+                   theme: model.theme, editableTheme: $model.theme, onMore: openSettings,
+                   swapKey: ("FLUTUAR", { openWindow(id: "mini"); dismissWindow(id: "main") }))
             .frame(width: size.width, height: size.height)
         .environment(\.colorScheme, .dark)
             .contextMenu {

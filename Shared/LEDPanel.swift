@@ -121,3 +121,50 @@ enum WidgetItems {
         return out
     }
 }
+
+/// Faixa fina de LED: nome à esquerda, tempo apagado e % à direita; o fundo enche com o gasto.
+struct SlimRow: View {
+    var item: WidgetItems.Item
+    var now: Date
+    var theme: Theme
+    var showTime = true
+
+    var body: some View {
+        let p = item.window?.used(at: now) ?? 0
+        GeometryReader { geo in
+            let rows = 11
+            let dot = max(1, geo.size.height / CGFloat(rows))
+            let cols = max(20, Int(geo.size.width / dot))
+            DotCanvas(bitmap: bitmap(p, cols: cols, rows: rows), dot: dot, textColor: theme.text.color,
+                      fieldColor: theme.fill(item.providerID, percent: p).opacity(0.65),
+                      offColor: theme.fill(item.providerID, percent: p).opacity(0.10), round: theme.roundDots)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .leading)
+        }
+    }
+
+    private func bitmap(_ p: Double, cols: Int, rows: Int) -> DotBitmap {
+        var b = DotBitmap(cols: cols, rows: rows)
+        let filled = Int((min(max(p, 0), 100) / 100 * Double(cols)).rounded())
+        for x in 0..<filled { for y in 0..<rows { b.set(x, y, 1) } }
+        let big = item.window == nil ? "--" : "\(Int(p.rounded()))%"
+        let right = cols - 2 - DotFont.width(big)
+        // Nome inteiro só se não encostar na %.
+        let name = 2 + DotFont.width(item.title) + 8 <= right - (showTime ? DotFont.width(time) + 4 : 0)
+            ? item.title : LEDPanel.abbreviate(item.title)
+        b.draw(name, x: 2, y: 2)
+        b.draw(big, x: right, y: 2)
+        let t = time
+        if showTime, 2 + DotFont.width(name) + 4 + DotFont.width(t) + 4 <= right {
+            b.draw(t, x: right - 4 - DotFont.width(t), y: 2, value: 3)
+        }
+        return b
+    }
+
+    private var time: String {
+        guard let w = item.window, let r = w.resetsAt else { return "" }
+        if w.didReset(at: now) { return "OK" }
+        let s = max(0, Int(r.timeIntervalSince(now)))
+        let d = s / 86400, h = (s % 86400) / 3600, m = (s % 3600) / 60
+        return d > 0 ? "\(d)D" : "\(h):" + String(format: "%02d", m)
+    }
+}

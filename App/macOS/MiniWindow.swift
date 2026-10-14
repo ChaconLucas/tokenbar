@@ -53,8 +53,11 @@ struct MiniWindow: View {
 
     var body: some View {
         BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
-                   theme: model.theme)
-            .frame(width: 380, height: 140)
+                   theme: model.theme,
+                   swapKey: ("GRANDE", { openWindow(id: "main"); NSApp.activate(); dismissWindow(id: "mini") }))
+            .frame(width: 420, height: 150)
+            // Margem transparente: o × fica no canto, fora das teclas.
+            .padding(.top, 10).padding(.leading, 10)
             .overlay(alignment: .topLeading) {
                 // Fechar: aparece ao passar o mouse.
                 Button { dismissWindow(id: "mini") } label: {
@@ -65,14 +68,13 @@ struct MiniWindow: View {
                         .background(Circle().fill(.white.opacity(0.18)))
                 }
                 .buttonStyle(.plain)
-                .padding(5)
                 .opacity(hover ? 1 : 0)
                 .animation(.easeOut(duration: 0.15), value: hover)
             }
             .onHover { hover = $0 }
             .environment(\.colorScheme, .dark)
             .contextMenu {
-                Button("Abrir aparelho grande") { openWindow(id: "main"); NSApp.activate() }
+                Button("Voltar ao aparelho grande") { openWindow(id: "main"); NSApp.activate(); dismissWindow(id: "mini") }
                 Divider()
                 Button("Fechar Mini") { dismissWindow(id: "mini") }
             }
