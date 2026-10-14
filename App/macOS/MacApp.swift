@@ -152,6 +152,7 @@ struct TokenBarMacApp: App {
 
 /// O rótulo da barra de menu existe desde o lançamento: daqui a janela abre ao iniciar.
 struct MenuLabel: View {
+    @MainActor static var launched = false
     var image: NSImage
     var delegate: AppDelegate
     var model: MacModel
@@ -161,6 +162,9 @@ struct MenuLabel: View {
         Image(nsImage: image)
             .onAppear {
                 delegate.openMain = { openWindow(id: "main"); NSApp.activate() }
+                // Só na abertura do app: o rótulo da barra reaparece a cada clique, e isso não pode reabrir janela.
+                guard !MenuLabel.launched else { return }
+                MenuLabel.launched = true
                 // Abre um só: o flutuante, se era ele que estava aberto; senão, o aparelho grande.
                 if UserDefaults.standard.bool(forKey: "miniOpen") || UserDefaults.standard.bool(forKey: "TBMini") {
                     MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })
