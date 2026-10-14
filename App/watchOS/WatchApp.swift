@@ -90,27 +90,36 @@ struct WatchRootView: View {
     /// "all", "claude" ou "codex".
     @State private var agent = TB.defaults.string(forKey: "watchAgent") ?? "all"
     @State private var windowChoice = Prefs.window == "long" ? "long" : "short"
+    @State private var crown = 0.0
 
     var body: some View {
         let theme = model.theme
-        ScrollView {
-            VStack(spacing: 6) {
-                keys(theme)
-                if model.pairing == nil {
-                    Text("Pareie no app TokenBar do iPhone.").font(.footnote).foregroundStyle(.secondary)
-                }
-                TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                    VStack(spacing: 6) {
-                        ForEach(panels, id: \.key) { item in
-                            WatchPanel(provider: model.snapshot.provider(item.id), providerID: item.id,
-                                       window: item.window, now: ctx.date, theme: theme)
-                                .onTapGesture { if agent == "all" { toggleWindow() } }
-                        }
+        NavigationStack {
+            TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                VStack(spacing: 6) {
+                    if model.pairing == nil {
+                        Text("Pareie no app TokenBar do iPhone.").font(.footnote).foregroundStyle(.secondary)
                     }
+                    ForEach(panels, id: \.key) { item in
+                        WatchPanel(window: item.window, title: item.title, sub: item.sub, providerID: item.id,
+                                   now: ctx.date, theme: theme)
+                            .onTapGesture { if agent == "all" { toggleWindow() } }
+                    }
+                    if let e = model.error { Text(e).font(.footnote).foregroundStyle(.red) }
                 }
-                if let e = model.error { Text(e).font(.footnote).foregroundStyle(.red) }
+                .frame(maxHeight: .infinity, alignment: .top)
             }
-            .padding(.horizontal, 2)
+            // Coroa digital: girar troca TODOS → CLAUDE → CODEX.
+            .focusable()
+            .digitalCrownRotation($crown, from: 0, through: 1000, by: 1, sensitivity: .low,
+                                  isContinuous: true, isHapticFeedbackEnabled: true)
+            .onChange(of: crown) { _, v in
+                let order = ["all"] + Prefs.allProviders
+                let next = order[Int(v.rounded()) % order.count]
+                if next != agent { agent = next; TB.defaults.set(agent, forKey: "watchAgent") }
+            }
+            // As teclas ficam na barra de cima, ao lado da hora: os painéis ganham a tela toda.
+            .toolbar { ToolbarItem(placement: .topBarLeading) { keys(theme) } }
         }
         .task {
             while !Task.isCancelled {
@@ -120,16 +129,17 @@ struct WatchRootView: View {
         }
     }
 
-    /// Todas as IAs na janela escolhida; ou uma IA só com o 5H e o 7D dela.
-    private var panels: [(key: String, id: String, window: UsageWindow?)] {
+    /// Todas as IAs na janela escolhida (título = nome); ou uma IA só com o 5H e o 7D dela (título = janela).
+    private var panels: [(key: String, id: String, window: UsageWindow?, title: String, sub: String?)] {
         if agent == "all" {
             return Prefs.allProviders.map { id in
-                (id, id, Prefs.pickFrom(model.snapshot.provider(id), windowChoice))
+                let w = Prefs.pickFrom(model.snapshot.provider(id), windowChoice)
+                return (id, id, w, UsageStyle.shortName(id), w?.label.uppercased())
             }
         }
         let ws = model.snapshot.provider(agent)?.windows ?? []
-        if ws.isEmpty { return [(agent, agent, nil)] }
-        return ws.map { ("\(agent)-\($0.id)", agent, $0) }
+        if ws.isEmpty { return [(agent, agent, nil, UsageStyle.shortName(agent), nil)] }
+        return ws.map { ("\(agent)-\($0.id)", agent, $0, $0.label.uppercased(), nil) }
     }
 
     private func keys(_ theme: Theme) -> some View {
@@ -145,8 +155,6 @@ struct WatchRootView: View {
                 DotKey(text: windowChoice == "long" ? "7D" : "5H", on: true, color: theme.timer.color,
                        dot: 1.6, round: theme.roundDots, action: toggleWindow)
             }
-            // O canto direito é do relógio do sistema.
-            Spacer(minLength: 0)
         }
     }
 
@@ -157,15 +165,16 @@ struct WatchRootView: View {
     }
 }
 
-/// Um painel do relógio: nome e reset pequenos em cima; janela e % grande embaixo; o fundo enche com o gasto.
+/// Um painel do relógio: título e reset pequenos em cima; % grande embaixo; o fundo enche com o gasto.
 struct WatchPanel: View {
-    var provider: ProviderUsage?
-    var providerID: String
     var window: UsageWindow?
+    var title: String
+    var sub: String?
+    var providerID: String
     var now: Date
     var theme: Theme
 
-    static let cols = 64, rows = 27
+    static let cols = 64, rows = 26
 
     var body: some View {
         let p = window?.used(at: now) ?? 0
@@ -178,7 +187,7 @@ struct WatchPanel: View {
         }
         .aspectRatio(CGFloat(Self.cols) / CGFloat(Self.rows), contentMode: .fit)
         .accessibilityElement()
-        .accessibilityLabel("\(UsageStyle.shortName(providerID)) \(UsageStyle.percent(p))")
+        .accessibilityLabel("\(title) \(UsageStyle.percent(p))")
     }
 
     private func bitmap(_ p: Double) -> DotBitmap {
@@ -187,16 +196,14 @@ struct WatchPanel: View {
         let filled = Int((min(max(p, 0), 100) / 100 * Double(cols)).rounded())
         for x in 0..<filled { for y in 0..<rows { b.set(x, y, 1) } }
 
-        b.draw(UsageStyle.shortName(providerID), x: 2, y: 2)
-        let t = timeText
-        b.draw(t, x: cols - 2 - DotFont.width(t), y: 2, value: 3)
-
-        if let window {
-            b.draw(window.label.uppercased(), x: 2, y: 17)
+        b.draw(title, x: 2, y: 2)
+        if window != nil {
+            // Tempo embaixo à esquerda (apagado): nunca encosta no nome nem na %.
+            b.draw(timeText, x: 2, y: 17, value: 3)
             let big = "\(min(Int(p.rounded()), 999))%"
-            b.draw(big, x: cols - 2 - DotFont.width(big, scale: 2), y: 11, scale: 2)
+            b.draw(big, x: cols - 2 - DotFont.width(big, scale: 2), y: 10, scale: 2)
         } else {
-            b.drawCentered("SEM DADOS", y: 15)
+            b.drawCentered("SEM DADOS", y: 13)
         }
         return b
     }

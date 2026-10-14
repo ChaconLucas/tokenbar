@@ -17,7 +17,7 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 
 - **Mac:** um "aparelho" de LED na tela (dá para aumentar, diminuir e pôr em tela cheia), a % na barra de menu e widgets.
 - **iPhone:** abre deitado, em tela cheia, com a tela sempre acesa, para usar como relógio de mesa. Tem widgets na tela inicial e na tela bloqueada.
-- **Apple Watch:** um app e complicações no mostrador (anel, canto e linha). No app, a tecla **TODOS / CLAUDE / CODEX** escolhe ver todas as IAs ou só uma (com o 5H e o 7D dela), e **5H / 7D** troca a janela. As cores seguem as do iPhone.
+- **Apple Watch:** um app e complicações no mostrador (anel, canto e linha). No app, a tecla **TODOS / CLAUDE / CODEX** (ou girar a coroa digital) escolhe ver todas as IAs ou só uma (com o 5H e o 7D dela), e **5H / 7D** troca a janela. As cores seguem as do iPhone.
 - **Duas IAs:** Claude Code e Codex. Você escolhe qual aparecer e arrasta para o lado para trocar.
 - **Janelas:** 5 horas, 7 dias ou as duas na mesma tela.
 - **Personalização:** cor de cada IA, do texto e do tempo, pontos redondos ou quadrados, brilho e vermelho perto do limite.
