@@ -23,12 +23,13 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 - **Personalização:** cor de cada IA, do texto e do tempo, pontos redondos ou quadrados, brilho e vermelho perto do limite.
 - **O fundo enche conforme o gasto:** 23% acende 23% do display.
 - **Avisos:** notificação (no iPhone e espelhada no relógio) ao passar de **80%** e **95%** de uma janela, e quando ela **reseta**. O iPhone atualiza em segundo plano para avisar mesmo com o app fechado (o iOS decide a frequência, em geral a cada 15–60 min).
-- **Mostrador do relógio:** complicação retangular (também na Pilha Inteligente) como mini display de LED, e redonda como anel de pontos.
+- **Widgets:** um widget só, configurável (segure → Editar): escolha **Todas / Claude / Codex** e **5h / 7d / As duas**. Pequeno, médio e grande no Mac e no iPhone; tela bloqueada e mostrador do relógio (retangular, redondo, canto e linha). No relógio, as combinações aparecem prontas na lista do mostrador.
 
 <p align="center">
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H e 7D juntos">
 <img src="docs/mac.png" width="49%" alt="TokenBar no Mac">
 </p>
+<p align="center"><img src="docs/widgets.png" width="640" alt="Widgets em todos os tamanhos"></p>
 <p align="center"><img src="docs/watch.jpg" width="420" alt="TokenBar no Apple Watch: todas as IAs e uma IA só"></p>
 
 ## Como funciona
