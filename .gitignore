@@ -8,3 +8,6 @@ xcuserdata/
 Config/Signing.local.xcconfig
 server/wrangler.toml
 build26/
+desktop/node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokenBar</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="device" data-tauri-drag-region>
+    <div id="keys" data-tauri-drag-region>
+      <div id="agents"></div>
+      <div id="pages"></div>
+      <div id="right"></div>
+    </div>
+    <div id="screen"><canvas id="display"></canvas></div>
+  </main>
+
+  <section id="settings" hidden>
+    <header data-tauri-drag-region><h1>AJUSTES</h1><button id="close-settings">FECHAR</button></header>
+    <div class="panel">
+      <h2>CLAUDE CODE</h2>
+      <p id="claude-state"></p>
+      <button id="connect-claude">CONECTAR CLAUDE CODE</button>
+    </div>
+    <div class="panel row">
+      <div id="qr"></div>
+      <div>
+        <h2>CELULAR E RELÓGIO</h2>
+        <p>Aponte a câmera do celular para o código (app TokenBar → Escanear QR).</p>
+        <button id="copy-link">COPIAR LINK</button>
+        <p class="dim">Quem tem o código vê os seus números. Não publique.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>RELÓGIO SEM CELULAR (WEAR OS)</h2>
+      <p><span id="code" class="code"></span> digite no relógio (mesmo Wi-Fi). Vale uma vez e troca a cada 10 min.</p>
+    </div>
+    <div class="panel">
+      <h2>SERVIDOR (OPCIONAL)</h2>
+      <p class="dim">Para ver fora de casa. Deixe vazio para usar só o Wi-Fi.</p>
+      <input id="server" placeholder="https://tokenbar.sua-conta.workers.dev">
+      <button id="save-server">SALVAR</button>
+      <p id="server-msg" class="dim"></p>
+    </div>
+    <div class="panel">
+      <h2>OUTRAS IAS</h2>
+      <p class="dim">Qualquer IA aparece aqui ao gravar um arquivo em <code>~/.tokenbar/providers/</code> (veja docs/providers.md no GitHub).</p>
+    </div>
+  </section>
+<script type="module" src="app.js"></script>
+</body>
+</html>

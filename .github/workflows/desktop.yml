@@ -1,0 +1,51 @@
+name: Desktop (Windows e Linux)
+
+# Compila o app de Windows e Linux e anexa os instaladores na Release.
+# Roda ao criar uma tag v*, ou à mão em Actions → Desktop → Run workflow.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependências do Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with: { workspaces: "desktop/src-tauri -> target" }
+
+      - run: npm ci || npm install
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || 'desktop-latest' }}
+          releaseName: TokenBar ${{ github.ref_type == 'tag' && github.ref_name || '(desktop)' }}
+          releaseBody: "Windows: baixe o `.msi` ou o `-setup.exe`. Linux: `.AppImage` (qualquer distro) ou `.deb` (Ubuntu/Debian)."
+          releaseDraft: false
+          prerelease: false
