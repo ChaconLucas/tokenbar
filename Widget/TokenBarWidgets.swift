@@ -249,7 +249,13 @@ struct TokenBarWidgetBundle: WidgetBundle {
         CodexBothWidget()
         TokenBarWidget()
         #if !os(watchOS)
-        if #available(iOS 18.0, macOS 26.0, *) { UsageControl() }
+        if #available(iOS 18.0, macOS 26.0, *) {
+            UsageControl()
+            ClaudeControl()
+            CodexControl()
+            OpenMiniControl()
+            OpenMainControl()
+        }
         #endif
     }
 }

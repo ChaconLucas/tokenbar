@@ -127,9 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Toque no controle da Central de Controle: abre o flutuante.
     func applicationDidBecomeActive(_ notification: Notification) {
-        guard TB.defaults.bool(forKey: "openMiniRequest") else { return }
-        TB.defaults.set(false, forKey: "openMiniRequest")
-        openMini?()
+        guard let target = TB.defaults.string(forKey: "openRequest") else { return }
+        TB.defaults.removeObject(forKey: "openRequest")
+        if target == "main" { openMain?() } else { openMini?() }
     }
     var openMini: (() -> Void)?
 
