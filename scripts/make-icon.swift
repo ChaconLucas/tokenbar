@@ -3,7 +3,11 @@ import SwiftUI
 import AppKit
 
 let purple = Color(red: 0.62, green: 0.36, blue: 1.0)
-let claude = Color(red: 0.85, green: 0.47, blue: 0.34)   // terracota
+let cyan = Color(red: 0.20, green: 0.85, blue: 0.95)
+/// Roxo → ciano ao longo do anel.
+func mix(_ t: Double) -> Color {
+    Color(red: 0.62 + (0.20 - 0.62) * t, green: 0.36 + (0.85 - 0.36) * t, blue: 1.0 + (0.95 - 1.0) * t)
+}
 
 // "%" em 7×7 numa grade 11×11
 let glyph = ["##....#", "##...#.", "....#..", "...#...", "..#....", ".#...##", "#....##"]
@@ -20,7 +24,7 @@ struct DotIcon: View {
                 .fill(LinearGradient(colors: [Color(white: 0.13), Color(white: 0.02)], startPoint: .top, endPoint: .bottom))
                 .overlay {
                     RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(RadialGradient(colors: [claude.opacity(0.22), .clear], center: .init(x: 0.5, y: 0.5), startRadius: 0, endRadius: shape * 0.7))
+                        .fill(RadialGradient(colors: [purple.opacity(0.25), .clear], center: .init(x: 0.5, y: 0.5), startRadius: 0, endRadius: shape * 0.7))
                 }
                 .overlay {
                     if !fullBleed {
@@ -32,52 +36,37 @@ struct DotIcon: View {
                 .shadow(color: .black.opacity(fullBleed ? 0 : 0.45), radius: size * 0.02, y: size * 0.012)
 
             Canvas { ctx, s in
-                // Sol de raios (estilo do símbolo do Claude) amostrado numa grade de pontos.
-                // Aceso no sentido horário a partir das 12h até `filled`, como um ponteiro de relógio.
-                let n = 19
-                let cell = s.width / CGFloat(n)
-                let dot = cell * 0.82
-                let c = Double(n) / 2
-                let filled = 0.72
-                let rays: [(angle: Double, length: Double)] = (0..<12).map { i in
-                    let jitter = [0.0, 5, -4, 3, -5, 2, 4, -3, 4, -4, 1, -2][i]
-                    let length = [8.6, 7.4, 8.2, 7.0, 8.8, 7.6, 8.0, 7.2, 8.6, 7.4, 8.2, 7.8][i]
-                    return ((Double(i) * 30 + jitter) * .pi / 180, length)
-                }
-                func inside(_ px: Double, _ py: Double) -> Bool {
-                    let dx = px - c, dy = py - c
-                    let d = (dx * dx + dy * dy).squareRoot()
-                    if d <= 1.4 { return true }
-                    for r in rays {
-                        // Projeção no eixo do raio (0 = topo, sentido horário).
-                        let ux = sin(r.angle), uy = -cos(r.angle)
-                        let along = dx * ux + dy * uy
-                        let across = abs(dx * uy - dy * ux)
-                        guard along > 0, along <= r.length else { continue }
-                        let half = 0.95 * (1 - along / (r.length + 0.6)) + 0.12   // afina na ponta
-                        if across <= half { return true }
+                // Medidor genérico de uso: anel de pontos aceso no sentido horário (roxo → ciano)
+                // e um "%" de pontos no centro. Não é o símbolo de nenhuma IA.
+                let c = CGPoint(x: s.width / 2, y: s.height / 2)
+                let filled = 0.7
+                for (ring, radius, count, dot) in [(0, 0.46, 40, 0.055), (1, 0.37, 32, 0.05)] {
+                    for i in 0..<count {
+                        let f = Double(i) / Double(count)
+                        let a = f * 2 * .pi - .pi / 2
+                        let r = Double(s.width) * radius
+                        let p = CGPoint(x: c.x + CGFloat(r * cos(a)), y: c.y + CGFloat(r * sin(a)))
+                        let d = s.width * dot
+                        let lit = f < filled
+                        let color: Color = lit ? mix(f / filled) : .white.opacity(ring == 0 ? 0.10 : 0.07)
+                        ctx.fill(Path(ellipseIn: CGRect(x: p.x - d / 2, y: p.y - d / 2, width: d, height: d)), with: .color(color))
                     }
-                    return false
                 }
-                for y in 0..<n {
-                    for x in 0..<n {
-                        var hits = 0
-                        for sy in 0..<5 { for sx in 0..<5 {
-                            if inside(Double(x) + (Double(sx) + 0.5) / 5, Double(y) + (Double(sy) + 0.5) / 5) { hits += 1 }
-                        } }
-                        let inShape = hits >= 8
-                        let dx = Double(x) + 0.5 - c, dy = Double(y) + 0.5 - c
-                        var sweep = atan2(dx, -dy)
-                        if sweep < 0 { sweep += 2 * .pi }
-                        let lit = sweep / (2 * .pi) <= filled
-                        let color: Color = inShape ? (lit ? claude : claude.opacity(0.34)) : .white.opacity(0.04)
-                        let r = CGRect(x: CGFloat(x) * cell + (cell - dot) / 2, y: CGFloat(y) * cell + (cell - dot) / 2, width: dot, height: dot)
-                        ctx.fill(Path(ellipseIn: r), with: .color(color))
+                // "%" em pontos no meio.
+                let glyph = ["##....#", "##...#.", "....#..", "...#...", "..#....", ".#...##", "#....##"]
+                let cell = s.width * 0.062
+                let ox = c.x - cell * 3.5, oy = c.y - cell * 3.5
+                for (y, row) in glyph.enumerated() {
+                    for (x, ch) in row.enumerated() where ch == "#" {
+                        let d = cell * 0.8
+                        ctx.fill(Path(ellipseIn: CGRect(x: ox + CGFloat(x) * cell + (cell - d) / 2,
+                                                        y: oy + CGFloat(y) * cell + (cell - d) / 2, width: d, height: d)),
+                                 with: .color(.white))
                     }
                 }
             }
             .frame(width: shape * 0.74, height: shape * 0.74)
-            .shadow(color: claude.opacity(0.6), radius: shape * 0.03)
+            .shadow(color: purple.opacity(0.6), radius: shape * 0.03)
         }
         .frame(width: size, height: size)
     }
