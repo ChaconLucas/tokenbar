@@ -28,6 +28,7 @@ struct BusyDevice: View {
     @State private var lastTouch = Date.distantPast
     #if os(macOS)
     @State private var scrollMonitor: Any?
+    @State private var hostWindow = WindowRef()
     @State private var scrolling = false
     @State private var scrollRaw: CGFloat = 0
     #endif
@@ -73,6 +74,7 @@ struct BusyDevice: View {
             }
         }
         #if os(macOS)
+        .background(WindowReader(ref: hostWindow))
         .onAppear(perform: installScroll)
         .onDisappear { if let m = scrollMonitor { NSEvent.removeMonitor(m) } }
         #endif
@@ -145,24 +147,27 @@ struct BusyDevice: View {
     }
 
     #if os(macOS)
-    /// Dois dedos no trackpad: o display segue os dedos e decide ao soltar.
-    /// A inércia que o trackpad manda depois de soltar é ignorada — era ela que fazia tremer.
+    /// Dois dedos no trackpad: um deslize = um passo. Só reage o aparelho que está debaixo do cursor;
+    /// a inércia e a roda repetida são ignoradas até o gesto acabar.
     private func installScroll() {
         guard scrollMonitor == nil else { return }
         scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { e in
-            guard (e.window?.identifier?.rawValue.hasPrefix("main") == true || e.window?.identifier?.rawValue.hasPrefix("mini") == true), ids.count > 1 else { return e }
+            guard ids.count > 1, let win = e.window, win === hostWindow.window,
+                  win.contentView?.hitTest(e.locationInWindow) != nil else { return e }
+            // Inércia depois de soltar: engole sem fazer nada.
             if !e.momentumPhase.isEmpty { return nil }
 
             if e.phase.isEmpty {
-                // Roda de mouse comum (sem fases): um passo por movimento lateral.
-                guard abs(e.scrollingDeltaX) > abs(e.scrollingDeltaY), abs(e.scrollingDeltaX) > 2 else { return e }
+                // Roda lateral de mouse: no máximo um passo a cada 0,5 s.
+                guard abs(e.scrollingDeltaX) > abs(e.scrollingDeltaY), abs(e.scrollingDeltaX) > 3 else { return e }
+                guard Date.now.timeIntervalSince(lastTouch) > 0.5 else { return nil }
                 lastTouch = .now
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
                     index = min(max(index + (e.scrollingDeltaX > 0 ? -1 : 1), 0), ids.count - 1)
                 }
                 return nil
             }
-            if e.phase.contains(.began) {
+            if e.phase.contains(.began) || e.phase.contains(.mayBegin) {
                 scrolling = abs(e.scrollingDeltaX) >= abs(e.scrollingDeltaY)
                 scrollRaw = 0
             }
@@ -173,11 +178,18 @@ struct BusyDevice: View {
             }
             if e.phase.contains(.ended) || e.phase.contains(.cancelled) {
                 scrolling = false
-                settle(predicted: scrollRaw * 1.6, moved: scrollRaw)
+                let step = scrollRaw < -40 ? 1 : scrollRaw > 40 ? -1 : 0
+                lastTouch = .now
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                    index = min(max(index + step, 0), ids.count - 1)
+                    drag = 0
+                }
+                scrollRaw = 0
             }
             return nil
         }
     }
+
     #endif
 
     // MARK: Teclas dentro da tela
@@ -328,3 +340,20 @@ extension Prefs {
         return choice == "long" ? (p.windows.count > 1 ? p.windows[1] : p.windows.first) : p.windows.first
     }
 }
+
+#if os(macOS)
+/// Guarda a janela em que o aparelho está (para o trackpad só mexer no aparelho certo).
+final class WindowRef { weak var window: NSWindow? }
+
+struct WindowReader: NSViewRepresentable {
+    var ref: WindowRef
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        DispatchQueue.main.async { ref.window = v.window }
+        return v
+    }
+    func updateNSView(_ v: NSView, context: Context) {
+        if ref.window == nil { DispatchQueue.main.async { ref.window = v.window } }
+    }
+}
+#endif
