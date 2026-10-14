@@ -45,16 +45,16 @@ struct ControlReading {
             let d = sec / 86400, h = (sec % 86400) / 3600, m = (sec % 3600) / 60
             return d > 0 ? "\(d)d \(h)h" : "\(h):" + String(format: "%02d", m)
         }
-        let max = parts.map { $0.1.used() }.max() ?? 0
+        let top = parts.map { $0.1.used() }.max() ?? 0
         if agent == "all" {
             return ControlReading(
                 text: parts.map { "\($0.0 == "codex" ? "CX" : "CL") \(pct($0.1))" }.joined(separator: " · "),
                 detail: "\(label) · reseta " + parts.map { left($0.1) }.joined(separator: " · "),
-                symbol: symbol(max))
+                symbol: symbol(top))
         }
         let (id, w) = parts[0]
         return ControlReading(text: "\(id == "codex" ? "Codex" : "Claude") \(pct(w))",
-                              detail: "\(label) · reseta \(left(w))", symbol: symbol(max))
+                              detail: "\(label) · reseta \(left(w))", symbol: symbol(top))
     }
 
     /// O ponteiro do ícone acompanha o gasto (0, 33, 50, 67 ou 100%).
