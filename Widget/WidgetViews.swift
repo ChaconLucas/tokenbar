@@ -10,9 +10,10 @@ struct WidgetContent: View {
     var now: Date
     var theme: Theme
     var paired: Bool
+    var cycling = false
 
     var body: some View {
-        let items = WidgetItems.make(snapshot, agent: agent, window: window)
+        let items = WidgetItems.make(snapshot, agent: agent, window: window, showName: cycling)
         if snapshot.providers.isEmpty {
             EmptyUsage(paired: paired)
         } else {
@@ -44,12 +45,14 @@ struct WidgetContent: View {
         }
     }
 
-    /// Painéis em grade; cada um recebe a sua fatia exata da área.
+    /// Painéis em grade; cada um recebe a sua fatia exata da área e todos usam a mesma escala.
     private func grid(_ items: [WidgetItems.Item], columns: Int, cols: Int, gap: CGFloat) -> some View {
         GeometryReader { geo in
             let rows = Int((Double(items.count) / Double(columns)).rounded(.up))
             let w = (geo.size.width - gap * CGFloat(columns - 1)) / CGFloat(columns)
             let h = (geo.size.height - gap * CGFloat(max(rows - 1, 0))) / CGFloat(max(rows, 1))
+            let longest = items.map(\.title).max(by: { DotFont.width($0) < DotFont.width($1) }) ?? ""
+            let k = LEDPanel.bestScale(width: w, height: h, longestTitle: longest)
             VStack(spacing: gap) {
                 ForEach(0..<rows, id: \.self) { r in
                     HStack(spacing: gap) {
@@ -58,7 +61,7 @@ struct WidgetContent: View {
                             if i < items.count {
                                 let it = items[i]
                                 LEDPanel(window: it.window, title: it.title, providerID: it.providerID,
-                                         now: now, theme: theme)
+                                         now: now, theme: theme, scale: k, longestTitle: longest)
                                     .frame(width: w, height: h)
                                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             } else {

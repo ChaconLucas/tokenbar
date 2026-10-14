@@ -120,7 +120,7 @@ struct DotCanvas: View {
                 for x in 0..<bitmap.cols {
                     let v = bitmap.get(x, y)
                     let rect = CGRect(x: CGFloat(x) * dot, y: CGFloat(y) * dot, width: size, height: size)
-                    let color: Color = v == 2 ? textColor : v == 3 ? textColor.opacity(0.5) : v == 1 ? fieldColor : offColor
+                    let color: Color = v == 2 ? textColor : v == 3 ? textColor.opacity(0.72) : v == 1 ? fieldColor : offColor
                     let path = round ? Path(ellipseIn: rect) : Path(roundedRect: rect, cornerRadius: size * 0.22)
                     ctx.fill(path, with: .color(color))
                 }

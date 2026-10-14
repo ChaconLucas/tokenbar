@@ -8,9 +8,13 @@ struct LEDPanel: View {
     var providerID: String
     var now: Date
     var theme: Theme
-    /// Mínimo de colunas (cabe "CLAUDE" + folga); o ponto sai do espaço disponível.
+    /// Mantidos por compatibilidade com quem já chama assim.
     var minCols: Int = 44
     var maxScale: Int = 3
+    /// Escala do número; se nil, o painel escolhe sozinho. Widgets passam a mesma para todos os painéis.
+    var scale: Int? = nil
+    /// Título mais longo do widget: garante que título e tempo caibam em todos os painéis.
+    var longestTitle: String? = nil
 
     var body: some View {
         let p = window?.used(at: now) ?? 0
@@ -18,10 +22,12 @@ struct LEDPanel: View {
         GeometryReader { geo in
             let w = geo.size.width.isFinite ? geo.size.width : 0
             let h = geo.size.height.isFinite ? geo.size.height : 0
-            // Ponto pela altura (~26 linhas), mas nunca com menos colunas que o mínimo.
-            let dot = max(1, min(h / 26, w / CGFloat(minCols)))
-            let cols = max(minCols, Int(w / dot)), rows = max(12, Int(h / dot))
-            DotCanvas(bitmap: bitmap(p, cols: min(cols, 300), rows: min(rows, 200)), dot: dot,
+            let t = longestTitle ?? title
+            let k = scale ?? LEDPanel.bestScale(width: w, height: h, longestTitle: t, maxScale: maxScale)
+            let dot = LEDPanel.dot(width: w, height: h, k: k, longestTitle: t)
+            let rows = max(LEDPanel.rows(for: k), Int(h / dot))
+            let cols = max(10, Int(w / dot))
+            DotCanvas(bitmap: bitmap(p, k: k, cols: min(cols, 300), rows: min(rows, 200)), dot: dot,
                       textColor: theme.text.color, fieldColor: level.opacity(0.62), offColor: level.opacity(0.10),
                       round: theme.roundDots)
                 .shadow(color: level.opacity(0.3 * theme.glow), radius: 2 * theme.glow)
@@ -31,54 +37,42 @@ struct LEDPanel: View {
         .accessibilityLabel("\(title) \(UsageStyle.percent(p))")
     }
 
-    private func bitmap(_ p: Double, cols: Int, rows: Int) -> DotBitmap {
+    // Grade fixa: margem 2 · título 7 · vão 3 · número 7k · margem 2.
+    static func rows(for k: Int) -> Int { 2 + 7 + 3 + 7 * k + 2 }
+
+    /// Colunas que a escala k precisa: "100%" e "TÍTULO  0:00" inteiros.
+    static func colsNeeded(k: Int, longestTitle: String) -> Int {
+        max(DotFont.width("100%", scale: k) + 4, 2 + DotFont.width(longestTitle) + 6 + DotFont.width("0:00") + 2)
+    }
+
+    /// O ponto cabe na altura (grade da escala k) e na largura (colunas necessárias).
+    static func dot(width w: CGFloat, height h: CGFloat, k: Int, longestTitle: String) -> CGFloat {
+        max(1, min(h / CGFloat(rows(for: k)), w / CGFloat(colsNeeded(k: k, longestTitle: longestTitle))))
+    }
+
+    /// Maior escala cujo ponto ainda fica visível (o número cresce o quanto der sem apertar nada).
+    static func bestScale(width w: CGFloat, height h: CGFloat, longestTitle: String, maxScale: Int = 3) -> Int {
+        guard w > 0, h > 0 else { return 1 }
+        for k in stride(from: maxScale, through: 2, by: -1)
+        where dot(width: w, height: h, k: k, longestTitle: longestTitle) >= 1.9 { return k }
+        return 1
+    }
+
+    private func bitmap(_ p: Double, k: Int, cols: Int, rows: Int) -> DotBitmap {
         var b = DotBitmap(cols: cols, rows: rows)
         let filled = Int((min(max(p, 0), 100) / 100 * Double(cols)).rounded())
         for x in 0..<filled { for y in 0..<rows { b.set(x, y, 1) } }
 
-        guard window != nil else {
-            b.draw(title, x: 2, y: 2)
-            b.drawCentered("--", y: max(10, rows / 2 - 3))
-            return b
-        }
-        let t = timeText
-        let big = "\(min(Int(p.rounded()), 999))%"
-        func w(_ s: String, _ k: Int = 1) -> Int { DotFont.width(s, scale: k) }
-        func best(top: Int, bottom: Int) -> Int {
-            var k = maxScale
-            while k > 0 && (w(big, k) > cols - 4 || top + 7 * k > bottom) { k -= 1 }
-            return k
-        }
-        func drawBig(_ k: Int, top: Int, bottom: Int) {
-            let y = top + max(0, (bottom - top - 7 * k) / 2)
-            // Sempre centrada no painel: as duas faixas ficam alinhadas.
-            let x = (cols - w(big, k)) / 2
-            b.draw(big, x: x, y: y, scale: k)
-        }
-
-        // 1) Título e tempo na linha de cima; % embaixo, o maior possível.
-        for name in [title, LEDPanel.abbreviate(title)] where 2 + w(name) + 6 + w(t) <= cols - 2 {
-            let k = best(top: 10, bottom: rows - 1)
-            if k >= 2 || (k == 1 && name == LEDPanel.abbreviate(title)) {
-                b.draw(name, x: 2, y: 2)
-                b.draw(t, x: cols - 2 - w(t), y: 2, value: 3)
-                drawBig(k, top: 10, bottom: rows - 1)
-                return b
-            }
-        }
-        // 2) Título em cima, tempo embaixo, % no meio.
-        let k2 = best(top: 10, bottom: rows - 10)
-        if k2 >= 1 {
-            b.draw(title, x: 2, y: 2)
-            b.draw(t, x: 2, y: rows - 9, value: 3)
-            drawBig(k2, top: 10, bottom: rows - 10)
-            return b
-        }
-        // 3) Apertado: nome curto e % na mesma linha, tempo embaixo se couber.
-        let name = LEDPanel.abbreviate(title)
+        // Título à esquerda; tempo (mais apagado) à direita na mesma linha, se couber.
+        let name = 2 + DotFont.width(title) + 6 + DotFont.width(timeText) + 2 <= cols ? title : LEDPanel.abbreviate(title)
         b.draw(name, x: 2, y: 2)
-        b.draw(big, x: cols - 2 - w(big), y: 2)
-        if rows >= 18 { b.draw(t, x: 2, y: 11, value: 3) }
+        if window != nil, 2 + DotFont.width(name) + 6 + DotFont.width(timeText) + 2 <= cols {
+            b.draw(timeText, x: cols - 2 - DotFont.width(timeText), y: 2, value: 3)
+        }
+        let big = window == nil ? "--" : "\(min(Int(p.rounded()), 999))%"
+        // Número centrado no espaço abaixo do título.
+        let y = 12 + max(0, (rows - 2 - 12 - 7 * k) / 2)
+        b.draw(big, x: (cols - DotFont.width(big, scale: k)) / 2, y: y, scale: k)
         return b
     }
 
@@ -106,7 +100,7 @@ enum WidgetItems {
     }
 
     /// agent: "all" | "claude" | "codex"; window: "short" | "long" | "both".
-    static func make(_ s: UsageSnapshot, agent: String, window: String) -> [Item] {
+    static func make(_ s: UsageSnapshot, agent: String, window: String, showName: Bool = false) -> [Item] {
         let ids = agent == "all" ? Prefs.allProviders : [agent]
         var out: [Item] = []
         for id in ids {
@@ -117,7 +111,8 @@ enum WidgetItems {
             for w in picked {
                 // Uma IA só: o título é a janela. Várias: o nome da IA (+ janela se mostrar as duas).
                 let title: String
-                if ids.count == 1 { title = w?.label.uppercased() ?? UsageStyle.shortName(id) }
+                if ids.count == 1 && showName { title = (id == "codex" ? "CX " : "CL ") + (w?.label.uppercased() ?? "") }
+                else if ids.count == 1 { title = w?.label.uppercased() ?? UsageStyle.shortName(id) }
                 else if window == "both" { title = (id == "codex" ? "CX " : "CL ") + (w?.label.uppercased() ?? "") }
                 else { title = UsageStyle.shortName(id) }
                 out.append(Item(key: "\(id)-\(w?.id ?? "none")", providerID: id, window: w, title: title))

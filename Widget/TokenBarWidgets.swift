@@ -122,24 +122,25 @@ struct EntryView: View {
     var entry: UsageEntry
 
     var body: some View {
-        WidgetContent(family: family, snapshot: entry.snapshot, agent: entry.agent, window: entry.window,
-                      now: entry.date, theme: Prefs.theme, paired: entry.paired)
-            .padding(isSystem ? 8 : 0)
-            .overlay(alignment: .topTrailing) { if entry.cycling && isSystem { nextKey } }
+        cycleWrap(
+            WidgetContent(family: family, snapshot: entry.snapshot, agent: entry.agent, window: entry.window,
+                          now: entry.date, theme: Prefs.theme, paired: entry.paired, cycling: entry.cycling)
+                .padding(isSystem ? 8 : 0)
+        )
             .containerBackground(for: .widget) { Color.black }
             .widgetURL(URL(string: "\(TB.urlScheme)://open"))
     }
 
-    /// Tecla de LED "›" no canto: troca para a próxima IA sem abrir o app.
-    @ViewBuilder private var nextKey: some View {
+    /// "Uma por vez": o widget inteiro é o botão — tocar em qualquer lugar passa para a próxima IA.
+    @ViewBuilder private func cycleWrap<V: View>(_ v: V) -> some View {
         #if os(watchOS)
-        EmptyView()
+        v
         #else
-        Button(intent: NextAgentIntent()) {
-            DotKeyFace(text: ">", on: true, color: Prefs.theme.base(entry.agent), dot: 1.8, round: Prefs.theme.roundDots)
+        if entry.cycling && isSystem {
+            Button(intent: NextAgentIntent()) { v }.buttonStyle(.plain)
+        } else {
+            v
         }
-        .buttonStyle(.plain)
-        .padding(6)
         #endif
     }
 
