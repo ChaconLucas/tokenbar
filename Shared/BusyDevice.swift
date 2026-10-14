@@ -17,6 +17,8 @@ struct BusyDevice: View {
     var onSettings: (() -> Void)?
     /// Celular: sem moldura e o display ocupando a área inteira.
     var fullBleed = false
+    /// Vidro líquido (macOS 26 / iOS 26) no lugar do vidro preto.
+    var liquidGlass = false
     /// Margem lateral do aparelho (Dynamic Island), em pontos: o texto recua, o fundo não.
     var sideSafeInset: CGFloat = 0
 
@@ -261,7 +263,18 @@ struct BusyDevice: View {
 
     // MARK: Vidro
 
-    private var glass: some View {
+    @ViewBuilder private var glass: some View {
+        if liquidGlass, #available(macOS 26.0, iOS 26.0, watchOS 26.0, *) {
+            // Vidro líquido escurecido: deixa ver o fundo e mantém os LEDs nítidos.
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.black.opacity(0.35))
+                .glassEffect(.regular.tint(.black.opacity(0.25)), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        } else {
+            solidGlass
+        }
+    }
+
+    private var solidGlass: some View {
         RoundedRectangle(cornerRadius: 22, style: .continuous)
             .fill(.black)
             .overlay {

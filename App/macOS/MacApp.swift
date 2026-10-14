@@ -204,24 +204,44 @@ struct MenuContent: View {
     var body: some View {
         VStack(spacing: 10) {
             // O aparelho precisa de altura fixa: dentro do menu ele não tem de onde tirar o tamanho.
-            BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice, theme: model.theme)
+            BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
+                       theme: model.theme, liquidGlass: true)
                 .frame(width: 400, height: 150)
             HStack(spacing: 6) {
-                Button("APARELHO") { openWindow(id: "main"); NSApp.activate() }
-                Button("MINI") { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
-                Button("AJUSTES") { openWindow(id: "settings"); NSApp.activate() }
+                menuButton("Aparelho", "rectangle.inset.filled") { openWindow(id: "main"); NSApp.activate() }
+                menuButton("Mini", "pip") { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
+                menuButton("Ajustes", "gearshape") { openWindow(id: "settings"); NSApp.activate() }
                 Spacer(minLength: 4)
-                Button { model.refresh() } label: { Image(systemName: "arrow.clockwise") }
-                    .help("Atualizar")
-                Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }
-                    .help("Sair do TokenBar")
+                menuButton(nil, "arrow.clockwise") { model.refresh() }.help("Atualizar")
+                menuButton(nil, "power") { NSApp.terminate(nil) }.help("Sair do TokenBar")
             }
-            .buttonStyle(ArcadeButtonStyle())
         }
-        .padding(10)
-        .frame(width: 420)
-        .background(Color.black)
+        .padding(12)
+        .frame(width: 424)
+        .modifier(MenuBackground())
         .environment(\.colorScheme, .dark)
+    }
+
+    /// Botão de vidro do sistema (macOS 26); antes disso, o botão de fliperama.
+    @ViewBuilder
+    private func menuButton(_ title: String?, _ icon: String, action: @escaping () -> Void) -> some View {
+        let label = Group {
+            if let title { Label(title, systemImage: icon) } else { Image(systemName: icon) }
+        }
+        if #available(macOS 26.0, *) {
+            Button(action: action) { label.padding(.horizontal, 2) }
+                .buttonStyle(.glass)
+                .controlSize(.large)
+        } else {
+            Button(action: action) { label }.buttonStyle(ArcadeButtonStyle())
+        }
+    }
+}
+
+/// Fundo do resumo: o vidro do próprio menu (macOS 26) ou preto nos anteriores.
+private struct MenuBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) { content } else { content.background(Color.black) }
     }
 }
 
