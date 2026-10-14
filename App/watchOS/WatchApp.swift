@@ -185,7 +185,7 @@ struct WatchPanel: View {
     var now: Date
     var theme: Theme
 
-    static let cols = 64, rows = 22
+    static let cols = 78, rows = 26
 
     var body: some View {
         let p = window?.used(at: now) ?? 0
