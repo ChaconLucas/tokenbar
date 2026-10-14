@@ -13,6 +13,22 @@ android {
         versionCode = 1
         versionName = "0.1.0"
     }
+    // Assinatura definitiva: a chave fica fora do repositório (~/.tokenbar-keys). Sem ela, gera só o debug.
+    val keyFile = file(System.getProperty("user.home") + "/.tokenbar-keys/release.jks")
+    signingConfigs {
+        if (keyFile.exists()) create("release") {
+            storeFile = keyFile
+            storePassword = file(System.getProperty("user.home") + "/.tokenbar-keys/storepass.txt").readText().trim()
+            keyAlias = "tokenbar"
+            keyPassword = storePassword
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
+        }
+    }
     buildFeatures { compose = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
