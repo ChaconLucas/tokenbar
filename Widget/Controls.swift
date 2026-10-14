@@ -19,27 +19,42 @@ struct OpenTokenBarIntent: AppIntent {
     }
 }
 
-/// O que um controle mostra: texto curto e o ícone de ponteiro na posição do gasto.
+/// O que um controle mostra: título, linha de baixo (reset) e o ícone de ponteiro na posição do gasto.
 struct ControlReading {
     var text: String
+    var detail: String = ""
     var symbol: String
 
     static func make(agent: String) -> ControlReading {
         guard let s = SharedStore.loadSnapshot(), !s.providers.isEmpty else {
-            return ControlReading(text: "Sem dados", symbol: "gauge.with.dots.needle.0percent")
+            return ControlReading(text: "Sem dados", detail: "abra o TokenBar", symbol: "gauge.with.dots.needle.0percent")
         }
         let window = Prefs.window == "long" ? "long" : "short"
         let ids = agent == "all" ? Prefs.allProviders : [agent]
-        let parts = ids.compactMap { id -> (String, Double)? in
+        let parts = ids.compactMap { id -> (String, UsageWindow)? in
             guard let w = Prefs.pickFrom(s.provider(id), window) else { return nil }
-            return (id, w.used())
+            return (id, w)
         }
         guard !parts.isEmpty else { return ControlReading(text: "Sem dados", symbol: "gauge.with.dots.needle.0percent") }
         let label = window == "long" ? "7d" : "5h"
-        let text = agent == "all"
-            ? parts.map { "\($0.0 == "codex" ? "CX" : "CL") \(Int($0.1.rounded()))%" }.joined(separator: " · ")
-            : "\(agent == "codex" ? "Codex" : "Claude") \(label) \(Int(parts[0].1.rounded()))%"
-        return ControlReading(text: text, symbol: symbol(parts.map(\.1).max() ?? 0))
+        func pct(_ w: UsageWindow) -> String { "\(Int(w.used().rounded()))%" }
+        func left(_ w: UsageWindow) -> String {
+            guard let r = w.resetsAt else { return "" }
+            if w.didReset() { return "OK" }
+            let sec = max(0, Int(r.timeIntervalSinceNow))
+            let d = sec / 86400, h = (sec % 86400) / 3600, m = (sec % 3600) / 60
+            return d > 0 ? "\(d)d \(h)h" : "\(h):" + String(format: "%02d", m)
+        }
+        let max = parts.map { $0.1.used() }.max() ?? 0
+        if agent == "all" {
+            return ControlReading(
+                text: parts.map { "\($0.0 == "codex" ? "CX" : "CL") \(pct($0.1))" }.joined(separator: " · "),
+                detail: "\(label) · reseta " + parts.map { left($0.1) }.joined(separator: " · "),
+                symbol: symbol(max))
+        }
+        let (id, w) = parts[0]
+        return ControlReading(text: "\(id == "codex" ? "Codex" : "Claude") \(pct(w))",
+                              detail: "\(label) · reseta \(left(w))", symbol: symbol(max))
     }
 
     /// O ponteiro do ícone acompanha o gasto (0, 33, 50, 67 ou 100%).
@@ -52,8 +67,8 @@ struct ControlReading {
 @available(iOS 18.0, macOS 26.0, *)
 struct UsageValue: ControlValueProvider {
     var agent: String
-    var previewValue: ControlReading { ControlReading(text: agent == "codex" ? "Codex 5h 8%" : agent == "all" ? "CL 42% · CX 8%" : "Claude 5h 42%",
-                                                      symbol: "gauge.with.dots.needle.50percent") }
+    var previewValue: ControlReading { ControlReading(text: agent == "codex" ? "Codex 8%" : agent == "all" ? "CL 42% · CX 8%" : "Claude 42%",
+                                                      detail: "5h · reseta 2:40", symbol: "gauge.with.dots.needle.50percent") }
     func currentValue() async throws -> ControlReading { ControlReading.make(agent: agent) }
 }
 
@@ -61,7 +76,13 @@ struct UsageValue: ControlValueProvider {
 private func usageControl(kind: String, name: LocalizedStringResource, about: LocalizedStringResource, agent: String) -> some ControlWidgetConfiguration {
     StaticControlConfiguration(kind: kind, provider: UsageValue(agent: agent)) { r in
         ControlWidgetButton(action: OpenTokenBarIntent(target: "mini")) {
-            Label(r.text, systemImage: r.symbol)
+            // Duas linhas no tamanho grande: o gasto em cima, quando reseta embaixo.
+            Label {
+                Text(r.text)
+                Text(r.detail)
+            } icon: {
+                Image(systemName: r.symbol)
+            }
         }
     }
     .displayName(name)
