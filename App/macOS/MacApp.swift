@@ -115,6 +115,13 @@ final class MacModel: ObservableObject {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var openMain: (() -> Void)?
 
+    /// ⌘H (Esconder) fecha o aparelho e o flutuante: senão, abrir o resumo da barra traz tudo de volta.
+    func applicationDidHide(_ notification: Notification) {
+        for w in NSApp.windows where w.identifier?.rawValue.hasPrefix("main") == true { w.close() }
+        Task { @MainActor in MiniPanel.shared.close() }
+        NSApp.unhideWithoutActivation()
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !hasVisibleWindows { openMain?() }
         return true
