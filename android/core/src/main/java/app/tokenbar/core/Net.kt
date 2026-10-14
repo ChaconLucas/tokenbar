@@ -38,7 +38,33 @@ object Fetch {
         return withContext(Dispatchers.IO) { get(URL("http://$h:${info.port}/v1/usage"), p.token) }
     }
 
-    private suspend fun discover(nsd: NsdManager, lanId: String): NsdServiceInfo =
+    /** Relógio sem celular: acha qualquer Mac com TokenBar no Wi-Fi e troca o código de 6 números pelo pareamento. */
+    suspend fun pairByCode(context: Context, code: String): Pairing {
+        val nsd = context.getSystemService(Context.NSD_SERVICE) as NsdManager
+        val info = withTimeoutOrNull(8000) { discover(nsd, null) } ?: throw Failure("Nenhum Mac com TokenBar no Wi-Fi")
+        val host = info.host?.hostAddress ?: throw Failure("Mac sem endereço")
+        val h = if (host.contains(':')) "[$host]" else host
+        return withContext(Dispatchers.IO) {
+            val c = (URL("http://$h:${info.port}/v1/pair?code=$code").openConnection() as HttpURLConnection).apply {
+                connectTimeout = 6000; readTimeout = 6000
+            }
+            try {
+                when (c.responseCode) {
+                    200 -> {
+                        val body = c.inputStream.bufferedReader().readText()
+                        val link = Regex("\"link\"\\s*:\\s*\"([^\"]+)\"").find(body)?.groupValues?.get(1)?.replace("\\/", "/")
+                        link?.let { Pairing.parse(it) } ?: throw Failure("Resposta inválida do Mac")
+                    }
+                    401 -> throw Failure("Código errado")
+                    429 -> throw Failure("Muitas tentativas: espere 1 minuto")
+                    else -> throw Failure("Resposta ${c.responseCode}")
+                }
+            } finally { c.disconnect() }
+        }
+    }
+
+    /** lanId nulo = o primeiro Mac encontrado. */
+    private suspend fun discover(nsd: NsdManager, lanId: String?): NsdServiceInfo =
         suspendCancellableCoroutine { cont ->
             var done = false
             lateinit var listener: NsdManager.DiscoveryListener
@@ -49,7 +75,7 @@ object Fetch {
                         override fun onResolveFailed(si: NsdServiceInfo, code: Int) {}
                         override fun onServiceResolved(si: NsdServiceInfo) {
                             val id = si.attributes["id"]?.let { String(it) }
-                            if (id == lanId && !done) { done = true; runCatching { nsd.stopServiceDiscovery(listener) }; cont.resume(si) }
+                            if ((lanId == null || id == lanId) && !done) { done = true; runCatching { nsd.stopServiceDiscovery(listener) }; cont.resume(si) }
                         }
                     })
                 }

@@ -32,6 +32,7 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** App do relógio: TODOS (as IAs na janela escolhida) ou uma IA com 5h e 7d. Toque nas teclas troca. */
 class MainActivity : ComponentActivity() {
@@ -46,14 +47,24 @@ class MainActivity : ComponentActivity() {
             var window by remember { mutableStateOf(if (store.window == "long") "long" else "short") }
             var tick by remember { mutableLongStateOf(0L) }
             LaunchedEffect(Unit) { while (true) { delay(1000); tick++; if (tick % 10 == 0L) snapshot = store.snapshot } }
-            // Com servidor, o relógio busca sozinho (funciona longe do celular).
-            LaunchedEffect(Unit) {
-                while (true) {
-                    store.pairing?.takeIf { it.server != null }?.let { p ->
-                        runCatching { Fetch.server(p) }.getOrNull()?.let { if (it.updatedAt >= store.snapshot.updatedAt) { store.snapshot = it; snapshot = it } }
+            var paired by remember { mutableStateOf(store.pairing != null) }
+            // Busca sozinho (Wi-Fi do Mac ou servidor): funciona sem o celular. Com celular, ele também manda.
+            LaunchedEffect(paired) {
+                while (paired) {
+                    store.pairing?.let { p ->
+                        runCatching { Fetch.best(this@MainActivity, p) }.getOrNull()
+                            ?.let { if (it.updatedAt >= store.snapshot.updatedAt) { store.snapshot = it; snapshot = it } }
                     }
                     delay(60_000)
                 }
+            }
+            if (!paired && snapshot.providers.isEmpty()) {
+                CodeEntry { code, done ->
+                    runCatching { Fetch.pairByCode(this@MainActivity, code) }
+                        .onSuccess { store.pairing = it; paired = true; done(null) }
+                        .onFailure { done(it.message) }
+                }
+                return@setContent
             }
 
             // Tela redonda: margem maior dos lados para nada encostar no contorno.
@@ -72,7 +83,7 @@ class MainActivity : ComponentActivity() {
                 Spacer(Modifier.height(6.dp))
                 val items = if (agent == "all") Led.items(snapshot, "all", window) else Led.items(snapshot, agent, "both")
                 if (snapshot.providers.isEmpty()) {
-                    BasicText("Abra o TokenBar no celular.", style = TextStyle(color = Color.Gray, fontSize = 12.sp))
+                    BasicText("Buscando os números…", style = TextStyle(color = Color.Gray, fontSize = 12.sp))
                 } else Canvas(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(12.dp))) {
                     tick.let { }
                     drawIntoCanvas { Led.grid(it.nativeCanvas, 0f, 0f, size.width, size.height, items, 1, 10f, now()) }
@@ -131,6 +142,44 @@ class UsageComplication : SuspendingComplicationDataSourceService() {
                 .setTitle(PlainComplicationText.Builder(if (claude != null) "CL" else "CX").build()).build()
             ComplicationType.LONG_TEXT -> LongTextComplicationData.Builder(PlainComplicationText.Builder(long).build(), desc).build()
             else -> null
+        }
+    }
+}
+
+/** Teclado numérico: o código de 6 números que o Mac mostra em Ajustes. */
+@Composable
+private fun CodeEntry(submit: suspend (String, (String?) -> Unit) -> Unit) {
+    var code by remember { mutableStateOf("") }
+    var msg by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 34.dp, vertical = 26.dp),
+           horizontalAlignment = Alignment.CenterHorizontally) {
+        BasicText(if (busy) "Procurando o Mac…" else (msg ?: "Código do Mac"),
+            style = TextStyle(color = if (msg != null) Color(0xFFFF8A8A) else Color.Gray, fontSize = 11.sp))
+        BasicText(code.padEnd(6, '_'), style = TextStyle(fontFamily = FontFamily.Monospace, color = Color.White, fontSize = 20.sp, letterSpacing = 3.sp))
+        Spacer(Modifier.height(4.dp))
+        val rows = listOf("123", "456", "789", "<0>")
+        rows.forEach { r ->
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                r.forEach { ch ->
+                    Box(Modifier.size(width = 38.dp, height = 26.dp).border(1.dp, Color.DarkGray, RoundedCornerShape(50))
+                        .clickable(enabled = !busy) {
+                            when (ch) {
+                                '<' -> code = code.dropLast(1)
+                                '>' -> if (code.length == 6) {
+                                    busy = true; msg = null
+                                    scope.launch { submit(code) { err -> busy = false; msg = err; if (err != null) code = "" } }
+                                }
+                                else -> if (code.length < 6) code += ch
+                            }
+                        }, contentAlignment = Alignment.Center) {
+                        BasicText(when (ch) { '<' -> "⌫"; '>' -> "OK"; else -> ch.toString() },
+                            style = TextStyle(color = if (ch == '>') Color(0xFF33D9F2) else Color.White, fontSize = 13.sp))
+                    }
+                }
+            }
+            Spacer(Modifier.height(3.dp))
         }
     }
 }

@@ -24,7 +24,7 @@ final class MacModel: ObservableObject {
 
     private var timer: Timer?
     private var lastPushed: UsageSnapshot?
-    private let lan = LANServer()
+    let lan = LANServer()
 
     private static func loadOrCreatePairing() -> Pairing {
         if let p = SharedStore.loadPairing() { return p }
@@ -400,6 +400,19 @@ struct MacMainView: View {
                         }
                         Text("Quem tem o código vê os seus números. Não publique.")
                             .font(.caption2).foregroundStyle(Arcade.dim)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                SectionTitle(text: "RELÓGIO SEM CELULAR (WEAR OS)")
+                ArcadePanel {
+                    TimelineView(.periodic(from: .now, by: 5)) { _ in
+                        HStack(spacing: 16) {
+                            Text(model.lan.currentCode())
+                                .font(Arcade.digits(30)).tracking(6).foregroundStyle(.white)
+                            Text("No relógio, abra o TokenBar e digite este código (mesmo Wi-Fi). Vale uma vez e troca a cada 10 min.")
+                                .font(.caption).foregroundStyle(Arcade.dim)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

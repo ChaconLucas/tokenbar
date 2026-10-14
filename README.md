@@ -42,9 +42,15 @@ Para quem tem **Mac + celular Android + relógio Wear OS** (Galaxy Watch, Pixel 
 </p>
 
 - **Celular:** abre deitado, em tela cheia e com a tela sempre acesa. Teclas CLAUDE/CODEX e 5H/7D/5H 7D; deslizar troca de IA. Widget na tela inicial (largo = 5h e 7d de todas as IAs). Avisos de 80%, 95% e reset, com atualização em segundo plano.
-- **Relógio:** recebe os números do celular (e, com servidor, busca sozinho). Teclas TODOS/CLAUDE/CODEX e 5H/7D. Complicações no mostrador (anel, texto curto e longo).
+- **Relógio:** funciona **com ou sem celular**. Com celular, recebe os números dele; sozinho, digite no relógio o **código de 6 números** que o Mac mostra em *Editar → Mais ajustes* (mesmo Wi-Fi) e ele passa a buscar direto no Mac ou no servidor. Teclas TODOS/CLAUDE/CODEX e 5H/7D. Complicações no mostrador.
 - **Pareamento:** no Mac, *Editar → Mais ajustes*; no Android, **ESCANEAR QR** (ou cole o link).
 - Lê o Mac pelo Wi-Fi (o mesmo anúncio Bonjour do iPhone) ou pelo servidor opcional.
+
+### Baixar
+
+Na página de [**Releases**](https://github.com/ChaconLucas/tokenbar/releases) há `TokenBar-Android.apk` (celular) e `TokenBar-WearOS.apk` (relógio). No celular, abra o `.apk` e permita "instalar apps desconhecidos". No relógio, instale com `adb` (Ajustes → Opções do desenvolvedor → Depuração por Wi-Fi).
+
+**Huawei:** celulares com EMUI / HarmonyOS 2–4 instalam o `.apk`, mas sem os serviços do Google o botão "Escanear QR" não funciona — cole o link. Celulares com **HarmonyOS NEXT** e relógios Huawei ainda não são suportados.
 
 ### Compilar
 
