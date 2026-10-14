@@ -117,7 +117,8 @@ struct WatchRootView: View {
                         }
                     }
                 }
-                .ignoresSafeArea(edges: .bottom)
+                // Respeita as quinas arredondadas da tela: nada fica cortado embaixo.
+                .padding(.bottom, 2)
             }
             // Coroa digital: girar troca TODOS → CLAUDE → CODEX.
             .focusable()
