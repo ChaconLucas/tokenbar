@@ -32,6 +32,32 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 <p align="center"><img src="docs/widgets.png" width="640" alt="Widgets em todos os tamanhos"></p>
 <p align="center"><img src="docs/watch.jpg" width="420" alt="TokenBar no Apple Watch: todas as IAs e uma IA só"></p>
 
+## Android e Wear OS
+
+Para quem tem **Mac + celular Android + relógio Wear OS** (Galaxy Watch, Pixel Watch e outros). O app fica em [`android/`](android).
+
+<p align="center">
+<img src="docs/android.jpg" width="62%" alt="TokenBar no Android">
+<img src="docs/wearos.jpg" width="30%" alt="TokenBar no Wear OS">
+</p>
+
+- **Celular:** abre deitado, em tela cheia e com a tela sempre acesa. Teclas CLAUDE/CODEX e 5H/7D/5H 7D; deslizar troca de IA. Widget na tela inicial (largo = 5h e 7d de todas as IAs). Avisos de 80%, 95% e reset, com atualização em segundo plano.
+- **Relógio:** recebe os números do celular (e, com servidor, busca sozinho). Teclas TODOS/CLAUDE/CODEX e 5H/7D. Complicações no mostrador (anel, texto curto e longo).
+- **Pareamento:** no Mac, *Editar → Mais ajustes*; no Android, **ESCANEAR QR** (ou cole o link).
+- Lê o Mac pelo Wi-Fi (o mesmo anúncio Bonjour do iPhone) ou pelo servidor opcional.
+
+### Compilar
+
+Requisitos: JDK 17 e Android SDK (`brew install openjdk@17 android-commandlinetools`).
+
+```sh
+cd android
+echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew :app:assembleDebug :wear:assembleDebug
+adb install app/build/outputs/apk/debug/app-debug.apk          # no celular
+adb -s <relógio> install wear/build/outputs/apk/debug/wear-debug.apk   # no relógio (depuração por Wi-Fi ligada)
+```
+
 ## Como funciona
 
 ```
