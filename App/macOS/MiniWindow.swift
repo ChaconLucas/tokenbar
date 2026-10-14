@@ -44,56 +44,124 @@ enum MenuBarImage {
     }
 }
 
-/// Janela "Mini": o aparelho do app em tamanho pequeno, sempre na frente e em todas as mesas.
-struct MiniWindow: View {
+/// Mini: painel flutuante de verdade (NSPanel). Fica por cima de tudo, inclusive de apps em tela cheia,
+/// vai para todas as mesas e pode ser redimensionado pelas bordas, mantendo a proporção.
+@MainActor
+final class MiniPanel: NSObject, NSWindowDelegate {
+    static let shared = MiniPanel()
+    private var panel: NSPanel?
+    static let ratio = NSSize(width: 420, height: 150)
+
+    var isOpen: Bool { panel?.isVisible == true }
+
+    func show(model: MacModel, openMain: @escaping () -> Void) {
+        if let panel { panel.orderFrontRegardless(); return }
+        let view = MiniContent(close: { [weak self] in self?.close() },
+                               grande: { [weak self] in openMain(); self?.close() })
+            .environmentObject(model)
+        let host = NSHostingView(rootView: view)
+        host.safeAreaRegions = []   // sem a faixa da barra de título escondida
+        host.sizingOptions = []     // o painel manda no tamanho; o SwiftUI só acompanha (senão entra em laço)
+
+        let w = UserDefaults.standard.double(forKey: "miniWidth")
+        let width = w > 0 ? w : Self.ratio.width
+        let size = NSSize(width: width, height: width * Self.ratio.height / Self.ratio.width)
+        let p = NSPanel(contentRect: NSRect(origin: .zero, size: size),
+                        styleMask: [.titled, .fullSizeContentView, .resizable, .nonactivatingPanel, .utilityWindow],
+                        backing: .buffered, defer: false)
+        p.identifier = NSUserInterfaceItemIdentifier("mini-panel")
+        p.titleVisibility = .hidden
+        p.titlebarAppearsTransparent = true
+        [.closeButton, .miniaturizeButton, .zoomButton].forEach { p.standardWindowButton($0)?.isHidden = true }
+        p.isFloatingPanel = true
+        p.level = .statusBar                 // acima de janelas normais e de flutuantes comuns
+        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        p.hidesOnDeactivate = false
+        p.isMovableByWindowBackground = false  // o arrasto no display troca de IA; mover é pela borda/teclas
+        p.backgroundColor = .clear
+        p.isOpaque = false
+        p.hasShadow = true
+        p.contentAspectRatio = Self.ratio
+        p.contentMinSize = NSSize(width: 210, height: 75)
+        p.contentMaxSize = NSSize(width: 1400, height: 500)
+        // O SwiftUI vai dentro de uma caixa que só acompanha o painel (sem restrições de tamanho brigando).
+        let box = NSView(frame: NSRect(origin: .zero, size: size))
+        host.frame = box.bounds
+        host.autoresizingMask = [.width, .height]
+        host.translatesAutoresizingMaskIntoConstraints = true
+        box.addSubview(host)
+        p.contentView = box
+        p.delegate = self
+
+        if let x = UserDefaults.standard.object(forKey: "miniX") as? Double,
+           let y = UserDefaults.standard.object(forKey: "miniY") as? Double {
+            p.setFrameOrigin(NSPoint(x: x, y: y))
+        } else if let screen = NSScreen.main {
+            p.setFrameOrigin(NSPoint(x: screen.visibleFrame.maxX - size.width - 24, y: screen.visibleFrame.maxY - size.height - 24))
+        }
+        p.orderFrontRegardless()
+        panel = p
+        UserDefaults.standard.set(true, forKey: "miniOpen")
+    }
+
+    func close() {
+        panel?.orderOut(nil)
+        panel = nil
+        UserDefaults.standard.set(false, forKey: "miniOpen")
+    }
+
+    func windowDidMove(_ n: Notification) { save() }
+    func windowDidResize(_ n: Notification) { save() }
+
+    private func save() {
+        guard let f = panel?.frame else { return }
+        UserDefaults.standard.set(f.origin.x, forKey: "miniX")
+        UserDefaults.standard.set(f.origin.y, forKey: "miniY")
+        UserDefaults.standard.set(f.width, forKey: "miniWidth")
+    }
+}
+
+/// O conteúdo do Mini: o aparelho do app, que cresce e encolhe com o painel.
+struct MiniContent: View {
     @EnvironmentObject var model: MacModel
-    @Environment(\.openWindow) private var openWindow
-    @Environment(\.dismissWindow) private var dismissWindow
+    var close: () -> Void
+    var grande: () -> Void
     @State private var hover = false
 
     var body: some View {
-        BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
-                   theme: model.theme,
-                   swapKey: ("GRANDE", { openWindow(id: "main"); NSApp.activate(); dismissWindow(id: "mini") }))
-            .frame(width: 420, height: 150)
-            // Margem transparente: o × fica no canto, fora das teclas.
-            .padding(.top, 10).padding(.leading, 10)
-            .overlay(alignment: .topLeading) {
-                // Fechar: aparece ao passar o mouse.
-                Button { dismissWindow(id: "mini") } label: {
+        // Desenhado num tamanho base e escalado por igual: diminuir o painel encolhe tudo junto, nada é cortado.
+        GeometryReader { geo in
+            let base = MiniPanel.ratio
+            let k = min(geo.size.width / base.width, geo.size.height / base.height)
+            BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
+                       theme: model.theme, swapKey: ("GRANDE", grande))
+                .frame(width: base.width, height: base.height)
+                .scaleEffect(k, anchor: .topLeading)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+        }
+            .overlay(alignment: .bottomTrailing) {
+                // Fechar: aparece ao passar o mouse, no canto de baixo (fora das teclas).
+                Button(action: close) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .frame(width: 18, height: 18)
-                        .background(Circle().fill(.white.opacity(0.18)))
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 16, height: 16)
+                        .background(Circle().fill(.black.opacity(0.9)))
+                        .overlay(Circle().strokeBorder(.white.opacity(0.4)))
                 }
                 .buttonStyle(.plain)
+                .offset(x: -3, y: -3)
                 .opacity(hover ? 1 : 0)
                 .animation(.easeOut(duration: 0.15), value: hover)
+                .help("Fechar")
             }
             .onHover { hover = $0 }
             .environment(\.colorScheme, .dark)
             .contextMenu {
-                Button("Voltar ao aparelho grande") { openWindow(id: "main"); NSApp.activate(); dismissWindow(id: "mini") }
+                Button("Voltar ao aparelho grande", action: grande)
                 Divider()
-                Button("Fechar Mini") { dismissWindow(id: "mini") }
+                Button("Fechar Mini", action: close)
             }
-            .onAppear { pin(); UserDefaults.standard.set(true, forKey: "miniOpen") }
-            .onDisappear { UserDefaults.standard.set(false, forKey: "miniOpen") }
-    }
-
-    /// Sempre na frente, em todas as mesas, inclusive sobre apps em tela cheia.
-    private func pin() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // O SwiftUI dá ao NSWindow um identificador "mini-…": procura pelo começo.
-            for w in NSApp.windows where w.identifier?.rawValue.hasPrefix("mini") == true {
-                w.level = .floating
-                w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-                w.isMovableByWindowBackground = true
-                w.hidesOnDeactivate = false
-                w.hasShadow = true
-            }
-        }
     }
 }
 

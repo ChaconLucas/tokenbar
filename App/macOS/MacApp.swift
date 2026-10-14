@@ -141,18 +141,10 @@ struct TokenBarMacApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 520, height: 760)
 
-        // Mini: janelinha flutuante, sempre na frente.
-        Window("TokenBar Mini", id: "mini") {
-            MiniWindow().environmentObject(model)
-        }
-        .windowStyle(.plain)
-        .windowResizability(.contentSize)
-        .defaultPosition(.topTrailing)
-
         MenuBarExtra {
             MenuContent().environmentObject(model)
         } label: {
-            MenuLabel(image: model.menuImage, delegate: delegate)
+            MenuLabel(image: model.menuImage, delegate: delegate, model: model)
         }
         .menuBarExtraStyle(.window)
     }
@@ -162,16 +154,21 @@ struct TokenBarMacApp: App {
 struct MenuLabel: View {
     var image: NSImage
     var delegate: AppDelegate
+    var model: MacModel
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Image(nsImage: image)
             .onAppear {
                 delegate.openMain = { openWindow(id: "main"); NSApp.activate() }
-                delegate.openMain?()
-                // Lembra se o Mini estava aberto (e -TBMini YES abre, para capturas).
+                // Abre um só: o flutuante, se era ele que estava aberto; senão, o aparelho grande.
                 if UserDefaults.standard.bool(forKey: "miniOpen") || UserDefaults.standard.bool(forKey: "TBMini") {
-                    openWindow(id: "mini")
+                    MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })
+                    DispatchQueue.main.async {
+                        NSApp.windows.first { $0.identifier?.rawValue.hasPrefix("main") == true }?.close()
+                    }
+                } else {
+                    delegate.openMain?()
                 }
             }
     }
@@ -188,7 +185,7 @@ struct MenuContent: View {
                 .frame(width: 400, height: 150)
             HStack(spacing: 6) {
                 Button("APARELHO") { openWindow(id: "main"); NSApp.activate() }
-                Button("MINI") { openWindow(id: "mini") }
+                Button("MINI") { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
                 Button("AJUSTES") { openWindow(id: "settings"); NSApp.activate() }
                 Spacer(minLength: 4)
                 Button { model.refresh() } label: { Image(systemName: "arrow.clockwise") }
@@ -242,7 +239,10 @@ struct DeviceWindow: View {
         let size = fullScreen ? screen : CGSize(width: width, height: width / Self.aspect)
         BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
                    theme: model.theme, editableTheme: $model.theme, onMore: openSettings,
-                   swapKey: ("FLUTUAR", { openWindow(id: "mini"); dismissWindow(id: "main") }))
+                   swapKey: ("FLUTUAR", {
+                       MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })
+                       dismissWindow(id: "main")
+                   }))
             .frame(width: size.width, height: size.height)
         .environment(\.colorScheme, .dark)
             .contextMenu {
@@ -251,7 +251,7 @@ struct DeviceWindow: View {
                 Divider()
                 Button("Maior") { resize(1.15) }.keyboardShortcut("+")
                 Button("Menor") { resize(1 / 1.15) }.keyboardShortcut("-")
-                Button("Abrir Mini (flutuante)") { openWindow(id: "mini") }
+                Button("Abrir Mini (flutuante)") { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
                 Toggle("Flutuar (sempre na frente, em todas as mesas)", isOn: $alwaysOnTop)
                 Button(fullScreen ? "Sair da tela cheia" : "Tela cheia") { toggleFullScreen() }.keyboardShortcut("f", modifiers: [.command, .control])
                 Divider()
