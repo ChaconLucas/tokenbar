@@ -10,9 +10,9 @@ def circle(cx, cy, r, ccw=False):
     s = 0 if ccw else 1
     return f"M{cx - r:.2f} {cy:.2f}A{r} {r} 0 1 {s} {cx + r:.2f} {cy:.2f}A{r} {r} 0 1 {s} {cx - r:.2f} {cy:.2f}Z"
 
-W = 96          # largura do símbolo (unidades do template)
+W = 92          # largura do símbolo (unidades do template)
 C = (W / 2, -35.2)   # centro alinhado à metade da altura de maiúscula
-R, DOT, RING, HOLE = 40, 8.2, 7.0, 4.0
+R, DOT, RING, HOLE = 36, 9.0, 8.0, 4.4
 
 def paths(lit):
     d = []
