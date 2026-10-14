@@ -284,6 +284,9 @@ struct DeviceWindow: View {
             // Flutuar = sempre na frente + vai junto para todas as mesas (e por cima de apps em tela cheia).
             guard let w = NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix("main") == true }) else { return }
             w.level = alwaysOnTop ? .floating : .normal
+            // Arrastar o display troca de IA; a janela não pode ir junto (senão o arrasto mede zero).
+            w.isMovableByWindowBackground = false
+            w.isMovable = true
             w.collectionBehavior = alwaysOnTop ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.managed]
             w.hidesOnDeactivate = false
         }

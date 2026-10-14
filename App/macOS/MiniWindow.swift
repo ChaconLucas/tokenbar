@@ -64,7 +64,7 @@ final class MiniPanel: NSObject, NSWindowDelegate {
         host.sizingOptions = []     // o painel manda no tamanho; o SwiftUI só acompanha (senão entra em laço)
 
         let w = UserDefaults.standard.double(forKey: "miniWidth")
-        let width = w > 0 ? w : Self.ratio.width
+        let width = w > 0 ? min(w, 520) : 340
         let size = NSSize(width: width, height: width * Self.ratio.height / Self.ratio.width)
         let p = NSPanel(contentRect: NSRect(origin: .zero, size: size),
                         styleMask: [.titled, .fullSizeContentView, .resizable, .nonactivatingPanel, .utilityWindow],

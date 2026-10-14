@@ -23,7 +23,8 @@ struct BusyDevice: View {
     @State private var showEditor = false
 
     @State private var index = 0
-    @State private var drag: CGFloat = 0
+    @State private var drag: CGFloat = 0          // trackpad (dois dedos)
+    @GestureState private var mouseDrag: CGFloat = 0   // mouse/toque: volta a 0 sozinho se o gesto for interrompido
     @State private var lastTouch = Date.distantPast
     #if os(macOS)
     @State private var scrollMonitor: Any?
@@ -97,15 +98,16 @@ struct BusyDevice: View {
                         .frame(width: w, height: geo.size.height)
                     }
                 }
-                .offset(x: -CGFloat(index % max(ids.count, 1)) * w + drag)
+                .offset(x: -CGFloat(index % max(ids.count, 1)) * w + drag + mouseDrag)
             }
             .frame(width: w, alignment: .leading)
             .clipped()
             .contentShape(Rectangle())
             .gesture(
-                DragGesture(minimumDistance: 6, coordinateSpace: .global)
-                    .onChanged { v in follow(v.translation.width) }
-                    .onEnded { v in settle(predicted: v.predictedEndTranslation.width) }
+                // Espaço local: a conta não depende da janela (que não se move ao arrastar o display).
+                DragGesture(minimumDistance: 4, coordinateSpace: .local)
+                    .updating($mouseDrag) { v, state, _ in state = resisted(v.translation.width) }
+                    .onEnded { v in settle(predicted: v.predictedEndTranslation.width, moved: v.translation.width) }
             )
             .onAppear { pageWidth = w }
             .onChange(of: w) { _, nw in pageWidth = nw }
@@ -113,15 +115,20 @@ struct BusyDevice: View {
     }
 
     /// O display acompanha o dedo; nas pontas resiste, como uma lista que acabou.
-    private func follow(_ dx: CGFloat) {
-        guard ids.count > 1 else { return }
+    private func resisted(_ dx: CGFloat) -> CGFloat {
+        guard ids.count > 1 else { return 0 }
         let atEdge = (index == 0 && dx > 0) || (index == ids.count - 1 && dx < 0)
-        drag = atEdge ? dx / 3 : dx
+        return atEdge ? dx / 3 : dx
     }
 
+    private func follow(_ dx: CGFloat) { drag = resisted(dx) }
+
     /// Ao soltar: passou de um quarto da largura (ou foi rápido) troca de página; senão volta.
-    private func settle(predicted: CGFloat) {
-        let step = predicted < -pageWidth * 0.25 ? 1 : predicted > pageWidth * 0.25 ? -1 : 0
+    private func settle(predicted: CGFloat, moved: CGFloat = 0) {
+        // Troca com um arrasto curto (40 pt ou 15% da largura) ou com um gesto rápido.
+        let limit = min(40, pageWidth * 0.15)
+        let d = abs(moved) > abs(predicted) ? moved : predicted
+        let step = d < -limit ? 1 : d > limit ? -1 : 0
         lastTouch = .now
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
             index = min(max(index + step, 0), ids.count - 1)
@@ -166,7 +173,7 @@ struct BusyDevice: View {
             }
             if e.phase.contains(.ended) || e.phase.contains(.cancelled) {
                 scrolling = false
-                settle(predicted: scrollRaw * 1.6)
+                settle(predicted: scrollRaw * 1.6, moved: scrollRaw)
             }
             return nil
         }
@@ -204,10 +211,16 @@ struct BusyDevice: View {
                 save()
             }
             if let swapKey {
+                // Ícone em vez de palavra: "destacar" (vira flutuante) ou "expandir" (volta ao grande).
                 Button(action: swapKey.action) {
-                    DotKeyFace(text: swapKey.label, on: true, color: Arcade.cyan, dot: dot, round: theme.roundDots)
+                    Image(systemName: swapKey.label == "GRANDE" ? "arrow.up.left.and.arrow.down.right" : "pip.exit")
+                        .font(.system(size: max(10, dot * 5), weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.horizontal, dot * 4).padding(.vertical, dot * 2.4)
+                        .background(Capsule().fill(.black.opacity(0.72)).overlay(Capsule().strokeBorder(.white.opacity(0.25))))
                 }
                 .buttonStyle(PressDown())
+                .help(swapKey.label == "GRANDE" ? "Voltar ao aparelho grande" : "Destacar: janelinha flutuante, sempre na frente")
             }
             #if !os(watchOS)
             if let binding = editableTheme {
