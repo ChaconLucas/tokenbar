@@ -5,12 +5,25 @@ import AppIntents
 // MARK: - Configuração (segurar o widget → Editar)
 
 enum AgentChoice: String, AppEnum {
-    case all, claude, codex
+    case all, claude, codex, cycle
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "IA"
     static var caseDisplayRepresentations: [AgentChoice: DisplayRepresentation] = [
-        .all: "Todas", .claude: "Claude Code", .codex: "Codex",
+        .all: "Todas", .claude: "Claude Code", .codex: "Codex", .cycle: "Uma por vez (toque troca)",
     ]
+}
+
+/// Toque na tecla do widget: passa para a próxima IA (modo "Uma por vez").
+struct NextAgentIntent: AppIntent {
+    static var title: LocalizedStringResource = "Próxima IA"
+    static var isDiscoverable = false
+
+    func perform() async throws -> some IntentResult {
+        let ids = Prefs.allProviders
+        let cur = TB.defaults.string(forKey: "widgetCycleAgent") ?? ids[0]
+        TB.defaults.set(ids[((ids.firstIndex(of: cur) ?? 0) + 1) % ids.count], forKey: "widgetCycleAgent")
+        return .result()
+    }
 }
 
 enum WindowChoice: String, AppEnum {
@@ -38,6 +51,7 @@ struct UsageEntry: TimelineEntry {
     var paired: Bool
     var agent: String = "all"
     var window: String = "short"
+    var cycling = false
 }
 
 struct ConfigProvider: AppIntentTimelineProvider {
@@ -49,7 +63,12 @@ struct ConfigProvider: AppIntentTimelineProvider {
         let cached = SharedStore.loadSnapshot()
         return UsageEntry(date: .now, snapshot: context.isPreview ? (cached ?? .preview) : (cached ?? .empty),
                           paired: SharedStore.loadPairing() != nil || cached != nil,
-                          agent: config.agent.rawValue, window: config.window.rawValue)
+                          agent: Self.agent(config), window: config.window.rawValue)
+    }
+
+    /// "Uma por vez": a IA atual fica no App Group e a tecla do widget troca.
+    static func agent(_ c: TokenBarConfig) -> String {
+        c.agent == .cycle ? (TB.defaults.string(forKey: "widgetCycleAgent") ?? Prefs.allProviders[0]) : c.agent.rawValue
     }
 
     func timeline(for config: TokenBarConfig, in context: Context) async -> Timeline<UsageEntry> {
@@ -59,7 +78,8 @@ struct ConfigProvider: AppIntentTimelineProvider {
         let dates = Array(([now] + snapshot.upcomingResets(after: now).filter { $0 < now.addingTimeInterval(6 * 3600) }).prefix(8))
         let paired = SharedStore.loadPairing() != nil || !snapshot.providers.isEmpty
         let entries = dates.map {
-            UsageEntry(date: $0, snapshot: snapshot, paired: paired, agent: config.agent.rawValue, window: config.window.rawValue)
+            UsageEntry(date: $0, snapshot: snapshot, paired: paired, agent: Self.agent(config), window: config.window.rawValue,
+                       cycling: config.agent == .cycle)
         }
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60)))
     }
@@ -105,8 +125,22 @@ struct EntryView: View {
         WidgetContent(family: family, snapshot: entry.snapshot, agent: entry.agent, window: entry.window,
                       now: entry.date, theme: Prefs.theme, paired: entry.paired)
             .padding(isSystem ? 8 : 0)
+            .overlay(alignment: .topTrailing) { if entry.cycling && isSystem { nextKey } }
             .containerBackground(for: .widget) { Color.black }
             .widgetURL(URL(string: "\(TB.urlScheme)://open"))
+    }
+
+    /// Tecla de LED "›" no canto: troca para a próxima IA sem abrir o app.
+    @ViewBuilder private var nextKey: some View {
+        #if os(watchOS)
+        EmptyView()
+        #else
+        Button(intent: NextAgentIntent()) {
+            DotKeyFace(text: ">", on: true, color: Prefs.theme.base(entry.agent), dot: 1.8, round: Prefs.theme.roundDots)
+        }
+        .buttonStyle(.plain)
+        .padding(6)
+        #endif
     }
 
     private var isSystem: Bool {

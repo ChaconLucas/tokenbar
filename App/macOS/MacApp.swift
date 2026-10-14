@@ -96,7 +96,12 @@ final class MacModel: ObservableObject {
         }
     }
 
-    /// Texto curto da barra de menu: "C 32% · X 54%".
+    /// Mini barras de LED da barra de menu (refeitas quando muda o número, a IA visível ou a cor).
+    var menuImage: NSImage {
+        MenuBarImage.make(snapshot: snapshot, visible: visible, windowChoice: windowChoice, theme: theme)
+    }
+
+    /// Texto curto: "C 32% · X 54%".
     var menuTitle: String {
         let parts = snapshot.providers.filter { visible.contains($0.id) }.compactMap { p -> String? in
             guard let w = Prefs.pick(p) else { return nil }
@@ -136,10 +141,18 @@ struct TokenBarMacApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 520, height: 760)
 
+        // Mini: janelinha flutuante, sempre na frente.
+        Window("TokenBar Mini", id: "mini") {
+            MiniWindow().environmentObject(model)
+        }
+        .windowStyle(.plain)
+        .windowResizability(.contentSize)
+        .defaultPosition(.topTrailing)
+
         MenuBarExtra {
             MenuContent().environmentObject(model)
         } label: {
-            MenuLabel(title: model.menuTitle, delegate: delegate)
+            MenuLabel(image: model.menuImage, delegate: delegate)
         }
         .menuBarExtraStyle(.window)
     }
@@ -147,15 +160,19 @@ struct TokenBarMacApp: App {
 
 /// O rótulo da barra de menu existe desde o lançamento: daqui a janela abre ao iniciar.
 struct MenuLabel: View {
-    var title: String
+    var image: NSImage
     var delegate: AppDelegate
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Text(title).monospacedDigit()
+        Image(nsImage: image)
             .onAppear {
                 delegate.openMain = { openWindow(id: "main"); NSApp.activate() }
                 delegate.openMain?()
+                // Lembra se o Mini estava aberto (e -TBMini YES abre, para capturas).
+                if UserDefaults.standard.bool(forKey: "miniOpen") || UserDefaults.standard.bool(forKey: "TBMini") {
+                    openWindow(id: "mini")
+                }
             }
     }
 }
@@ -169,6 +186,7 @@ struct MenuContent: View {
             BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice, theme: model.theme)
             HStack {
                 Button("APARELHO") { openWindow(id: "main"); NSApp.activate() }
+                Button("MINI") { openWindow(id: "mini") }
                 Button("AJUSTES") { openWindow(id: "settings"); NSApp.activate() }
                 Spacer()
                 Button("ATUALIZAR") { model.refresh() }
@@ -228,6 +246,7 @@ struct DeviceWindow: View {
                 Divider()
                 Button("Maior") { resize(1.15) }.keyboardShortcut("+")
                 Button("Menor") { resize(1 / 1.15) }.keyboardShortcut("-")
+                Button("Abrir Mini (flutuante)") { openWindow(id: "mini") }
                 Toggle("Sempre na frente", isOn: $alwaysOnTop)
                 Button(fullScreen ? "Sair da tela cheia" : "Tela cheia") { toggleFullScreen() }.keyboardShortcut("f", modifiers: [.command, .control])
                 Divider()
