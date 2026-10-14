@@ -96,18 +96,28 @@ struct WatchRootView: View {
         let theme = model.theme
         NavigationStack {
             TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                VStack(spacing: 6) {
-                    if model.pairing == nil {
-                        Text("Pareie no app TokenBar do iPhone.").font(.footnote).foregroundStyle(.secondary)
+                // Cada painel recebe a sua parte exata da altura livre: juntos ocupam a tela toda.
+                GeometryReader { geo in
+                    let items = panels
+                    let gap: CGFloat = 6
+                    let h = max(40, (geo.size.height - gap * CGFloat(items.count - 1)) / CGFloat(max(items.count, 1)))
+                    VStack(spacing: gap) {
+                        ForEach(items, id: \.key) { item in
+                            WatchPanel(window: item.window, title: item.title, sub: item.sub, providerID: item.id,
+                                       now: ctx.date, theme: theme)
+                                .frame(height: h)
+                                .onTapGesture { if agent == "all" { toggleWindow() } }
+                        }
                     }
-                    ForEach(panels, id: \.key) { item in
-                        WatchPanel(window: item.window, title: item.title, sub: item.sub, providerID: item.id,
-                                   now: ctx.date, theme: theme)
-                            .onTapGesture { if agent == "all" { toggleWindow() } }
+                    .overlay(alignment: .bottom) {
+                        if model.pairing == nil {
+                            Text("Pareie no app TokenBar do iPhone.").font(.footnote).foregroundStyle(.secondary)
+                        } else if let e = model.error {
+                            Text(e).font(.footnote).foregroundStyle(.red)
+                        }
                     }
-                    if let e = model.error { Text(e).font(.footnote).foregroundStyle(.red) }
                 }
-                .frame(maxHeight: .infinity, alignment: .top)
+                .ignoresSafeArea(edges: .bottom)
             }
             // Coroa digital: girar troca TODOS → CLAUDE → CODEX.
             .focusable()
@@ -174,24 +184,29 @@ struct WatchPanel: View {
     var now: Date
     var theme: Theme
 
-    static let cols = 64, rows = 26
+    static let cols = 64, rows = 22
 
     var body: some View {
         let p = window?.used(at: now) ?? 0
         let level = theme.fill(providerID, percent: p)
         GeometryReader { geo in
-            DotCanvas(bitmap: bitmap(p), dot: geo.size.width / CGFloat(Self.cols),
+            // Estica até a altura disponível: mais linhas de pontos, conteúdo distribuído.
+            let h = geo.size.height.isFinite ? geo.size.height : 0   // altura infinita em algumas medições
+            // O ponto cabe na largura e na altura mínima; nunca transborda para o painel de baixo.
+            let dot = max(1, min(geo.size.width / CGFloat(Self.cols), h > 0 ? h / CGFloat(Self.rows) : .infinity))
+            let rows = min(200, max(Self.rows, Int(h / dot)))
+            DotCanvas(bitmap: bitmap(p, rows: rows), dot: dot,
                       textColor: theme.text.color, fieldColor: level.opacity(0.62), offColor: level.opacity(0.10),
                       round: theme.roundDots)
                 .shadow(color: level.opacity(0.35 * theme.glow), radius: 3 * theme.glow)
         }
-        .aspectRatio(CGFloat(Self.cols) / CGFloat(Self.rows), contentMode: .fit)
+
         .accessibilityElement()
         .accessibilityLabel("\(title) \(UsageStyle.percent(p))")
     }
 
-    private func bitmap(_ p: Double) -> DotBitmap {
-        let cols = Self.cols, rows = Self.rows
+    private func bitmap(_ p: Double, rows: Int) -> DotBitmap {
+        let cols = Self.cols
         var b = DotBitmap(cols: cols, rows: rows)
         let filled = Int((min(max(p, 0), 100) / 100 * Double(cols)).rounded())
         for x in 0..<filled { for y in 0..<rows { b.set(x, y, 1) } }
@@ -199,11 +214,16 @@ struct WatchPanel: View {
         b.draw(title, x: 2, y: 2)
         if window != nil {
             // Tempo embaixo à esquerda (apagado): nunca encosta no nome nem na %.
-            b.draw(timeText, x: 2, y: 17, value: 3)
+            b.draw(timeText, x: 2, y: rows - 9, value: 3)
             let big = "\(min(Int(p.rounded()), 999))%"
-            b.draw(big, x: cols - 2 - DotFont.width(big, scale: 2), y: 10, scale: 2)
+            // % grande à direita, centrada na altura que sobra abaixo do título.
+            let scale = rows >= 34 ? 3 : 2
+            let bigW = DotFont.width(big, scale: scale)
+            let bigScale = bigW + 22 <= cols ? scale : 2
+            b.draw(big, x: cols - 2 - DotFont.width(big, scale: bigScale),
+                   y: 9 + max(0, (rows - 11 - 7 * bigScale) / 2), scale: bigScale)
         } else {
-            b.drawCentered("SEM DADOS", y: 13)
+            b.drawCentered("SEM DADOS", y: rows / 2 - 3)
         }
         return b
     }

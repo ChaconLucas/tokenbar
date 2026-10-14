@@ -1,6 +1,7 @@
 import SwiftUI
 import WidgetKit
 import WatchConnectivity
+import BackgroundTasks
 
 @MainActor
 final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
@@ -70,7 +71,17 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         error = nil
         WidgetCenter.shared.reloadAllTimelines()
         sendToWatch()
+        UsageAlerts.check(best)
     }
+
+    /// Próxima atualização em segundo plano (o iOS decide quando, em geral 15–60 min).
+    nonisolated static func scheduleBackgroundRefresh() {
+        let r = BGAppRefreshTaskRequest(identifier: PhoneModel.bgTaskID)
+        r.earliestBeginDate = .now.addingTimeInterval(15 * 60)
+        try? BGTaskScheduler.shared.submit(r)
+    }
+
+    nonisolated static let bgTaskID = "tokenbar.refresh"
 
     private static func result<T>(_ f: () async throws -> T) async -> Result<T, Error> {
         do { return .success(try await f()) } catch { return .failure(error) }
@@ -106,10 +117,20 @@ struct TokenBarPhoneApp: App {
         WindowGroup {
             PhoneRootView()
                 .environmentObject(model)
+                .onAppear {
+                    UsageAlerts.requestPermission()
+                    PhoneModel.scheduleBackgroundRefresh()
+                }
                 .onOpenURL { model.pair(with: $0) }
                 .onChange(of: phase) { _, p in
                     if p == .active { Task { await model.refresh() } }
+                    if p == .background { PhoneModel.scheduleBackgroundRefresh() }
                 }
+        }
+        // Atualiza em segundo plano: avisos e widgets em dia sem abrir o app.
+        .backgroundTask(.appRefresh(PhoneModel.bgTaskID)) {
+            PhoneModel.scheduleBackgroundRefresh()
+            await model.refresh()
         }
     }
 }

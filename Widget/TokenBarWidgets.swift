@@ -59,11 +59,8 @@ struct AllUsageView: View {
             } else {
                 switch family {
                 case .accessoryRectangular:
-                    VStack(alignment: .leading, spacing: 3) {
-                        ForEach(providers) { p in
-                            if let w = Prefs.pick(p) { MiniRow(provider: p, window: w, now: entry.date) }
-                        }
-                    }
+                    // Mini display de LED: uma faixa por IA, o fundo enche com o gasto.
+                    AccessoryDots(snapshot: entry.snapshot, ids: providers.map(\.id), now: entry.date)
                 case .systemSmall:
                     DisplayStack(snapshot: entry.snapshot, visible: visible, windowChoice: Prefs.window,
                                  now: entry.date, compact: true, spacing: 6)
@@ -173,13 +170,18 @@ struct SingleUsageView: View {
                     }
             #endif
             case .accessoryCircular:
-                Gauge(value: min(pct, 100), in: 0...100) {
-                    Image(systemName: UsageStyle.icon(providerID))
-                } currentValueLabel: {
-                    Text(w == nil ? "—" : "\(Int(pct.rounded()))")
+                // Anel de pontos: acende no sentido horário até o gasto.
+                ZStack {
+                    DotRing(percent: w == nil ? 0 : pct, color: Prefs.theme.fill(providerID, percent: pct))
+                    VStack(spacing: -2) {
+                        Text(w == nil ? "—" : "\(Int(pct.rounded()))")
+                            .font(.system(size: 17, weight: .heavy, design: .monospaced))
+                        Text(providerID == "codex" ? "CX" : "CL")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .gaugeStyle(.accessoryCircularCapacity)
-                .tint(UsageStyle.color(pct))
+                .widgetAccentable()
             default:
                 if p != nil {
                     DotDisplay(provider: p, providerID: providerID, window: Prefs.pick(p), now: entry.date, compact: true)
@@ -231,5 +233,64 @@ struct TokenBarWidgetBundle: WidgetBundle {
         AllUsageWidget()
         ClaudeWidget()
         CodexWidget()
+    }
+}
+
+/// Faixas de pontos para a complicação retangular e a Pilha Inteligente.
+struct AccessoryDots: View {
+    var snapshot: UsageSnapshot
+    var ids: [String]
+    var now: Date
+
+    var body: some View {
+        let theme = Prefs.theme
+        VStack(spacing: 3) {
+            ForEach(ids, id: \.self) { id in
+                let w = Prefs.pick(snapshot.provider(id))
+                let pct = w?.used(at: now) ?? 0
+                GeometryReader { geo in
+                    let cols = 44
+                    let dot = max(1, geo.size.width / CGFloat(cols))
+                    let rows = max(9, Int((geo.size.height.isFinite ? geo.size.height : 0) / dot))
+                    DotCanvas(bitmap: bitmap(id: id, w: w, pct: pct, cols: cols, rows: rows), dot: dot,
+                              textColor: .white, fieldColor: theme.fill(id, percent: pct).opacity(0.75),
+                              offColor: .white.opacity(0.08), round: theme.roundDots)
+                }
+            }
+        }
+        .widgetAccentable()
+    }
+
+    private func bitmap(id: String, w: UsageWindow?, pct: Double, cols: Int, rows: Int) -> DotBitmap {
+        var b = DotBitmap(cols: cols, rows: rows)
+        let filled = Int((min(max(pct, 0), 100) / 100 * Double(cols)).rounded())
+        for x in 0..<filled { for y in 0..<rows { b.set(x, y, 1) } }
+        let y = (rows - 7) / 2
+        b.draw(id == "codex" ? "CODEX" : "CLAUDE", x: 1, y: y)
+        let t = w == nil ? "--" : "\(Int(pct.rounded()))%"
+        b.draw(t, x: cols - 1 - DotFont.width(t), y: y)
+        return b
+    }
+}
+
+/// Anel feito de pontos, aceso até a porcentagem.
+struct DotRing: View {
+    var percent: Double
+    var color: Color
+
+    var body: some View {
+        Canvas { ctx, size in
+            let n = 24
+            let r = min(size.width, size.height) / 2 - 3
+            let c = CGPoint(x: size.width / 2, y: size.height / 2)
+            let lit = Int((min(max(percent, 0), 100) / 100 * Double(n)).rounded())
+            for i in 0..<n {
+                let a = Double(i) / Double(n) * 2 * .pi - .pi / 2
+                let p = CGPoint(x: c.x + r * cos(a), y: c.y + r * sin(a))
+                let d: CGFloat = 4
+                ctx.fill(Path(ellipseIn: CGRect(x: p.x - d / 2, y: p.y - d / 2, width: d, height: d)),
+                         with: .color(i < lit ? color : .white.opacity(0.18)))
+            }
+        }
     }
 }

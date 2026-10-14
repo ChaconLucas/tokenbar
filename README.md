@@ -22,6 +22,8 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 - **Janelas:** 5 horas, 7 dias ou as duas na mesma tela.
 - **Personalização:** cor de cada IA, do texto e do tempo, pontos redondos ou quadrados, brilho e vermelho perto do limite.
 - **O fundo enche conforme o gasto:** 23% acende 23% do display.
+- **Avisos:** notificação (no iPhone e espelhada no relógio) ao passar de **80%** e **95%** de uma janela, e quando ela **reseta**. O iPhone atualiza em segundo plano para avisar mesmo com o app fechado (o iOS decide a frequência, em geral a cada 15–60 min).
+- **Mostrador do relógio:** complicação retangular (também na Pilha Inteligente) como mini display de LED, e redonda como anel de pontos.
 
 <p align="center">
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H e 7D juntos">
