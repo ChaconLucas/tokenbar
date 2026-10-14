@@ -1,0 +1,9 @@
+{
+  "name": "tokenbar-server",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler d1 execute tokenbar --local --file=schema.sql && wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": { "wrangler": "4.40.0" }
+}

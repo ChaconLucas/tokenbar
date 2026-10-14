@@ -1,0 +1,14 @@
+// Assinatura do TokenBar.
+// Não edite aqui: crie Config/Signing.local.xcconfig (ignorado pelo git) com as suas duas linhas:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345          // seu Team ID (Xcode → Settings → Accounts)
+//   TB_BUNDLE_PREFIX = com.seunome         // prefixo único dos identificadores
+//
+DEVELOPMENT_TEAM =
+TB_BUNDLE_PREFIX = com.example
+
+#include? "Signing.local.xcconfig"
+
+// Derivados (não precisa mexer)
+TB_APP_GROUP_IOS = group.$(TB_BUNDLE_PREFIX).tokenbar
+TB_APP_GROUP_MAC = $(DEVELOPMENT_TEAM).$(TB_BUNDLE_PREFIX).tokenbar

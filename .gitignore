@@ -1,0 +1,9 @@
+*.xcodeproj/
+build/
+DerivedData/
+.DS_Store
+server/node_modules/
+server/.wrangler/
+xcuserdata/
+Config/Signing.local.xcconfig
+server/wrangler.toml

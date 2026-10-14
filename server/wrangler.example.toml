@@ -1,0 +1,8 @@
+name = "tokenbar"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tokenbar"
+database_id = "COLE_AQUI_O_ID"   # sai do `npx wrangler d1 create tokenbar`
