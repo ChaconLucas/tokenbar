@@ -70,6 +70,7 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         SharedStore.saveSnapshot(best)
         error = nil
         WidgetCenter.shared.reloadAllTimelines()
+        if #available(iOS 18.0, macOS 26.0, *) { ControlCenter.shared.reloadAllControls() }
         sendToWatch()
         UsageAlerts.check(best)
     }

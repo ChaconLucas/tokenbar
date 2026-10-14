@@ -45,7 +45,10 @@ final class MacModel: ObservableObject {
         let changed = fresh.providers != snapshot.providers
         snapshot = fresh
         SharedStore.saveSnapshot(fresh)
-        if changed { WidgetCenter.shared.reloadAllTimelines() }
+        if changed {
+            WidgetCenter.shared.reloadAllTimelines()
+            if #available(iOS 18.0, macOS 26.0, *) { ControlCenter.shared.reloadAllControls() }
+        }
         claudeConnected = ClaudeHook.isInstalled
         lan.publish(fresh, pairing: pairing)
         Task { await push(force: false) }
@@ -122,6 +125,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.unhideWithoutActivation()
     }
 
+    /// Toque no controle da Central de Controle: abre o flutuante.
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard TB.defaults.bool(forKey: "openMiniRequest") else { return }
+        TB.defaults.set(false, forKey: "openMiniRequest")
+        openMini?()
+    }
+    var openMini: (() -> Void)?
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !hasVisibleWindows { openMain?() }
         return true
@@ -169,6 +180,7 @@ struct MenuLabel: View {
         Image(nsImage: image)
             .onAppear {
                 delegate.openMain = { openWindow(id: "main"); NSApp.activate() }
+                delegate.openMini = { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
                 // Só na abertura do app: o rótulo da barra reaparece a cada clique, e isso não pode reabrir janela.
                 guard !MenuLabel.launched else { return }
                 MenuLabel.launched = true
