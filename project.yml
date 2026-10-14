@@ -14,7 +14,7 @@ settings:
   base:
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.2.0"
-    CURRENT_PROJECT_VERSION: "6"
+    CURRENT_PROJECT_VERSION: "7"
     SWIFT_VERSION: "5.0"
     GENERATE_INFOPLIST_FILE: YES
     TB_APP_GROUP: $(TB_APP_GROUP_IOS)
@@ -63,6 +63,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(TB_BUNDLE_PREFIX).tokenbar.widget
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"   # controles da Central de Controle
         INFOPLIST_KEY_CFBundleDisplayName: TokenBar
         TARGETED_DEVICE_FAMILY: "1"
     info:
@@ -151,6 +152,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(TB_BUNDLE_PREFIX).tokenbar.mac.widget
+        MACOSX_DEPLOYMENT_TARGET: "26.0"     # controles da Central de Controle
         TB_APP_GROUP: $(TB_APP_GROUP_MAC)
         INFOPLIST_KEY_CFBundleDisplayName: TokenBar
         ENABLE_HARDENED_RUNTIME: YES
