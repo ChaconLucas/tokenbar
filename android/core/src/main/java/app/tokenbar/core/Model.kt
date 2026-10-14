@@ -20,7 +20,8 @@ data class UsageWindow(
 }
 
 @Serializable
-data class ProviderUsage(val id: String, val name: String, val windows: List<UsageWindow>, val observedAt: Double)
+data class ProviderUsage(val id: String, val name: String, val windows: List<UsageWindow>, val observedAt: Double,
+                         val color: String? = null)
 
 @Serializable
 data class UsageSnapshot(val providers: List<ProviderUsage>, val updatedAt: Double) {
@@ -54,11 +55,29 @@ data class Pairing(val token: String, val server: String? = null) {
     }
 }
 
-/** Ordem e nomes das IAs. */
+/** As IAs com dados: Claude e Codex primeiro, depois qualquer outra que o Mac mandar. */
 object Providers {
-    val all = listOf("claude", "codex")
-    fun short(id: String) = if (id == "codex") "CODEX" else "CLAUDE"
-    fun abbr(id: String) = if (id == "codex") "CX" else "CL"
+    @Volatile private var last: UsageSnapshot = UsageSnapshot.EMPTY
+    fun update(s: UsageSnapshot) { last = s }
+
+    val all: List<String>
+        get() {
+            val ids = last.providers.map { it.id }
+            val known = listOf("claude", "codex")
+            val list = known.filter { ids.isEmpty() || it in ids } + ids.filter { it !in known }
+            return list.ifEmpty { known }
+        }
+
+    fun short(id: String) = when (id) {
+        "claude" -> "CLAUDE"; "codex" -> "CODEX"
+        else -> (last.provider(id)?.name ?: id).uppercase().take(8)
+    }
+    fun abbr(id: String) = when (id) {
+        "claude" -> "CL"; "codex" -> "CX"
+        else -> short(id).replace(" ", "").take(2)
+    }
+    /** Cor que a IA mandou ("#RRGGBB"), se houver. */
+    fun color(id: String): Int? = last.provider(id)?.color?.removePrefix("#")?.toLongOrNull(16)?.let { (0xFF000000 or it).toInt() }
 }
 
 /** Escolha de janela: "short" (5h), "long" (7d) ou "both". */
@@ -81,8 +100,9 @@ class Store(context: Context) {
     private val p = context.getSharedPreferences("tokenbar", Context.MODE_PRIVATE)
 
     var snapshot: UsageSnapshot
-        get() = p.getString("snapshot", null)?.let { runCatching { json.decodeFromString<UsageSnapshot>(it) }.getOrNull() } ?: UsageSnapshot.EMPTY
-        set(v) { p.edit().putString("snapshot", json.encodeToString(UsageSnapshot.serializer(), v)).apply() }
+        get() = (p.getString("snapshot", null)?.let { runCatching { json.decodeFromString<UsageSnapshot>(it) }.getOrNull() } ?: UsageSnapshot.EMPTY)
+            .also { Providers.update(it) }
+        set(v) { Providers.update(v); p.edit().putString("snapshot", json.encodeToString(UsageSnapshot.serializer(), v)).apply() }
 
     var pairing: Pairing?
         get() = p.getString("pairing", null)?.let { runCatching { json.decodeFromString<Pairing>(it) }.getOrNull() }
@@ -92,9 +112,13 @@ class Store(context: Context) {
         get() = p.getString("window", "short") ?: "short"
         set(v) { p.edit().putString("window", v).apply() }
 
+    /** Guarda as IAs DESLIGADAS: uma IA nova já chega ligada. */
     var visible: List<String>
-        get() = (p.getString("visible", null)?.split(",")?.filter { it in Providers.all })?.ifEmpty { null } ?: Providers.all
-        set(v) { p.edit().putString("visible", v.joinToString(",")).apply() }
+        get() {
+            val hidden = p.getString("hidden", "")!!.split(",").toSet()
+            return Providers.all.filter { it !in hidden }.ifEmpty { Providers.all }
+        }
+        set(v) { p.edit().putString("hidden", Providers.all.filter { it !in v }.joinToString(",")).apply() }
 
     /** Limites já avisados neste ciclo ("claude.five_hour.80" → resetsAt). */
     fun alerted(key: String): Double = p.getFloat("alert.$key", 0f).toDouble()

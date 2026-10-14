@@ -144,7 +144,7 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, onUnpa
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Providers.all.forEach { id ->
-                Key(Providers.short(id), Palette.base(id), id in visible) {
+                Key(if (Providers.all.size > 2) Providers.abbr(id) else Providers.short(id), Palette.base(id), id in visible) {
                     val next = if (id in visible) visible - id else Providers.all.filter { it in visible || it == id }
                     if (next.isNotEmpty()) { visible = next; store.visible = next }
                 }

@@ -77,7 +77,11 @@ object Palette {
     const val CLAUDE = 0xFF9E5CFF.toInt()
     const val CODEX = 0xFF33D9F2.toInt()
     const val RED = 0xFFFF3838.toInt()
-    fun base(id: String) = if (id == "codex") CODEX else CLAUDE
+    private val extra = intArrayOf(0xFFFF9E33.toInt(), 0xFF59D973.toInt(), 0xFFFFD940.toInt(), 0xFF6699FF.toInt(), 0xFFFF73A6.toInt())
+    fun base(id: String) = when (id) {
+        "claude" -> CLAUDE; "codex" -> CODEX
+        else -> Providers.color(id) ?: extra[Math.floorMod(id.hashCode(), extra.size)]
+    }
     /** Vermelho a partir de 85%. */
     fun fill(id: String, pct: Double) = if (pct >= 85) RED else base(id)
 }
