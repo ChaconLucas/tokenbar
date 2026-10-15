@@ -30,14 +30,20 @@ enum Collector {
               let limits = root["rate_limits"] as? [String: Any]
         else { return nil }
 
+        // Janela que acabou de resetar some do JSON: entra zerada, para 5h e 7d nunca trocarem de lugar.
         var windows: [UsageWindow] = []
+        var found = false
         for (key, label, minutes) in [("five_hour", "5h", 300), ("seven_day", "7d", 10080)] {
-            guard let w = limits[key] as? [String: Any], let pct = number(w["used_percentage"]) else { continue }
+            guard let w = limits[key] as? [String: Any], let pct = number(w["used_percentage"]) else {
+                windows.append(UsageWindow(id: key, label: label, usedPercent: 0, resetsAt: nil, windowMinutes: minutes))
+                continue
+            }
+            found = true
             windows.append(UsageWindow(id: key, label: label, usedPercent: pct,
                                        resetsAt: number(w["resets_at"]).map { Date(timeIntervalSince1970: $0) },
                                        windowMinutes: minutes))
         }
-        guard !windows.isEmpty else { return nil }
+        guard found else { return nil }
         return ProviderUsage(id: "claude", name: "Claude Code", windows: windows, observedAt: modified(claudeFile))
     }
 

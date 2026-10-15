@@ -48,13 +48,19 @@ enum ClaudeAccount {
         guard code == 200, let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw code == 200 ? Failure.format : Failure.http(code)
         }
+        // A que falta entra zerada: 5h e 7d sempre nos mesmos lugares.
         var windows: [UsageWindow] = []
+        var found = false
         for (key, label, minutes) in [("five_hour", "5h", 300), ("seven_day", "7d", 10080)] {
-            guard let w = root[key] as? [String: Any], let pct = w["utilization"] as? Double else { continue }
+            guard let w = root[key] as? [String: Any], let pct = w["utilization"] as? Double else {
+                windows.append(UsageWindow(id: key, label: label, usedPercent: 0, resetsAt: nil, windowMinutes: minutes))
+                continue
+            }
+            found = true
             windows.append(UsageWindow(id: key, label: label, usedPercent: pct,
                                        resetsAt: (w["resets_at"] as? String).flatMap(date), windowMinutes: minutes))
         }
-        guard !windows.isEmpty else { throw Failure.format }
+        guard found else { throw Failure.format }
         return ProviderUsage(id: "claude", name: "Claude Code", windows: windows, observedAt: .now)
     }
 

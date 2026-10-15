@@ -78,14 +78,22 @@ fn read_claude() -> Option<ProviderUsage> {
     let file = tokenbar_dir().join("claude.json");
     let root: Value = serde_json::from_str(&fs::read_to_string(&file).ok()?).ok()?;
     let limits = root.get("rate_limits")?;
+    // Janela que acabou de resetar some do JSON: entra zerada, para 5h e 7d nunca trocarem de lugar.
     let mut windows = vec![];
+    let mut found = false;
     for (key, label, minutes) in [("five_hour", "5h", 300), ("seven_day", "7d", 10080)] {
-        let w = match limits.get(key) { Some(w) => w, None => continue };
-        let pct = match num(w.get("used_percentage")) { Some(p) => p, None => continue };
-        windows.push(UsageWindow { id: key.into(), label: label.into(), used_percent: pct,
-                                   resets_at: num(w.get("resets_at")), window_minutes: Some(minutes) });
+        let w = limits.get(key);
+        match w.and_then(|w| num(w.get("used_percentage"))) {
+            Some(pct) => {
+                found = true;
+                windows.push(UsageWindow { id: key.into(), label: label.into(), used_percent: pct,
+                                           resets_at: w.and_then(|w| num(w.get("resets_at"))), window_minutes: Some(minutes) });
+            }
+            None => windows.push(UsageWindow { id: key.into(), label: label.into(), used_percent: 0.0,
+                                               resets_at: None, window_minutes: Some(minutes) }),
+        }
     }
-    if windows.is_empty() { return None }
+    if !found { return None }
     Some(ProviderUsage { id: "claude".into(), name: "Claude Code".into(), windows, observed_at: modified(&file), color: None })
 }
 
@@ -163,13 +171,21 @@ fn fetch_account() -> Result<ProviderUsage, String> {
 
 fn parse_account(body: &Value, observed_at: f64) -> Option<ProviderUsage> {
     let mut windows = vec![];
+    let mut found = false;
     for (key, label, minutes) in [("five_hour", "5h", 300), ("seven_day", "7d", 10080)] {
-        let w = match body.get(key) { Some(w) => w, None => continue };
-        let pct = match num(w.get("utilization")) { Some(p) => p, None => continue };
-        let resets = w.get("resets_at").and_then(|v| v.as_str()).and_then(rfc3339);
-        windows.push(UsageWindow { id: key.into(), label: label.into(), used_percent: pct,
-                                   resets_at: resets, window_minutes: Some(minutes) });
+        let w = body.get(key);
+        match w.and_then(|w| num(w.get("utilization"))) {
+            Some(pct) => {
+                found = true;
+                let resets = w.and_then(|w| w.get("resets_at")).and_then(|v| v.as_str()).and_then(rfc3339);
+                windows.push(UsageWindow { id: key.into(), label: label.into(), used_percent: pct,
+                                           resets_at: resets, window_minutes: Some(minutes) });
+            }
+            None => windows.push(UsageWindow { id: key.into(), label: label.into(), used_percent: 0.0,
+                                               resets_at: None, window_minutes: Some(minutes) }),
+        }
     }
+    if !found { windows.clear(); }
     if windows.is_empty() { return None }
     Some(ProviderUsage { id: "claude".into(), name: "Claude Code".into(), windows, observed_at, color: None })
 }

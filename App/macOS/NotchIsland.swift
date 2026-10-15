@@ -154,13 +154,14 @@ final class NotchIsland: NSObject {
 
     // MARK: Mouse
 
+    /// Abrir pede o mouse parado em cima ~0,6 s: só passar pelo notch (rumo à barra de menu) não abre.
     private func hover(_ inside: Bool) {
         if inside {
             collapseWork?.cancel()
             guard !state.expanded else { return }
             let w = DispatchWorkItem { [weak self] in self?.setExpanded(true) }
             expandWork = w
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: w)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: w)
         } else {
             expandWork?.cancel()
             guard state.expanded, !pinned else { return }
@@ -203,7 +204,7 @@ struct NotchGeometry: Equatable {
     var collapsedSize: CGSize {
         CGSize(width: hasNotch ? notchWidth + 2 * Self.wing : 2 * Self.wing + 16, height: band)
     }
-    var expandedWidth: CGFloat { max(460, notchWidth + 2 * 178) }
+    var expandedWidth: CGFloat { max(420, notchWidth + 2 * 150) }
 }
 
 @MainActor
@@ -409,10 +410,10 @@ struct NotchIslandView: View {
 
     private func lineDot(count: Int) -> CGFloat {
         switch (count <= 1, window == "both") {
-        case (true, false): 3.4
-        case (true, true): 2.8
-        case (false, false): 2.6
-        case (false, true): 2.0
+        case (true, false): 2.4
+        case (true, true): 1.9
+        case (false, false): 1.9
+        case (false, true): 1.6
         }
     }
 
@@ -425,7 +426,7 @@ struct NotchIslandView: View {
     private func expandedSize(_ g: NotchGeometry, rows count: Int) -> CGSize {
         let n = max(1, count)
         let dot = lineDot(count: n)
-        let h = g.band + 14 + CGFloat(n) * blockHeight(dot: dot) + CGFloat(n - 1) * blockSpacing(dot: dot) + 32
+        let h = g.band + 10 + CGFloat(n) * blockHeight(dot: dot) + CGFloat(n - 1) * blockSpacing(dot: dot) + 20
         return CGSize(width: g.expandedWidth, height: ceil(h))
     }
 
@@ -434,16 +435,16 @@ struct NotchIslandView: View {
         let theme = model.theme
         let agentText = single ? (rows.first.map { UsageStyle.abbr($0.id) } ?? "-") : Lang.t("TODAS")
         let agentColor = single ? (rows.first.map { theme.base($0.id) } ?? .white) : Color.white
-        return VStack(spacing: 14) {
+        return VStack(spacing: 10) {
             // Faixa de cima: metade de cada lado do notch, com largura fixa — nada fica embaixo da câmera.
             let side = g.hasNotch ? (g.expandedWidth - g.notchWidth) / 2 - 18 : nil
             HStack(spacing: 0) {
                 HStack(spacing: 6) {
-                    Button(action: open) { LEDText(text: "TOKENBAR", color: .white, dot: 1.5).contentShape(Rectangle()) }
+                    Button(action: open) { LEDText(text: "TOKENBAR", color: .white, dot: 1.25).contentShape(Rectangle()) }
                         .buttonStyle(PressDown())
                         .help(Lang.t("Abrir o aparelho"))
                     Button { NotchIsland.shared.openSettings?() } label: {
-                        NotchPill(text: Lang.t("AJUSTES"), color: .white.opacity(0.8), dot: 1.15)
+                        NotchPill(text: Lang.t("AJUSTES"), color: .white.opacity(0.8), dot: 1.0)
                     }
                     .buttonStyle(PressDown())
                     .help(Lang.t("Ajustes"))
@@ -451,12 +452,12 @@ struct NotchIslandView: View {
                 .frame(width: side, alignment: .leading)
                 if g.hasNotch { Spacer().frame(width: g.notchWidth) } else { Spacer(minLength: 12) }
                 HStack(spacing: 5) {
-                    Button(action: cycleAgent) { NotchPill(text: "\(Lang.t("IA")) \(agentText) >", color: agentColor, dot: 1.15) }
+                    Button(action: cycleAgent) { NotchPill(text: "\(Lang.t("IA")) \(agentText) >", color: agentColor, dot: 1.0) }
                         .buttonStyle(PressDown())
                         .help(Lang.t("Trocar a IA"))
                     Button(action: cycleWindow) {
                         NotchPill(text: window == "long" ? "7D" : window == "both" ? "5H 7D" : "5H",
-                                  color: theme.timer.color, dot: 1.15)
+                                  color: theme.timer.color, dot: 1.0)
                     }
                     .buttonStyle(PressDown())
                     .help(Lang.t("Trocar a janela"))

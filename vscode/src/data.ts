@@ -114,14 +114,17 @@ export async function readClaude(): Promise<Provider | undefined> {
   const file = claudeFile();
   const limits = obj(obj(await readJson(file))?.rate_limits);
   if (!limits) return undefined;
+  // Janela que acabou de resetar some do JSON: entra zerada, para 5h e 7d nunca trocarem de lugar.
   const windows: UsageWindow[] = [];
+  let found = false;
   for (const [key, label, minutes] of [["five_hour", "5h", 300], ["seven_day", "7d", 10080]] as const) {
     const w = obj(limits[key]);
     const pct = num(w?.used_percentage);
-    if (!w || pct === undefined) continue;
+    if (!w || pct === undefined) { windows.push({ id: key, label, usedPercent: 0, windowMinutes: minutes }); continue; }
+    found = true;
     windows.push({ id: key, label, usedPercent: pct, resetsAt: num(w.resets_at), windowMinutes: minutes });
   }
-  if (!windows.length) return undefined;
+  if (!found) return undefined;
   return { id: "claude", name: "Claude Code", windows, observedAt: await mtime(file) };
 }
 
