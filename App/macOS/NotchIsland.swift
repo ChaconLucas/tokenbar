@@ -417,15 +417,15 @@ struct NotchIslandView: View {
     }
 
     private func blockHeight(dot: CGFloat) -> CGFloat {
-        window == "both" ? 14 * dot + dot * 1.2 : 9 * dot
+        window == "both" ? 14 * dot + dot * 2 : 9 * dot
     }
 
-    private func blockSpacing(dot: CGFloat) -> CGFloat { window == "both" ? dot * 3.5 : 9 }
+    private func blockSpacing(dot: CGFloat) -> CGFloat { window == "both" ? dot * 5.5 : 10 }
 
     private func expandedSize(_ g: NotchGeometry, rows count: Int) -> CGSize {
         let n = max(1, count)
         let dot = lineDot(count: n)
-        let h = g.band + 14 + CGFloat(n) * blockHeight(dot: dot) + CGFloat(n - 1) * blockSpacing(dot: dot) + 20
+        let h = g.band + 14 + CGFloat(n) * blockHeight(dot: dot) + CGFloat(n - 1) * blockSpacing(dot: dot) + 32
         return CGSize(width: g.expandedWidth, height: ceil(h))
     }
 
@@ -468,7 +468,7 @@ struct NotchIslandView: View {
                 VStack(spacing: blockSpacing(dot: dot)) {
                     ForEach(rows) { row in
                         if window == "both" {
-                            VStack(spacing: dot * 1.2) {
+                            VStack(spacing: dot * 2) {
                                 NotchLine(row: row, window: "short", left: row.name, right: "5H", now: now, theme: theme, dot: dot, rows: 7)
                                 NotchLine(row: row, window: "long", left: nil, right: "7D", now: now, theme: theme, dot: dot, rows: 7)
                             }
