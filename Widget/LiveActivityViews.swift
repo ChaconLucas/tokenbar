@@ -34,23 +34,22 @@ struct UsageLiveActivity: Widget {
                     .opacity(ctx.isStale ? 0.55 : 1)
                 }
             } compactLeading: {
-                HStack(spacing: 4) {
-                    MiniDotRing(percent: top?.used ?? 0, color: color).frame(width: 18, height: 18)
-                    Text(top.map { "\(Int($0.used.rounded()))%" } ?? "--")
-                        .font(.system(size: 13, weight: .heavy, design: .monospaced))
-                        .foregroundStyle(color)
-                }
-                .padding(.leading, 2)
+                // Uma IA de cada lado, com o nome: "CL 56%" | "CX 12%". Só uma? O tempo vai à direita.
+                if let first = ctx.state.rows.first { IslandTag(row: first, theme: theme).padding(.leading, 2) }
             } compactTrailing: {
-                LiveCountdown(resetsAt: top?.resetsAt)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .frame(width: 58, alignment: .trailing)
+                if ctx.state.rows.count > 1 {
+                    IslandTag(row: ctx.state.rows[1], theme: theme)
+                } else {
+                    LiveCountdown(resetsAt: top?.resetsAt)
+                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .frame(width: 58, alignment: .trailing)
+                }
             } minimal: {
                 ZStack {
                     MiniDotRing(percent: top?.used ?? 0, color: color)
-                    Text(top.map { "\(Int($0.used.rounded()))" } ?? "-")
-                        .font(.system(size: 9, weight: .heavy, design: .monospaced))
+                    Text(top.map { UsageStyle.abbr($0.id) } ?? "-")
+                        .font(.system(size: 8, weight: .heavy, design: .monospaced))
                         .foregroundStyle(color)
                 }
                 .frame(width: 24, height: 24)
@@ -160,6 +159,25 @@ struct MiniDotRing: View {
                 ctx.fill(Path(ellipseIn: CGRect(x: p.x - d / 2, y: p.y - d / 2, width: d, height: d)),
                          with: .color(i < lit ? color : .white.opacity(0.2)))
             }
+        }
+    }
+}
+/// "CL 56%" na cor da IA: dá para saber de quem é o número sem abrir a ilha.
+struct IslandTag: View {
+    var row: UsageActivityAttributes.ContentState.Row
+    var theme: Theme
+
+    var body: some View {
+        let c = theme.fill(row.id, percent: row.used)
+        HStack(spacing: 3) {
+            Text(UsageStyle.abbr(row.id))
+                .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                .foregroundStyle(.black)
+                .padding(.horizontal, 3).padding(.vertical, 1)
+                .background(RoundedRectangle(cornerRadius: 3).fill(c))
+            Text("\(Int(row.used.rounded()))%")
+                .font(.system(size: 13, weight: .heavy, design: .monospaced))
+                .foregroundStyle(c)
         }
     }
 }

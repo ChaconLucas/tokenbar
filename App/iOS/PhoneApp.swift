@@ -305,7 +305,7 @@ struct PhoneDetails: View {
 /// Liga e desliga o uso na tela bloqueada e na Dynamic Island.
 struct LiveActivitySection: View {
     @EnvironmentObject var model: PhoneModel
-    @AppStorage(LiveUsage.enabledKey) private var enabled = false
+    @AppStorage(LiveUsage.enabledKey) private var enabled = true
 
     var body: some View {
         SectionTitle(text: Lang.t("DYNAMIC ISLAND / TELA BLOQUEADA"))

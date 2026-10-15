@@ -7,7 +7,8 @@ enum LiveUsage {
     static let enabledKey = "liveActivityEnabled"
 
     static var enabled: Bool {
-        get { UserDefaults.standard.bool(forKey: enabledKey) }
+        // Ligada por padrão: pareou, a ilha já aparece. A chave nos ajustes serve para desligar.
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
 
