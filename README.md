@@ -30,7 +30,8 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 | Aparelho | Como |
 |---|---|
 | **Mac** | o comando acima |
-| **Windows / Linux** | instalador nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) (ou compilar, veja o `INSTALL.md`) |
+| **Windows** | `TokenBar-Windows-setup.exe` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases). Se o Windows avisar, **Mais informações → Executar assim mesmo** |
+| **Linux** | por enquanto compilando (veja o `INSTALL.md`) |
 | **Android** | `TokenBar-Android.apk` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
 | **iPhone / Apple Watch** | só compilando no Xcode (conta Apple gratuita: o app expira a cada 7 dias). Veja [Instalar pelo Xcode](#instalar-pelo-xcode-iphone-e-apple-watch) |

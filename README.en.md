@@ -32,7 +32,8 @@ curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/i
 | Device | How |
 |---|---|
 | **Mac** | the command above |
-| **Windows / Linux** | installer in [Releases](https://github.com/ChaconLucas/tokenbar/releases) (or build it, see `INSTALL.md`) |
+| **Windows** | `TokenBar-Windows-setup.exe` in [Releases](https://github.com/ChaconLucas/tokenbar/releases). If SmartScreen warns, **More info → Run anyway** |
+| **Linux** | build from source for now (see `INSTALL.md`) |
 | **Android** | `TokenBar-Android.apk` in [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` in Releases, installed with `adb` |
 | **iPhone / Apple Watch** | build with Xcode only (free Apple account: the app expires every 7 days). See [Install with Xcode](#install-with-xcode-iphone-and-apple-watch) |

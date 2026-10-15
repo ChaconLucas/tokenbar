@@ -26,7 +26,8 @@ Then tell them the plan before you start, using the table below.
 | Device | How hard | What's needed |
 |---|---|---|
 | **Mac** (macOS 15+) | 1 command | nothing |
-| **Windows / Linux** | download installer | see "Windows / Linux" for the state of the installers |
+| **Windows** | download `TokenBar-Windows-setup.exe` | click through SmartScreen once |
+| **Linux** | build from source (no package yet) | Rust + Node |
 | **Android phone** | download `.apk` | allow "install unknown apps" |
 | **Wear OS watch** | `.apk` via `adb` | developer options on the watch |
 | **iPhone / Apple Watch** | build with Xcode | a Mac with Xcode, a free Apple ID; the app **expires every 7 days** (Apple rule for free accounts) |
@@ -85,7 +86,7 @@ Check the latest release for installers:
 https://github.com/ChaconLucas/tokenbar/releases/latest
 (or `gh release view --repo ChaconLucas/tokenbar --json assets -q '.assets[].name'`).
 
-- **Windows:** `TokenBar_*.msi` or `TokenBar_*_x64-setup.exe`. SmartScreen may warn
+- **Windows:** `TokenBar-Windows-setup.exe` (or `TokenBar_*_x64-setup.exe` / `.msi` from CI builds). SmartScreen may warn
   ("Windows protected your PC") because the app isn't code-signed: **More info → Run anyway**.
 - **Linux:** `TokenBar_*.AppImage` (`chmod +x` and run) or `.deb` (`sudo apt install ./TokenBar_*.deb`).
 
