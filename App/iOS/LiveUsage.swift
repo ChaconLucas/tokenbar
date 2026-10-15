@@ -51,13 +51,21 @@ enum LiveUsage {
     /// -TBLiveActivityDemo YES: números de mentira, para ver a tela bloqueada e a ilha no simulador.
     static var demo: Bool { UserDefaults.standard.bool(forKey: "TBLiveActivityDemo") }
 
-    static func startDemo() async {
+    static func startDemo() async { await show(demoState()) }
+
+    /// Os números de mentira, já filtrados pela escolha (IA e janela) como os de verdade.
+    static func demoState(agent: String = LiveChoice.agent, window: String = LiveChoice.window) -> UsageActivityAttributes.ContentState {
         let now = Date.now
-        await show(.init(rows: [
-            .init(id: "claude", name: "CLAUDE", used: 32, resetsAt: now.addingTimeInterval(2 * 3600 + 14 * 60), week: 61),
-            .init(id: "codex", name: "CODEX", used: 87, resetsAt: now.addingTimeInterval(41 * 60), week: 23),
-            .init(id: "gemini", name: "GEMINI", used: 54, resetsAt: now.addingTimeInterval(3 * 3600 + 5 * 60), week: 40),
-        ], updatedAt: now))
+        let rows: [UsageActivityAttributes.ContentState.Row] = [
+            .init(id: "claude", name: "CLAUDE", used: 32, resetsAt: now.addingTimeInterval(2 * 3600 + 14 * 60), week: 61,
+                  weekResetsAt: now.addingTimeInterval(3 * 86400 + 5 * 3600)),
+            .init(id: "codex", name: "CODEX", used: 87, resetsAt: now.addingTimeInterval(41 * 60), week: 23,
+                  weekResetsAt: now.addingTimeInterval(5 * 86400 + 2 * 3600)),
+            .init(id: "gemini", name: "GEMINI", used: 54, resetsAt: now.addingTimeInterval(3 * 3600 + 5 * 60), week: 40,
+                  weekResetsAt: now.addingTimeInterval(20 * 3600)),
+        ]
+        let one = rows.filter { $0.id == agent }
+        return .init(rows: one.isEmpty ? rows : one, updatedAt: now, window: window, all: one.isEmpty)
     }
     #endif
 }

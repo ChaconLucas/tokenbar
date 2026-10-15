@@ -81,7 +81,8 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
     /// Tela bloqueada / Dynamic Island: segue o último número (ou some, se desligada).
     func syncLiveActivity() async {
         #if DEBUG
-        if LiveUsage.demo { return }   // a demonstração fica parada com os números de mentira
+        // A demonstração fica com os números de mentira (mas segue a IA e a janela escolhidas).
+        if LiveUsage.demo { await LiveUsage.startDemo(); return }
         #endif
         await LiveUsage.sync(snapshot, paired: pairing != nil)
     }
@@ -306,6 +307,9 @@ struct PhoneDetails: View {
 struct LiveActivitySection: View {
     @EnvironmentObject var model: PhoneModel
     @AppStorage(LiveUsage.enabledKey) private var enabled = true
+    // No App Group: as teclas da ilha (LiveActivityIntent) gravam aqui e a tela acompanha.
+    @AppStorage(LiveChoice.agentKey, store: TB.defaults) private var agent = "all"
+    @AppStorage(LiveChoice.windowKey, store: TB.defaults) private var window = "short"
 
     var body: some View {
         SectionTitle(text: Lang.t("DYNAMIC ISLAND / TELA BLOQUEADA"))
@@ -314,11 +318,28 @@ struct LiveActivitySection: View {
                 LEDRow(label: Lang.t("MOSTRAR O USO")) {
                     LEDSwitch(isOn: $enabled, color: Arcade.green)
                 }
+                // O que a ilha e a tela bloqueada mostram; as teclas da ilha trocam o mesmo par.
+                LEDRow(label: Lang.t("IA")) {
+                    LEDChoice(options: agentOptions, selection: $agent, color: Arcade.amber)
+                }
+                LEDRow(label: Lang.t("JANELA")) {
+                    LEDChoice(options: [("short", "5H"), ("long", "7D"), ("both", Lang.t("AMBAS"))],
+                              selection: $window, color: Arcade.amber)
+                }
                 Text(note).font(.callout).foregroundStyle(Arcade.dim).fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .onChange(of: enabled) { _, _ in Task { await model.syncLiveActivity() } }
+        .onChange(of: agent) { _, _ in Task { await model.syncLiveActivity() } }
+        .onChange(of: window) { _, _ in Task { await model.syncLiveActivity() } }
+    }
+
+    /// TODAS e cada IA com dados; a escolhida que sumiu do Mac continua na lista até trocar.
+    private var agentOptions: [(String, String)] {
+        var ids = LiveChoice.agents(in: model.snapshot)
+        if !ids.contains(agent) { ids.append(agent) }
+        return ids.map { ($0, $0 == "all" ? Lang.t("TODAS") : UsageStyle.shortName($0)) }
     }
 
     private var note: String {

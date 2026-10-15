@@ -340,6 +340,12 @@ enum Lang {
         "As Atividades ao Vivo estão desligadas nos Ajustes do iPhone (Ajustes → TokenBar).": "Live Activities are turned off in iPhone Settings (Settings → TokenBar).",
         "Aparece depois de conectar ao computador.": "Shows up after you connect to the computer.",
         "A % de cada IA e a contagem até zerar, sem abrir o app.": "Each AI's % and the countdown to reset, without opening the app.",
+        "IA": "AI",
+        "JANELA": "WINDOW",
+        "TODAS": "ALL",
+        "AMBAS": "BOTH",
+        "Trocar a IA": "Switch AI",
+        "Trocar a janela": "Switch window",
     ]
 }
 
