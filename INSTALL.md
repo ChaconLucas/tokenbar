@@ -105,6 +105,16 @@ that's how the phone and watch read the Mac over Wi-Fi.
 
 ---
 
+### Mac with Homebrew (alternative)
+
+`brew install --cask chaconlucas/tokenbar/tokenbar` — installs the same app and removes the quarantine flag.
+
+## VS Code extension (optional, any OS)
+
+Shows the % in VS Code's status bar. Download `TokenBar-VSCode.vsix` from the latest release and run
+`code --install-extension TokenBar-VSCode.vsix` (or Extensions → ⋯ → Install from VSIX). It reads
+`~/.tokenbar/snapshot.json` written by the TokenBar app, or the Claude/Codex files directly if the app isn't installed.
+
 ## Windows / Linux
 
 Check the latest release for installers:

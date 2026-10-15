@@ -100,7 +100,16 @@ struct SettingsView: View {
                     status("codex")
                 }
             }
-            let others = model.snapshot.providers.filter { $0.id != "claude" && $0.id != "codex" }
+            let others = model.snapshot.providers.filter { !["claude", "codex", "copilot"].contains($0.id) }
+            LEDGroup {
+                LEDRow(label: "GITHUB COPILOT", info: Lang.t("Lê a cota mensal de premium requests usando o login do GitHub CLI (gh) ou do Copilot. O token só vai para o GitHub.")) {
+                    if model.copilotOn { status("copilot") }
+                    LEDSwitch(isOn: $model.copilotOn)
+                }
+                if model.copilotOn, let e = model.copilotError {
+                    Text(e).font(.caption).foregroundStyle(Arcade.red).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+                }
+            }
             LEDGroup {
                 ForEach(others) { p in
                     LEDRow(label: p.name.uppercased()) { status(p.id) }

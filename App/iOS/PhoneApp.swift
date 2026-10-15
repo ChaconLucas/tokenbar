@@ -49,6 +49,7 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         SharedStore.saveSnapshot(.empty)
         sendPairingToWatch()
         WidgetCenter.shared.reloadAllTimelines()
+        Task { await LiveUsage.endAll() }
     }
 
     /// Wi-Fi local primeiro (direto do Mac); o servidor, se houver, em paralelo. Fica o número mais novo.
@@ -74,6 +75,15 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         if #available(iOS 18.0, macOS 26.0, *) { ControlCenter.shared.reloadAllControls() }
         sendToWatch()
         UsageAlerts.check(best)
+        await syncLiveActivity()
+    }
+
+    /// Tela bloqueada / Dynamic Island: segue o último número (ou some, se desligada).
+    func syncLiveActivity() async {
+        #if DEBUG
+        if LiveUsage.demo { return }   // a demonstração fica parada com os números de mentira
+        #endif
+        await LiveUsage.sync(snapshot, paired: pairing != nil)
     }
 
     /// Próxima atualização em segundo plano (o iOS decide quando, em geral 15–60 min).
@@ -125,6 +135,9 @@ struct TokenBarPhoneApp: App {
                     // Avisos só fazem sentido com números chegando: sem pareamento, pede depois.
                     if model.pairing != nil { UsageAlerts.requestPermission() }
                     PhoneModel.scheduleBackgroundRefresh()
+                    #if DEBUG
+                    if LiveUsage.demo { Task { await LiveUsage.startDemo() } }
+                    #endif
                 }
                 .onOpenURL { model.pair(with: $0) }
                 .onChange(of: phase) { _, p in
@@ -266,6 +279,7 @@ struct PhoneDetails: View {
                         }
                     }
                 }
+                LiveActivitySection().environmentObject(model)
                 if model.snapshot.updatedAt > .distantPast {
                     (Lang.isEN ? Text("MAC SENT \(model.snapshot.updatedAt, style: .relative) AGO")
                           : Text("MAC ENVIOU \(model.snapshot.updatedAt, style: .relative) ATRÁS"))
@@ -285,6 +299,32 @@ struct PhoneDetails: View {
         .preferredColorScheme(.dark)
         .environment(\.locale, Lang.locale)
         .presentationDetents([.large])
+    }
+}
+
+/// Liga e desliga o uso na tela bloqueada e na Dynamic Island.
+struct LiveActivitySection: View {
+    @EnvironmentObject var model: PhoneModel
+    @AppStorage(LiveUsage.enabledKey) private var enabled = false
+
+    var body: some View {
+        SectionTitle(text: Lang.t("DYNAMIC ISLAND / TELA BLOQUEADA"))
+        ArcadePanel {
+            VStack(alignment: .leading, spacing: 8) {
+                LEDRow(label: Lang.t("MOSTRAR O USO")) {
+                    LEDSwitch(isOn: $enabled, color: Arcade.green)
+                }
+                Text(note).font(.callout).foregroundStyle(Arcade.dim).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .onChange(of: enabled) { _, _ in Task { await model.syncLiveActivity() } }
+    }
+
+    private var note: String {
+        if enabled && !LiveUsage.allowed { return Lang.t("As Atividades ao Vivo estão desligadas nos Ajustes do iPhone (Ajustes → TokenBar).") }
+        if enabled && model.pairing == nil { return Lang.t("Aparece depois de conectar ao computador.") }
+        return Lang.t("A % de cada IA e a contagem até zerar, sem abrir o app.")
     }
 }
 

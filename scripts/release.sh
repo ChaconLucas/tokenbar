@@ -30,7 +30,7 @@ for f in android/app/build.gradle.kts android/wear/build.gradle.kts; do
   code=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' "$f")
   sed -i '' -e "s/versionCode = [0-9]*/versionCode = $((code + 1))/" -e "s/versionName = \"[^\"]*\"/versionName = \"$V\"/" "$f"
 done
-sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" desktop/src-tauri/tauri.conf.json desktop/package.json
+sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" desktop/src-tauri/tauri.conf.json desktop/package.json vscode/package.json
 sed -i '' "1,/^version = /s/^version = \"[^\"]*\"/version = \"$V\"/" desktop/src-tauri/Cargo.toml
 
 mkdir -p "$OUT"
@@ -55,6 +55,9 @@ cp "$nsis/TokenBar_${V}_x64-setup.exe" "$OUT/TokenBar-Windows-setup.exe"
 cp "$nsis/TokenBar_${V}_x64-setup.exe.sig" "$OUT/TokenBar-Windows-setup.exe.sig"
 sh scripts/windows-updater-manifest.sh "$V" "$OUT/TokenBar-Windows-setup.exe.sig" > "$OUT/latest.json"
 
+say "Extensão do VS Code"
+(cd vscode && npm install --silent >/dev/null 2>&1 && npx tsc -p . && npx --yes @vscode/vsce package --no-dependencies -o "$OUT/TokenBar-VSCode.vsix" >/dev/null)
+
 say "Commit, tag e Release no GitHub"
 git add -A
 git commit -q -m "Versão $V"
@@ -66,6 +69,17 @@ NOTES="$NOTES
 **Windows:** SmartScreen warning → **More info → Run anyway**. **Android:** allow installing unknown apps; Play Protect → **Install anyway**."
 gh release create "v$V" --title "TokenBar $V" --notes "$NOTES" \
   "$OUT/TokenBar-macOS.zip" "$OUT/TokenBar-Android.apk" "$OUT/TokenBar-WearOS.apk" \
-  "$OUT/TokenBar-Windows-setup.exe" "$OUT/TokenBar-Windows-setup.exe.sig" "$OUT/latest.json"
+  "$OUT/TokenBar-Windows-setup.exe" "$OUT/TokenBar-Windows-setup.exe.sig" "$OUT/latest.json" \
+  "$OUT/TokenBar-VSCode.vsix"
+
+say "Homebrew"
+TAP=$(brew --repository chaconlucas/tokenbar 2>/dev/null || true)
+if [ -d "$TAP/Casks" ]; then
+  SHA=$(shasum -a 256 "$OUT/TokenBar-macOS.zip" | cut -d' ' -f1)
+  sed -i '' -e "s/^  version \"[^\"]*\"/  version \"$V\"/" -e "s/^  sha256 \"[^\"]*\"/  sha256 \"$SHA\"/" "$TAP/Casks/tokenbar.rb"
+  (cd "$TAP" && git add -A && git commit -q -m "TokenBar $V" && git push -q origin HEAD:main) || say "Homebrew: não consegui publicar (veja $TAP)"
+else
+  say "Homebrew: tap chaconlucas/tokenbar não está instalada (brew tap chaconlucas/tokenbar)"
+fi
 
 printf '\n✓ TokenBar %s publicado. Mac, Windows e Android avisam a atualização em até 6 horas.\n' "$V"

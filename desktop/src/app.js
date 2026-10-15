@@ -173,6 +173,8 @@ async function openSettings() {
   $("disconnect-claude").hidden = !s.claudeConnected;
   $("claude-login").checked = s.claudeLogin;
   loginMsg($("claude-login-msg"), s.claudeLoginError);
+  $("copilot-on").checked = s.copilotOn;
+  loginMsg($("copilot-msg"), s.copilotError);
   $("qr").innerHTML = s.qrSvg;
   $("code").textContent = s.code;
   $("server").value = s.server || "";
@@ -201,6 +203,12 @@ async function setLogin(on) {
 }
 $("claude-login").onchange = async (e) => {
   loginMsg($("claude-login-msg"), await setLogin(e.target.checked));
+};
+/** GitHub Copilot pelo login do gh (opcional). Ao ligar, o Rust já tenta uma leitura. */
+$("copilot-on").onchange = async (e) => {
+  let err = null;
+  try { await invoke("set_copilot", { on: e.target.checked }); } catch (x) { err = String(x); }
+  loginMsg($("copilot-msg"), err);
 };
 $("save-server").onclick = async () => {
   try { await invoke("set_server", { url: $("server").value }); $("server-msg").textContent = t("Salvo. Escaneie o QR de novo no celular."); }

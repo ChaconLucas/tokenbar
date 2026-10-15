@@ -44,6 +44,9 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 | **Mac** | o comando acima |
 | **Windows** | `TokenBar-Windows-setup.exe` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases). Se o Windows avisar, **Mais informações → Executar assim mesmo** |
 | **Linux** | por enquanto compilando (veja o `INSTALL.md`) |
+| **Mac (Homebrew)** | `brew install --cask chaconlucas/tokenbar/tokenbar` |
+| **Windows (winget)** | `winget install ChaconLucas.TokenBar` (em análise pela Microsoft) |
+| **VS Code** | a % na barra de baixo do VS Code: baixe `TokenBar-VSCode.vsix` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) → no VS Code, **Extensões → ⋯ → Instalar do VSIX** |
 | **Android** | `TokenBar-Android.apk` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
 | **iPhone / Apple Watch** | só compilando no Xcode (conta Apple gratuita: o app expira a cada 7 dias). Veja [Instalar pelo Xcode](#instalar-pelo-xcode-iphone-e-apple-watch) |

@@ -42,6 +42,9 @@ struct Status {
     claude_installed: bool,
     claude_login: bool,
     claude_login_error: Option<String>,
+    /// GitHub Copilot pela API do GitHub (opcional, desligado por padrão).
+    copilot_on: bool,
+    copilot_error: Option<String>,
     push_error: Option<String>,
     last_client_ago: Option<u64>,
     version: String,
@@ -77,6 +80,8 @@ fn status(app: State<Arc<App>>, handle: AppHandle) -> Status {
         claude_installed: collector::home().join(".claude").is_dir(),
         claude_login,
         claude_login_error: if claude_login { collector::claude_login_error().map(|e| i18n::tr(&e)) } else { None },
+        copilot_on: collector::copilot_on(),
+        copilot_error: if collector::copilot_on() { collector::copilot_error() } else { None },
         push_error: app.push_error.lock().unwrap().clone(),
         last_client_ago,
         version: handle.package_info().version.to_string(),
@@ -114,6 +119,16 @@ fn reset_pairing(app: State<Arc<App>>, handle: AppHandle) {
 #[tauri::command]
 fn set_claude_login(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result<(), String> {
     let r = collector::set_claude_login(on).map_err(|e| i18n::tr(&e));
+    let snap = collector::collect();
+    *app.snapshot.lock().unwrap() = snap.clone();
+    let _ = handle.emit("snapshot", &snap);
+    r
+}
+
+/// Ler o GitHub Copilot com o login do gh. Ao ligar, já tenta uma leitura.
+#[tauri::command]
+fn set_copilot(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result<(), String> {
+    let r = collector::set_copilot(on);
     let snap = collector::collect();
     *app.snapshot.lock().unwrap() = snap.clone();
     let _ = handle.emit("snapshot", &snap);
@@ -232,7 +247,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_server, set_lang, open_mini, open_main, qr,
+        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_copilot, set_server, set_lang, open_mini, open_main, qr,
             update::check_update, update::install_update])
         .setup(move |app| {
             let h = app.handle().clone();
@@ -287,6 +302,11 @@ fn main() {
                     }
                     *st.snapshot.lock().unwrap() = snap.clone();
                     let _ = h.emit("snapshot", &snap);
+                    // Cópia para a extensão do VS Code e scripts (datas em segundos Unix).
+                    if let Ok(json) = serde_json::to_string(&snap) {
+                        let tmp = collector::tokenbar_dir().join("snapshot.json.tmp");
+                        if std::fs::write(&tmp, json).is_ok() { let _ = std::fs::rename(&tmp, collector::tokenbar_dir().join("snapshot.json")); }
+                    }
                     std::thread::sleep(Duration::from_secs(30));
                 }
             });

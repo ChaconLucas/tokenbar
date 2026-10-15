@@ -41,6 +41,8 @@
 	<string>A câmera lê o QR code que o computador mostra, para parear. / The camera reads the QR code shown on the computer, to pair.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>O TokenBar procura o seu Mac no Wi-Fi para ler os limites direto dele, sem servidor. / TokenBar looks for your Mac on Wi-Fi to read the limits straight from it, no server needed.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>TBAppGroup</key>
 	<string>$(TB_APP_GROUP)</string>
 	<key>UIBackgroundModes</key>

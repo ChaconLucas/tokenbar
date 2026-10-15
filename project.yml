@@ -45,6 +45,7 @@ targets:
         NSBonjourServices: [_tokenbar._tcp]
         NSCameraUsageDescription: "A câmera lê o QR code que o computador mostra, para parear. / The camera reads the QR code shown on the computer, to pair."
         UIBackgroundModes: [fetch]
+        NSSupportsLiveActivities: true
         BGTaskSchedulerPermittedIdentifiers: [tokenbar.refresh]
         CFBundleURLTypes:
           - CFBundleURLName: $(TB_BUNDLE_PREFIX).tokenbar

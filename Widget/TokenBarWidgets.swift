@@ -260,5 +260,8 @@ struct TokenBarWidgetBundle: WidgetBundle {
         OpenMainControl()
         #endif
         #endif
+        #if os(iOS)
+        UsageLiveActivity()
+        #endif
     }
 }

@@ -22,6 +22,18 @@ final class MacModel: ObservableObject {
         }
     }
     @Published var claudeLoginError: String?
+    /// GitHub Copilot pela API do GitHub (usa o token do gh). Desligado até a pessoa ligar.
+    @Published var copilotOn = UserDefaults.standard.bool(forKey: "copilotOn") {
+        didSet {
+            UserDefaults.standard.set(copilotOn, forKey: "copilotOn")
+            lastCopilotFetch = nil
+            if !copilotOn { copilot = nil; copilotError = nil }
+            refresh()
+        }
+    }
+    @Published var copilotError: String?
+    private var copilot: ProviderUsage?
+    private var lastCopilotFetch: Date?
     private var accountClaude: ProviderUsage?
     private var lastAccountFetch: Date?
     @Published var visible = Prefs.visible {
@@ -63,6 +75,14 @@ final class MacModel: ObservableObject {
                 fresh.providers.insert(acc, at: 0)
             }
         }
+        // Copilot logo depois das IAs da casa (Claude, Codex).
+        if copilotOn, let c = copilot {
+            fresh.providers.insert(c, at: fresh.providers.firstIndex { $0.id != "claude" && $0.id != "codex" } ?? fresh.providers.count)
+        }
+        if copilotOn, lastCopilotFetch.map({ Date.now.timeIntervalSince($0) > 300 }) ?? true {
+            lastCopilotFetch = .now
+            Task { await fetchCopilot() }
+        }
         // Pergunta à Anthropic no máximo a cada 5 minutos.
         if claudeLogin, lastAccountFetch.map({ Date.now.timeIntervalSince($0) > 300 }) ?? true {
             lastAccountFetch = .now
@@ -71,6 +91,7 @@ final class MacModel: ObservableObject {
         let changed = fresh.providers != snapshot.providers
         snapshot = fresh
         SharedStore.saveSnapshot(fresh)
+        Collector.writeSnapshotFile(fresh)
         if changed {
             WidgetCenter.shared.reloadAllTimelines()
             if #available(iOS 18.0, macOS 26.0, *) { ControlCenter.shared.reloadAllControls() }
@@ -122,6 +143,19 @@ final class MacModel: ObservableObject {
             refresh()
         } catch {
             claudeLoginError = error.localizedDescription
+        }
+    }
+
+    /// Falhou: fica o último número bom e o erro aparece nos Ajustes.
+    private func fetchCopilot() async {
+        do {
+            let got = try await Copilot.fetch()
+            guard copilotOn else { return }
+            copilot = got
+            copilotError = nil
+            refresh()
+        } catch {
+            if copilotOn { copilotError = error.localizedDescription }
         }
     }
 

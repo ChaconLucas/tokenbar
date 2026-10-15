@@ -28,6 +28,10 @@ const EN = {
   "https://tokenbar.sua-conta.workers.dev": "https://tokenbar.your-account.workers.dev",
   "SALVAR": "SAVE",
   "OUTRAS IAS": "OTHER AIS",
+  "Ler a cota do GitHub Copilot": "Read the GitHub Copilot quota",
+  "Lê a cota mensal de premium requests usando o login do GitHub CLI (gh) ou do Copilot. O token só vai para o GitHub.":
+    "Reads the monthly premium-request quota using the GitHub CLI (gh) or Copilot login. The token only goes to GitHub.",
+  "O Windsurf aparece sozinho quando está instalado.": "Windsurf shows up on its own when it's installed.",
   "Qualquer IA aparece aqui ao gravar um arquivo em <code>~/.tokenbar/providers/</code> (veja docs/providers.md no GitHub).":
     "Any AI shows up here when it writes a file to <code>~/.tokenbar/providers/</code> (see docs/providers.md on GitHub).",
   "VERSÃO": "VERSION",

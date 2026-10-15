@@ -46,6 +46,9 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 | **Mac** | the command above |
 | **Windows** | `TokenBar-Windows-setup.exe` in [Releases](https://github.com/ChaconLucas/tokenbar/releases). If SmartScreen warns, **More info → Run anyway** |
 | **Linux** | build from source for now (see `INSTALL.md`) |
+| **Mac (Homebrew)** | `brew install --cask chaconlucas/tokenbar/tokenbar` |
+| **Windows (winget)** | `winget install ChaconLucas.TokenBar` (pending Microsoft review) |
+| **VS Code** | usage in VS Code's status bar: download `TokenBar-VSCode.vsix` from [Releases](https://github.com/ChaconLucas/tokenbar/releases) → in VS Code, **Extensions → ⋯ → Install from VSIX** |
 | **Android** | `TokenBar-Android.apk` in [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` in Releases, installed with `adb` |
 | **iPhone / Apple Watch** | build with Xcode only (free Apple account: the app expires every 7 days). See [Install with Xcode](#install-with-xcode-iphone-and-apple-watch) |

@@ -328,6 +328,18 @@ enum Lang {
         "Abre o TokenBar pequeno, sempre na frente.": "Opens the small TokenBar, always on top.",
         "TokenBar aparelho": "TokenBar device",
         "Abre o aparelho grande.": "Opens the big device.",
+        // GitHub Copilot (Mac)
+        "Lê a cota mensal de premium requests usando o login do GitHub CLI (gh) ou do Copilot. O token só vai para o GitHub.": "Reads the monthly premium-request quota using the GitHub CLI (gh) or Copilot login. The token only goes to GitHub.",
+        "Não achei o login do GitHub (gh auth login) nem do Copilot neste computador.": "Couldn't find a GitHub (gh auth login) or Copilot login on this computer.",
+        "Login do GitHub expirado: rode gh auth login.": "GitHub login expired: run gh auth login.",
+        "O GitHub respondeu %d.": "GitHub responded %d.",
+        "Resposta inesperada do GitHub.": "Unexpected response from GitHub.",
+        // Atividade ao Vivo (iPhone)
+        "DYNAMIC ISLAND / TELA BLOQUEADA": "DYNAMIC ISLAND / LOCK SCREEN",
+        "MOSTRAR O USO": "SHOW USAGE",
+        "As Atividades ao Vivo estão desligadas nos Ajustes do iPhone (Ajustes → TokenBar).": "Live Activities are turned off in iPhone Settings (Settings → TokenBar).",
+        "Aparece depois de conectar ao computador.": "Shows up after you connect to the computer.",
+        "A % de cada IA e a contagem até zerar, sem abrir o app.": "Each AI's % and the countdown to reset, without opening the app.",
     ]
 }
 
