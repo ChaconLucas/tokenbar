@@ -59,6 +59,16 @@ enum Lang {
 
     static let en: [String: String] = [
         // Ajustes em LED e guia
+        "O APP VENCE EM %d DIAS · TOQUE": "APP EXPIRES IN %d DAYS · TAP",
+        "VERSÃO %@ DISPONÍVEL · TOQUE": "VERSION %@ AVAILABLE · TAP",
+        "ATUALIZAÇÃO": "UPDATE",
+        "Versão instalada: %@": "Installed version: %@",
+        "Nova versão: %@": "New version: %@",
+        "Vence em %d dias (conta gratuita da Apple).": "Expires in %d days (free Apple account).",
+        "Para atualizar ou renovar: conecte o iPhone ao Mac e rode no Terminal (ou peça para a sua IA):": "To update or renew: connect the iPhone to the Mac and run in Terminal (or ask your AI):",
+        "COPIAR COMANDO": "COPY COMMAND",
+        "O TokenBar vence amanhã": "TokenBar expires tomorrow",
+        "Conecte o iPhone ao Mac e rode o comando de instalação de novo para renovar.": "Connect the iPhone to the Mac and run the install command again to renew.",
         "MOSTRAR A %": "SHOW THE %",
         "BARRA": "MENU BAR",
         "OS DOIS": "BOTH",

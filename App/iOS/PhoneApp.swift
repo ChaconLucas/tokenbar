@@ -142,7 +142,7 @@ struct TokenBarPhoneApp: App {
                 }
                 .onOpenURL { model.pair(with: $0) }
                 .onChange(of: phase) { _, p in
-                    if p == .active { Task { await model.refresh() } }
+                    if p == .active { Task { await model.refresh(); await AppLifetime.shared.refresh() } }
                     if p == .background { PhoneModel.scheduleBackgroundRefresh() }
                 }
         }
@@ -157,6 +157,7 @@ struct TokenBarPhoneApp: App {
 /// O celular vira o aparelho: deitado, tela cheia, tela sempre acesa.
 struct PhoneRootView: View {
     @EnvironmentObject var model: PhoneModel
+    @ObservedObject private var life = AppLifetime.shared
     @State private var visible = Prefs.visible
     @State private var windowChoice = Prefs.window
     @State private var showDetails = false
@@ -215,14 +216,19 @@ struct PhoneRootView: View {
     /// Só erros: a falta de pareamento ou de dados o próprio letreiro de pontos já diz.
     private var hint: String? {
         guard model.pairing != nil else { return Lang.t("TOQUE PARA CONECTAR AO COMPUTADOR") }
-        guard let e = model.error else { return nil }
-        return e.uppercased()
+        if let e = model.error { return e.uppercased() }
+        // App instalado pelo Mac: avisa versão nova e o vencimento (toque abre os ajustes com o passo a passo).
+        let life = AppLifetime.shared
+        if let d = life.daysLeft, d <= 3 { return Lang.f("O APP VENCE EM %d DIAS · TOQUE", max(d, 0)) }
+        if let v = life.newVersion { return Lang.f("VERSÃO %@ DISPONÍVEL · TOQUE", v) }
+        return nil
     }
 }
 
 /// Ajustes e detalhes: fora do aparelho, numa folha.
 struct PhoneDetails: View {
     @EnvironmentObject var model: PhoneModel
+    @ObservedObject private var life = AppLifetime.shared
     @Binding var theme: Theme
     var showGuide: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
@@ -232,6 +238,28 @@ struct PhoneDetails: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 LangPicker()
+                if life.needsAttention || life.expires != nil {
+                    SectionTitle(text: Lang.t("ATUALIZAÇÃO"))
+                    ArcadePanel {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(Lang.f("Versão instalada: %@", AppLifetime.current)).font(.callout).foregroundStyle(.white)
+                            if let v = life.newVersion {
+                                Text(Lang.f("Nova versão: %@", v)).font(.callout).foregroundStyle(Arcade.green)
+                            }
+                            if let d = life.daysLeft {
+                                Text(Lang.f("Vence em %d dias (conta gratuita da Apple).", max(d, 0)))
+                                    .font(.callout).foregroundStyle(d <= 3 ? Arcade.amber : Arcade.dim)
+                            }
+                            Text(Lang.t("Para atualizar ou renovar: conecte o iPhone ao Mac e rode no Terminal (ou peça para a sua IA):"))
+                                .font(.caption).foregroundStyle(Arcade.dim)
+                            Text(AppLifetime.command).font(.system(size: 10, design: .monospaced)).foregroundStyle(.white)
+                                .textSelection(.enabled)
+                            Button(Lang.t("COPIAR COMANDO")) { UIPasteboard.general.string = AppLifetime.command }
+                                .buttonStyle(ArcadeButtonStyle())
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
                 if model.pairing == nil {
                     SectionTitle(text: Lang.t("PRIMEIROS PASSOS"))
                     ArcadePanel {

@@ -4,7 +4,21 @@
 #
 # Rodar de novo atualiza e renova os 7 dias da conta gratuita da Apple.
 # Antes, uma vez só: Xcode → Ajustes → Contas → entrar com o seu Apple ID.
+#
+#   … | sh -s -- --auto   instala e agenda o Mac para atualizar/renovar sozinho (pelo Wi-Fi, depois da 1ª vez no cabo)
 set -eu
+
+AUTO_SETUP=""
+for a in "$@"; do [ "$a" = "--auto" ] && AUTO_SETUP=1; done
+STAMP="$HOME/.tokenbar/ios-last-install"
+
+# Execução agendada: só trabalha se saiu versão nova ou se faltam ~2 dias para vencer (instalado há 5+ dias).
+if [ -n "${TB_SCHEDULED:-}" ] && [ -f "$STAMP" ]; then
+  read -r LAST_T LAST_V < "$STAMP" || true
+  LATEST=$(curl -fsSL https://api.github.com/repos/ChaconLucas/tokenbar/releases/latest 2>/dev/null | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)
+  AGE=$(( $(date +%s) - ${LAST_T:-0} ))
+  if [ "$AGE" -lt 432000 ] && [ "$LATEST" = "${LAST_V:-}" ]; then exit 0; fi
+fi
 
 say() { printf '\033[1;35m▸\033[0m %s\n' "$1"; }
 fail() { printf '\033[1;31m✗\033[0m %s\n' "$1" >&2; exit 1; }
@@ -50,6 +64,7 @@ if [ -z "$UDID" ]; then
   UDID=$(xcrun devicectl list devices 2>/dev/null | grep -i "iphone" | grep -v -i "simulat" | grep -i "available" \
     | grep -o '[0-9A-F]\{8\}-[0-9A-F]\{16\}' | head -1)
 fi
+[ -n "$UDID" ] || { [ -n "${TB_SCHEDULED:-}" ] && exit 0; true; }
 [ -n "$UDID" ] || fail "Nenhum iPhone encontrado. Conecte por cabo, desbloqueie, toque em Confiar e ligue Ajustes → Privacidade e Segurança → Modo de Desenvolvedor."
 
 say "Montando o app (a primeira vez leva alguns minutos)…"
@@ -63,8 +78,41 @@ fi
 
 [ -n "${TB_NO_INSTALL:-}" ] && { say "Montado (sem instalar)."; exit 0; }
 say "Instalando no iPhone…"
-xcrun devicectl device install app --device "$UDID" build-ios/Build/Products/Release-iphoneos/TokenBar.app >/dev/null \
+APP=build-ios/Build/Products/Release-iphoneos/TokenBar.app
+# iPhone com iOS beta pede o devicectl do Xcode beta.
+xcrun devicectl device install app --device "$UDID" "$APP" >/dev/null 2>&1 \
+  || { [ -d /Applications/Xcode-beta.app ] && DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
+       xcrun devicectl device install app --device "$UDID" "$APP" >/dev/null 2>&1; } \
   || fail "Não consegui instalar. O iPhone está desbloqueado e com o Modo de Desenvolvedor ligado?"
+TAG=$(curl -fsSL https://api.github.com/repos/ChaconLucas/tokenbar/releases/latest 2>/dev/null | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)
+printf '%s %s\n' "$(date +%s)" "$TAG" > "$STAMP"
+
+if [ -n "$AUTO_SETUP" ]; then
+  PLIST="$HOME/Library/LaunchAgents/io.tokenbar.ios-renew.plist"
+  mkdir -p "$HOME/Library/LaunchAgents"
+  cat > "$PLIST" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>io.tokenbar.ios-renew</string>
+  <key>ProgramArguments</key><array><string>/bin/sh</string><string>-c</string>
+    <string>curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh</string></array>
+  <key>EnvironmentVariables</key><dict>
+    <key>TB_SCHEDULED</key><string>1</string>
+    <key>TB_DIR</key><string>$DIR</string>
+    <key>TB_PREFIX</key><string>$PREFIX</string>
+    <key>TB_TEAM</key><string>$TEAM</string>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StartInterval</key><integer>86400</integer>
+  <key>StandardOutPath</key><string>$HOME/.tokenbar/ios-renew.log</string>
+  <key>StandardErrorPath</key><string>$HOME/.tokenbar/ios-renew.log</string>
+</dict></plist>
+PL
+  launchctl bootout "gui/$(id -u)/io.tokenbar.ios-renew" 2>/dev/null || true
+  launchctl bootstrap "gui/$(id -u)" "$PLIST" && say "Agendado: o Mac atualiza e renova o app do iPhone sozinho (1x por dia confere; só reinstala quando precisa)."
+fi
+[ -n "${TB_SCHEDULED:-}" ] && exit 0
 
 cat <<'EOF'
 
