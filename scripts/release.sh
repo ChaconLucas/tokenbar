@@ -60,6 +60,10 @@ git add -A
 git commit -q -m "Versão $V"
 git tag "v$V"
 git push -q origin main "v$V"
+NOTES="$NOTES
+
+**Mac:** install with \`curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh\`. Downloaded the .zip in a browser and macOS blocked it? System Settings → Privacy & Security → **Open Anyway**, or run \`xattr -dr com.apple.quarantine /Applications/TokenBar.app\`.
+**Windows:** SmartScreen warning → **More info → Run anyway**. **Android:** allow installing unknown apps; Play Protect → **Install anyway**."
 gh release create "v$V" --title "TokenBar $V" --notes "$NOTES" \
   "$OUT/TokenBar-macOS.zip" "$OUT/TokenBar-Android.apk" "$OUT/TokenBar-WearOS.apk" \
   "$OUT/TokenBar-Windows-setup.exe" "$OUT/TokenBar-Windows-setup.exe.sig" "$OUT/latest.json"

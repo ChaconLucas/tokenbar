@@ -23,6 +23,18 @@ on an LED display on Mac, Windows, Linux, iPhone, Android, Apple Watch and Wear 
 curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh
 ```
 
+<details>
+<summary><b>Mac blocked it ("can't be opened", "unidentified developer", "is damaged")?</b></summary>
+
+TokenBar isn't notarized by Apple yet (that needs a paid developer account), so macOS blocks the first launch when the app comes **from a browser**. Any of these fixes it:
+
+1. **Install with the command above.** Downloaded from Terminal, the warning doesn't appear.
+2. **Allow it once:** try to open TokenBar → **System Settings → Privacy & Security** → scroll down → **Open Anyway** → your Mac password.
+3. **"Is damaged"?** In Terminal: `xattr -dr com.apple.quarantine /Applications/TokenBar.app` and open it again.
+
+The prompt *"TokenBar wants to use confidential information stored in Claude Code-credentials"* isn't a block: it's the login reading (VS Code panel). Choose **Always Allow**.
+</details>
+
 **Or ask your AI.** Open Claude Code, Codex or any AI with a terminal and say:
 
 > Read https://github.com/ChaconLucas/tokenbar/blob/main/INSTALL.md and install TokenBar for me.

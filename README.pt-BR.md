@@ -21,6 +21,18 @@ num display de LED no Mac, Windows, Linux, iPhone, Android, Apple Watch e Wear O
 curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh
 ```
 
+<details>
+<summary><b>O Mac bloqueou ("não pode ser aberto", "desenvolvedor não identificado", "está danificado")?</b></summary>
+
+O TokenBar ainda não é autenticado pela Apple (isso exige a conta paga de desenvolvedor), então o macOS bloqueia a primeira abertura quando o app vem **pelo navegador**. Qualquer um destes resolve:
+
+1. **Instale pelo comando acima.** Baixado pelo Terminal, o aviso não aparece.
+2. **Libere uma vez:** tente abrir o TokenBar → **Ajustes do Sistema → Privacidade e Segurança** → role até o fim → **Abrir Mesmo Assim** → senha do Mac.
+3. **"Está danificado"?** No Terminal: `xattr -dr com.apple.quarantine /Applications/TokenBar.app` e abra de novo.
+
+O pedido *"TokenBar quer usar informações confidenciais em Claude Code-credentials"* não é bloqueio: é a leitura pelo login (painel do VS Code). Responda **Permitir sempre**.
+</details>
+
 **Ou peça para a sua IA.** Abra o Claude Code, o Codex ou outra IA com terminal e diga:
 
 > Leia https://github.com/ChaconLucas/tokenbar/blob/main/INSTALL.md e instale o TokenBar para mim.

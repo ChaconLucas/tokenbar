@@ -47,9 +47,21 @@ What it does: downloads `TokenBar-macOS.zip` from the latest GitHub Release, qui
 TokenBar, installs to `/Applications`, checks the code signature, opens it. Downloaded via
 `curl`, the app isn't quarantined, so macOS won't show the "unidentified developer" warning.
 
-> If the person downloaded the `.zip` with a **browser** instead, macOS blocks the first launch.
-> Fix: System Settings → Privacy & Security → scroll down → **Open Anyway**. Or run
-> `xattr -dr com.apple.quarantine /Applications/TokenBar.app`.
+### If macOS blocks it ("can't be opened", "unidentified developer", "is damaged")
+
+TokenBar isn't notarized by Apple yet, so Gatekeeper blocks apps that arrive **quarantined**
+(downloaded by a browser, AirDrop, chat apps). **Handle it yourself, don't just tell the person:**
+
+1. Check: `xattr -p com.apple.quarantine /Applications/TokenBar.app 2>/dev/null && echo QUARANTINED`
+2. If quarantined, or the person reports any of those messages:
+   `xattr -dr com.apple.quarantine /Applications/TokenBar.app && open /Applications/TokenBar.app`
+   (or simply re-run the `curl … | sh` installer above, which does the same).
+3. Verify the signature is intact: `codesign --verify --deep --strict /Applications/TokenBar.app && echo OK`.
+   If it fails, don't open it: reinstall with the `curl` command, and if it still fails, ask them to open an issue.
+4. Without a terminal: System Settings → Privacy & Security → scroll down → **Open Anyway** (after one failed launch).
+
+A prompt saying *"TokenBar wants to use your confidential information stored in 'Claude Code-credentials'"* is
+**not** a block: it's the optional login reading (VS Code panel). Tell them to click **Always Allow**.
 
 **Verify:** the LED device window appears and a small dot bar shows up in the menu bar.
 
