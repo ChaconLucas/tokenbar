@@ -6,34 +6,81 @@
   "version": "0.4.7",
   "license": "MIT",
   "icon": "media/icon.png",
-  "repository": { "type": "git", "url": "https://github.com/ChaconLucas/tokenbar" },
-  "bugs": { "url": "https://github.com/ChaconLucas/tokenbar/issues" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChaconLucas/tokenbar"
+  },
+  "bugs": {
+    "url": "https://github.com/ChaconLucas/tokenbar/issues"
+  },
   "homepage": "https://github.com/ChaconLucas/tokenbar",
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Other", "Visualization"],
-  "keywords": ["claude", "claude code", "codex", "usage", "rate limit", "tokens", "status bar"],
-  "activationEvents": ["onStartupFinished"],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "codex",
+    "usage",
+    "rate limit",
+    "tokens",
+    "status bar"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      { "command": "tokenbar.showDetails", "title": "Show details", "category": "TokenBar", "icon": "$(graph)" },
-      { "command": "tokenbar.toggleWindow", "title": "Switch window (5h / 7d / both)", "category": "TokenBar" },
-      { "command": "tokenbar.openApp", "title": "Open TokenBar app", "category": "TokenBar" },
-      { "command": "tokenbar.refresh", "title": "Refresh", "category": "TokenBar" }
+      {
+        "command": "tokenbar.showDetails",
+        "title": "Show details",
+        "category": "TokenBar",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "tokenbar.toggleWindow",
+        "title": "Switch window (5h / 7d / both)",
+        "category": "TokenBar"
+      },
+      {
+        "command": "tokenbar.openApp",
+        "title": "Open TokenBar app",
+        "category": "TokenBar"
+      },
+      {
+        "command": "tokenbar.refresh",
+        "title": "Refresh",
+        "category": "TokenBar"
+      }
     ],
     "configuration": {
       "title": "TokenBar",
       "properties": {
         "tokenbar.window": {
           "type": "string",
-          "enum": ["5h", "7d", "both"],
-          "enumDescriptions": ["Short window (5 hours)", "Long window (7 days)", "Both windows"],
+          "enum": [
+            "5h",
+            "7d",
+            "both"
+          ],
+          "enumDescriptions": [
+            "Short window (5 hours)",
+            "Long window (7 days)",
+            "Both windows"
+          ],
           "default": "5h",
           "description": "Which limit window the status bar shows. Clicking the status bar item cycles through them."
         },
         "tokenbar.providers": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "description": "Ids of the AIs to show (e.g. \"claude\", \"codex\", \"gemini\"). Empty = all."
         }
@@ -51,5 +98,11 @@
     "@types/vscode": "~1.90.0",
     "@vscode/vsce": "^3.2.0",
     "typescript": "^5.6.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
   }
 }
