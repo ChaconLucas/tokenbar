@@ -200,6 +200,9 @@ struct BusyDevice: View {
 
     private func keys(dot: CGFloat) -> some View {
         HStack(spacing: dot * 5) {
+            #if os(macOS)
+            if let windowControls { TrafficLights(close: windowControls.close, minimize: windowControls.minimize) }
+            #endif
             ForEach(Prefs.allProviders, id: \.self) { id in
                 let on = visible.contains(id)
                 DotKey(text: Prefs.allProviders.count > 2 ? UsageStyle.abbr(id) : UsageStyle.shortName(id),
@@ -248,10 +251,6 @@ struct BusyDevice: View {
             #endif
             if editableTheme == nil, let onSettings {
                 DotKey(text: "SET", on: true, color: theme.timer.color, dot: dot, round: theme.roundDots, action: onSettings)
-            }
-            if let windowControls {
-                iconKey("minus", Lang.t("Minimizar"), dot: dot, action: windowControls.minimize)
-                iconKey("xmark", Lang.t("Fechar"), dot: dot, action: windowControls.close)
             }
         }
     }
@@ -383,6 +382,40 @@ struct WindowReader: NSViewRepresentable {
     }
     func updateNSView(_ v: NSView, context: Context) {
         if ref.window == nil { DispatchQueue.main.async { ref.window = v.window } }
+    }
+}
+#endif
+
+#if os(macOS)
+/// Fechar e minimizar como no Mac: duas bolinhas; o símbolo aparece ao passar o mouse.
+struct TrafficLights: View {
+    var close: () -> Void
+    var minimize: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        HStack(spacing: 7) {
+            light(Color(red: 1, green: 0.37, blue: 0.34), "xmark", Lang.t("Fechar"), close)
+            light(Color(red: 1, green: 0.74, blue: 0.18), "minus", Lang.t("Minimizar"), minimize)
+        }
+        .onHover { hover = $0 }
+    }
+
+    private func light(_ color: Color, _ icon: String, _ help: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Circle().fill(color)
+                .frame(width: 12, height: 12)
+                .overlay {
+                    Image(systemName: icon)
+                        .font(.system(size: 7, weight: .black))
+                        .foregroundStyle(.black.opacity(0.6))
+                        .opacity(hover ? 1 : 0)
+                }
+                .overlay(Circle().strokeBorder(.black.opacity(0.25), lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel(help)
     }
 }
 #endif
