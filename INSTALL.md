@@ -194,7 +194,7 @@ script or scheduled job that keeps that file updated.
 ## Optional server (see numbers away from home)
 
 Without it, phones update only on the same Wi-Fi as the computer. With a free Cloudflare
-Worker they update anywhere: see "Servidor opcional" in [README.md](README.md#servidor-opcional-ver-fora-de-casa).
+Worker they update anywhere: see "Optional server" in [README.md](README.md#optional-server-see-your-numbers-away-from-home).
 Only suggest this if they ask to see it outside home.
 
 ## Troubleshooting
