@@ -136,7 +136,7 @@ final class NotchIsland: NSObject {
                                height: max(size.height, cur.height)))
             let w = DispatchWorkItem { [weak self] in self?.place(size: size) }
             shrinkWork = w
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: w)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: w)
         }
     }
 
@@ -167,7 +167,7 @@ final class NotchIsland: NSObject {
             guard state.expanded, !pinned else { return }
             let w = DispatchWorkItem { [weak self] in self?.setExpanded(false) }
             collapseWork = w
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: w)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: w)
         }
     }
 
@@ -179,7 +179,7 @@ final class NotchIsland: NSObject {
 
     private func setExpanded(_ on: Bool) {
         guard state.expanded != on else { return }
-        withAnimation(on ? .spring(response: 0.42, dampingFraction: 0.74) : .spring(response: 0.34, dampingFraction: 0.9)) {
+        withAnimation(on ? .spring(response: 0.42, dampingFraction: 0.74) : .spring(response: 0.22, dampingFraction: 0.95)) {
             state.expanded = on
         }
     }
