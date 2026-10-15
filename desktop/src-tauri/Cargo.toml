@@ -1,6 +1,6 @@
 [package]
 name = "tokenbar"
-version = "0.3.0"
+version = "0.3.1"
 description = "Limites do Claude Code, Codex e outras IAs num display de LED"
 edition = "2021"
 license = "MIT"
