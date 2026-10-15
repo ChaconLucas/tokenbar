@@ -119,11 +119,12 @@
           <div class="g-head"><h2>CELULAR</h2><span class="chip" id="g-phone"></span></div>
           <p class="g-say">Escolha o aparelho e aponte a câmera.</p>
           <div class="choices">
-            <button data-dev="android">ANDROID</button><button data-dev="wear">WEAR OS</button><button data-dev="iphone">IPHONE</button><button data-dev="watch">APPLE WATCH</button><button data-dev="here">SÓ AQUI</button>
+            <button data-dev="android">ANDROID<small>baixa o app</small></button><button data-dev="wear">WEAR OS<small>código no relógio</small></button><button data-dev="iphone">IPHONE<small>precisa de Xcode</small></button><button data-dev="watch">APPLE WATCH<small>precisa de Xcode</small></button><button data-dev="here">NENHUM<small>só neste PC</small></button>
           </div>
           <div data-for="android" class="qrs" hidden>
-            <figure><div class="qr" id="g-apk"></div><figcaption><b>1</b> BAIXAR</figcaption></figure>
-            <figure><div class="qr g-pair"></div><figcaption><b>2</b> PAREAR</figcaption></figure>
+            <figure data-and="0"><div class="qr" id="g-apk"></div><figcaption><b>1</b> BAIXAR O APP</figcaption></figure>
+            <figure data-and="1"><div class="qr g-pair"></div><figcaption><b>2</b> PAREAR · ESCANEAR QR no app</figcaption></figure>
+            <p class="g-line" data-and="0">Instalou? Toque em AVANÇAR para parear.</p>
           </div>
           <div data-for="iphone" class="qrs" hidden>
             <figure><div class="qr g-pair"></div><figcaption>PAREAR</figcaption></figure>
@@ -131,7 +132,7 @@
           </div>
           <div data-for="wear" hidden><span class="code big" id="g-code"></span><p class="g-line">Digite no relógio.</p></div>
           <div data-for="watch" hidden><p class="g-line">Vem com o app do iPhone.</p></div>
-          <div data-for="here" hidden><p class="g-line">Os números ficam só neste computador.</p></div>
+          <div data-for="here" hidden><p class="g-line">Sem celular: os números ficam neste computador.</p></div>
           <p class="g-hint">Se pedir permissão de rede/firewall, permita.</p>
         </div>
       </article>

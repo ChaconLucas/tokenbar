@@ -21,7 +21,16 @@ struct SetupGuide: View {
             case .wear: "WEAR OS"
             case .iphone: "IPHONE"
             case .watch: "APPLE WATCH"
-            case .none: "SÓ NO MAC"
+            case .none: "NENHUM"
+            }
+        }
+        /// Linha miúda embaixo do nome: o que a pessoa precisa saber antes de escolher.
+        var note: String {
+            switch self {
+            case .android: "baixa o app"
+            case .wear: "código no relógio"
+            case .iphone, .watch: "precisa de Xcode"
+            case .none: "só neste Mac"
             }
         }
     }
@@ -128,8 +137,13 @@ struct SetupGuide: View {
         VStack(spacing: 14) {
             HStack(spacing: 6) {
                 ForEach(Device.allCases, id: \.self) { d in
-                    Button(d.title) { device = d.rawValue; androidStep = 0 }
-                        .buttonStyle(ArcadeButtonStyle(tint: d == choice ? Arcade.amber : Arcade.dim))
+                    Button { device = d.rawValue; androidStep = 0 } label: {
+                        VStack(spacing: 2) {
+                            Text(d.title)
+                            Text(d.note).font(.system(size: 8)).tracking(0).opacity(0.75)
+                        }
+                    }
+                    .buttonStyle(ArcadeButtonStyle(tint: d == choice ? Arcade.amber : Arcade.dim))
                 }
             }
             .padding(.top, 10)
@@ -140,7 +154,7 @@ struct SetupGuide: View {
                       title: download ? "1 · BAIXE O APP" : "2 · PAREIE",
                       text: download ? "Aponte a câmera do celular e instale o arquivo." : "No app, toque em ESCANEAR QR.") {
                     if download {
-                        Button("JÁ INSTALEI →") { withAnimation { androidStep = 1 } }.buttonStyle(ArcadeButtonStyle())
+                        chip("Instalou? Toque em AVANÇAR para parear.", ok: false)
                     } else {
                         connection
                     }
@@ -148,7 +162,7 @@ struct SetupGuide: View {
             case .iphone:
                 slide(art: ScanArt { QRCode(text: model.pairing.link.absoluteString) },
                       title: "IPHONE",
-                      text: "Câmera do iPhone no QR → Abrir no TokenBar.") {
+                      text: "Precisa do app instalado pelo Xcode. Depois: ESCANEAR QR no app.") {
                     connection
                     Link("O app de iPhone é instalado pelo Xcode: ver como", destination: Self.installURL)
                         .font(.caption).foregroundStyle(Arcade.cyan)
@@ -165,11 +179,11 @@ struct SetupGuide: View {
             case .watch:
                 slide(art: ScanArt { QRCode(text: model.pairing.link.absoluteString) },
                       title: "APPLE WATCH",
-                      text: "Vem junto com o app do iPhone: pareie o iPhone e pronto.") {
+                      text: "Vem junto com o app do iPhone (Xcode): pareie o iPhone e pronto.") {
                     connection
                 }
             case .none:
-                slide(art: MenuBarArt(), title: "SÓ NO MAC", text: "Tudo certo: o TokenBar mora na barra de menu.") {
+                slide(art: MenuBarArt(), title: "SEM CELULAR", text: "Tudo certo: os números ficam na barra de menu deste Mac.") {
                     chip("Pronto", ok: true)
                 }
             }
@@ -254,8 +268,16 @@ struct SetupGuide: View {
         Button(title, action: action).buttonStyle(.plain).font(Arcade.label(9)).foregroundStyle(Arcade.dim)
     }
 
+    /// No Android, o passo do celular tem duas partes (baixar, depois parear): AVANÇAR passa por elas.
     private func go(_ step: Int) {
-        withAnimation(.easeOut(duration: 0.25)) { page = min(max(page + step, 0), pages - 1) }
+        withAnimation(.easeOut(duration: 0.25)) {
+            if page == 2 && choice == .android {
+                if step > 0 && androidStep == 0 { androidStep = 1; return }
+                if step < 0 && androidStep == 1 { androidStep = 0; return }
+            }
+            page = min(max(page + step, 0), pages - 1)
+            if page == 2 { androidStep = step > 0 ? 0 : 1 }
+        }
     }
 
     private func finish() {

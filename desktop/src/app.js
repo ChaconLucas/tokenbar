@@ -166,6 +166,7 @@ const dots = slides.map((s, i) => {
   $("g-dots").appendChild(d); return d;
 });
 let guideTimer = null, device = store("guideDevice"), cur = 0, t0 = 0, raf = 0, seen = {};
+let andStep = 0;   // Android tem duas partes no passo do celular: baixar, depois parear
 
 function goTo(i) {
   cur = Math.min(Math.max(i, 0), slides.length - 1);
@@ -219,10 +220,11 @@ function showDevice() {
   document.querySelectorAll(".choices button").forEach((b) => b.classList.toggle("on", b.dataset.dev === device));
   document.querySelectorAll("[data-for]").forEach((d) => { d.hidden = d.dataset.for !== device; });
   slides.find((s) => s.dataset.key === "phone").dataset.dev = device || "";
+  document.querySelectorAll("[data-and]").forEach((e) => { e.hidden = +e.dataset.and !== andStep; });
   if (device === "android" && !$("g-apk").innerHTML) invoke("qr", { text: APK }).then((svg) => { $("g-apk").innerHTML = svg; });
 }
 document.querySelectorAll(".choices button").forEach((b) => b.onclick = () => {
-  device = b.dataset.dev; store("guideDevice", device); showDevice(); t0 = performance.now(); refreshGuide();
+  device = b.dataset.dev; store("guideDevice", device); andStep = 0; showDevice(); t0 = performance.now(); refreshGuide();
 });
 
 // --- desenhos: o palco tem tamanho fixo (320×180) e escala para caber ---
@@ -311,8 +313,17 @@ function closeGuide() {
   store("guideDone", "1"); render();
 }
 $("g-pular").onclick = closeGuide;
-$("g-back").onclick = () => goTo(cur - 1);
-$("g-next").onclick = () => (cur === slides.length - 1 ? closeGuide() : goTo(cur + 1));
+/** AVANÇAR/VOLTAR passam pelas duas partes do Android antes de trocar de tela. */
+function step(dir) {
+  const onAndroid = slides[cur]?.dataset.key === "phone" && device === "android";
+  if (onAndroid && dir > 0 && andStep === 0) { andStep = 1; showDevice(); return; }
+  if (onAndroid && dir < 0 && andStep === 1) { andStep = 0; showDevice(); return; }
+  if (dir > 0 && cur === slides.length - 1) { closeGuide(); return; }
+  goTo(cur + dir);
+  if (slides[cur].dataset.key === "phone") { andStep = dir > 0 ? 0 : 1; showDevice(); }
+}
+$("g-back").onclick = () => step(-1);
+$("g-next").onclick = () => step(1);
 $("open-guide").onclick = openGuide;
 $("g-connect").onclick = async () => {
   try { await invoke("connect_claude"); refreshGuide(); } catch (e) { chip("g-claude", String(e), false); }
@@ -320,8 +331,8 @@ $("g-connect").onclick = async () => {
 $("g-skip").onclick = (e) => { e.preventDefault(); store("claudeSkip", "1"); refreshGuide(); };
 document.addEventListener("keydown", (e) => {
   if ($("guide").hidden) return;
-  if (e.key === "ArrowRight") goTo(cur + 1);
-  else if (e.key === "ArrowLeft") goTo(cur - 1);
+  if (e.key === "ArrowRight") step(1);
+  else if (e.key === "ArrowLeft") step(-1);
   else if (e.key === "Escape") closeGuide();
 });
 
