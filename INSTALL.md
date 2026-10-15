@@ -68,6 +68,19 @@ Do **not** edit `~/.claude/settings.json` by hand unless the button fails; if yo
 existing `statusLine.command` by saving it to `~/.tokenbar/statusline-original` and pointing
 `statusLine.command` to `~/.tokenbar/claude-tee.sh` (content: see `App/macOS/ClaudeHook.swift`).
 
+### Claude Code in the VS Code panel (or the desktop app)
+
+The statusline only runs in the **terminal**. If the person uses Claude Code in the VS Code
+extension **panel**, no numbers arrive. Two options — explain both and let them choose:
+
+1. Use `claude` in VS Code's integrated terminal (Ctrl+`) instead of the panel. Works now, nothing to turn on.
+2. Turn on **"Ler pelo login do Claude Code"** (Mac: Ajustes → CLAUDE CODE; Windows/Linux: ⚙ → CLAUDE CODE;
+   or the "painel do VS Code" link on the guide's Claude slide). TokenBar then reads the login Claude Code
+   already saved (Mac: Keychain item `Claude Code-credentials` — answer **Always Allow** when macOS asks;
+   Windows/Linux: `~/.claude/.credentials.json`) and asks `api.anthropic.com/api/oauth/usage` every 5 minutes.
+   Read-only; the token never leaves the computer except to Anthropic. That endpoint is not officially
+   documented and may change; the statusline keeps working as a fallback.
+
 ### Codex
 
 Nothing to do. TokenBar reads the last `token_count` event in `~/.codex/sessions/**/*.jsonl`.
@@ -190,7 +203,7 @@ Only suggest this if they ask to see it outside home.
 |---|---|
 | Phone: "Mac not found on Wi-Fi" | Same Wi-Fi? iPhone: Settings → Privacy → Local Network → TokenBar on. Computer firewall allows TokenBar? |
 | Phone: "key refused" | Scan the QR again. |
-| Claude missing | Connect Claude Code, then send a message in any Claude Code session. Check `~/.tokenbar/claude.json`. |
+| Claude missing | Connect Claude Code, then send a message in a Claude Code session **in the terminal**. Uses the VS Code panel? See "Claude Code in the VS Code panel". Check `~/.tokenbar/claude.json`. |
 | Codex missing | Use Codex once. |
 | Mac: "can't be opened" / "unidentified developer" | Install with the `curl` command above, or Privacy & Security → Open Anyway. |
 | Mac: blank Dock icon | `killall Dock`. |

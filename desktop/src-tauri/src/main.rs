@@ -31,6 +31,8 @@ struct Status {
     code: String,
     server: Option<String>,
     claude_connected: bool,
+    claude_login: bool,
+    claude_login_error: Option<String>,
     push_error: Option<String>,
     last_client_ago: Option<u64>,
 }
@@ -50,12 +52,15 @@ fn status(app: State<Arc<App>>) -> Status {
         let mut l = app.lan.lock().unwrap();
         (l.current_code(), l.last_client.map(|t| t.elapsed().as_secs()))
     };
+    let claude_login = collector::claude_login_on();
     Status {
         snapshot: app.snapshot.lock().unwrap().clone(),
         link, qr_svg,
         code,
         server: p.server,
         claude_connected: hook::is_installed(),
+        claude_login,
+        claude_login_error: if claude_login { collector::claude_login_error() } else { None },
         push_error: app.push_error.lock().unwrap().clone(),
         last_client_ago,
     }
@@ -67,6 +72,16 @@ fn qr(text: String) -> String { qr_svg(&text) }
 
 #[tauri::command]
 fn connect_claude() -> Result<(), String> { hook::install() }
+
+/// Ler o Claude pelo login salvo (para quem usa o painel do VS Code). Ao ligar, já tenta uma leitura.
+#[tauri::command]
+fn set_claude_login(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result<(), String> {
+    let r = collector::set_claude_login(on);
+    let snap = collector::collect();
+    *app.snapshot.lock().unwrap() = snap.clone();
+    let _ = handle.emit("snapshot", &snap);
+    r
+}
 
 /// Campo vazio desliga o servidor (fica só o Wi-Fi local).
 #[tauri::command]
@@ -153,7 +168,7 @@ fn main() {
 
     tauri::Builder::default()
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, set_server, open_mini, open_main, qr])
+        .invoke_handler(tauri::generate_handler![status, connect_claude, set_claude_login, set_server, open_mini, open_main, qr])
         .setup(move |app| {
             let h = app.handle().clone();
             let open = MenuItem::with_id(app, "main", "Abrir aparelho", true, None::<&str>)?;

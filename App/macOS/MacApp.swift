@@ -12,6 +12,18 @@ final class MacModel: ObservableObject {
     @Published var pushError: String?
     @Published var claudeConnected = ClaudeHook.isInstalled
     @Published var claudeError: String?
+    /// Ler o Claude pelo login (painel do VS Code). Desligado até a pessoa ligar.
+    @Published var claudeLogin = UserDefaults.standard.bool(forKey: "claudeLogin") {
+        didSet {
+            UserDefaults.standard.set(claudeLogin, forKey: "claudeLogin")
+            lastAccountFetch = nil
+            if !claudeLogin { accountClaude = nil; claudeLoginError = nil }
+            refresh()
+        }
+    }
+    @Published var claudeLoginError: String?
+    private var accountClaude: ProviderUsage?
+    private var lastAccountFetch: Date?
     @Published var visible = Prefs.visible {
         didSet { Prefs.visible = visible; WidgetCenter.shared.reloadAllTimelines() }
     }
@@ -41,7 +53,20 @@ final class MacModel: ObservableObject {
     }
 
     func refresh() {
-        let fresh = Collector.collect()
+        var fresh = Collector.collect()
+        // Duas fontes do Claude: fica a mais nova (a statusline no terminal, o login no painel do VS Code).
+        if let acc = accountClaude {
+            if let i = fresh.providers.firstIndex(where: { $0.id == "claude" }) {
+                if acc.observedAt > fresh.providers[i].observedAt { fresh.providers[i] = acc }
+            } else {
+                fresh.providers.insert(acc, at: 0)
+            }
+        }
+        // Pergunta à Anthropic no máximo a cada 5 minutos.
+        if claudeLogin, lastAccountFetch.map({ Date.now.timeIntervalSince($0) > 300 }) ?? true {
+            lastAccountFetch = .now
+            Task { await fetchAccount() }
+        }
         let changed = fresh.providers != snapshot.providers
         snapshot = fresh
         SharedStore.saveSnapshot(fresh)
@@ -87,6 +112,16 @@ final class MacModel: ObservableObject {
         pairing = p
         SharedStore.savePairing(p)
         Task { await push(force: true) }
+    }
+
+    private func fetchAccount() async {
+        do {
+            accountClaude = try await ClaudeAccount.fetch()
+            claudeLoginError = nil
+            refresh()
+        } catch {
+            claudeLoginError = error.localizedDescription
+        }
     }
 
     func connectClaude() {
@@ -407,6 +442,12 @@ struct MacMainView: View {
                             Button("CONECTAR CLAUDE CODE") { model.connectClaude() }.buttonStyle(ArcadeButtonStyle())
                         }
                         if let e = model.claudeError { Text(e).foregroundStyle(Arcade.red).font(.caption) }
+                        Divider().overlay(.white.opacity(0.1))
+                        Toggle("Ler pelo login do Claude Code (para quem usa o painel do VS Code)", isOn: $model.claudeLogin)
+                            .font(.caption).foregroundStyle(.white)
+                        Text("Usa a chave que o Claude Code já guardou; ela só vai para a Anthropic e não sai deste Mac. Na primeira vez, o macOS pergunta: responda Permitir sempre.")
+                            .font(.caption2).foregroundStyle(Arcade.dim)
+                        if let e = model.claudeLoginError { Text(e).foregroundStyle(Arcade.red).font(.caption) }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

@@ -115,6 +115,13 @@ struct SetupGuide: View {
                 if skipClaude { chip("Pulado", ok: true) } else { tiny("NÃO USO") { skipClaude = true } }
             }
             if let e = model.claudeError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
+            // O painel do VS Code não roda a statusline: aí os números vêm pelo login.
+            if model.claudeLogin {
+                if let e = model.claudeLoginError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
+                tiny("LENDO PELO LOGIN (VS CODE) · DESLIGAR") { model.claudeLogin = false }
+            } else if !hasClaude {
+                tiny("USA O CLAUDE NO PAINEL DO VS CODE? TOQUE AQUI") { model.claudeLogin = true }
+            }
         }
     }
 

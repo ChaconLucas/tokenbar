@@ -224,7 +224,7 @@ Cloudflare's free plan allows 100,000 writes per day. The Mac only sends when th
 |---|---|
 | iPhone says "Mac não encontrado no Wi-Fi" (Mac not found on Wi-Fi) | Same Wi-Fi? **Local Network** permission on (Settings → Privacy → Local Network → TokenBar)? Mac firewall allowing TokenBar? |
 | iPhone says "O Mac recusou a chave" (the Mac rejected the key) | Scan the QR again. |
-| Claude doesn't show up | Click **Conectar Claude Code** and open a Claude Code session. Check that `~/.tokenbar/claude.json` exists. |
+| Claude doesn't show up | Click **Conectar Claude Code** and send a message in Claude Code **in the terminal**. Using the **VS Code panel**? The statusline doesn't run there: use `claude` in VS Code's terminal, or turn on **Ler pelo login do Claude Code** in settings (macOS asks once: Always Allow). |
 | Codex doesn't show up | Use Codex once. The limits appear in the session files after the first response. |
 | Watch: "integrity could not be verified" | See **Install → Apple Watch**. |
 | Blank icon in the Dock | `killall Dock`. If it persists, restart the Mac (macOS icon cache). |

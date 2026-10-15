@@ -138,6 +138,8 @@ async function openSettings() {
     ? "Conectado pela statusline. Os números chegam enquanto alguma sessão do Claude Code estiver aberta."
     : "O Claude Code só entrega os limites para a statusline. O TokenBar lê essa cópia e mantém a sua statusline atual.";
   $("connect-claude").hidden = s.claudeConnected;
+  $("claude-login").checked = s.claudeLogin;
+  loginMsg($("claude-login-msg"), s.claudeLoginError);
   $("qr").innerHTML = s.qrSvg;
   $("code").textContent = s.code;
   $("server").value = s.server || "";
@@ -148,6 +150,14 @@ async function openSettings() {
 $("close-settings").onclick = () => { $("settings").hidden = true; };
 $("connect-claude").onclick = async () => {
   try { await invoke("connect_claude"); openSettings(); } catch (e) { $("claude-state").textContent = String(e); }
+};
+/** Ler o Claude pelo login salvo: o painel do VS Code não roda a statusline. */
+const loginMsg = (el, err) => { el.textContent = err || ""; el.hidden = !err; };
+async function setLogin(on) {
+  try { await invoke("set_claude_login", { on }); return null; } catch (e) { return String(e); }
+}
+$("claude-login").onchange = async (e) => {
+  loginMsg($("claude-login-msg"), await setLogin(e.target.checked));
 };
 $("save-server").onclick = async () => {
   try { await invoke("set_server", { url: $("server").value }); $("server-msg").textContent = "Salvo. Escaneie o QR de novo no celular."; }
@@ -166,6 +176,7 @@ const dots = slides.map((s, i) => {
   $("g-dots").appendChild(d); return d;
 });
 let guideTimer = null, device = store("guideDevice"), cur = 0, t0 = 0, raf = 0, seen = {};
+let claudeLogin = false;   // leitura pelo login ligada (último status)
 let andStep = 0;   // Android tem duas partes no passo do celular: baixar, depois parear
 
 function goTo(i) {
@@ -200,6 +211,9 @@ async function refreshGuide() {
   $("g-connected").hidden = !(claudeOk || s.claudeConnected);
   $("g-skip").hidden = claudeOk || skip;
   setDone("claude", claudeOk || skip);
+  claudeLogin = s.claudeLogin;
+  $("g-login-state").textContent = !s.claudeLogin ? "" : s.claudeLoginError || "Lendo pelo login ✓";
+  $("g-login-state").className = s.claudeLoginError ? "err" : "tag-ok";
 
   const codexOk = has("codex");
   chip("g-codex", codexOk ? "✓ Recebendo números" : "Esperando…", codexOk);
@@ -327,6 +341,12 @@ $("g-next").onclick = () => step(1);
 $("open-guide").onclick = openGuide;
 $("g-connect").onclick = async () => {
   try { await invoke("connect_claude"); refreshGuide(); } catch (e) { chip("g-claude", String(e), false); }
+};
+$("g-login").onclick = async (e) => {
+  e.preventDefault();
+  const err = await setLogin(!claudeLogin);
+  await refreshGuide();
+  if (err) $("g-login-state").textContent = err;
 };
 $("g-skip").onclick = (e) => { e.preventDefault(); store("claudeSkip", "1"); refreshGuide(); };
 document.addEventListener("keydown", (e) => {

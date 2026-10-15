@@ -23,6 +23,9 @@
       <h2>CLAUDE CODE</h2>
       <p id="claude-state"></p>
       <button id="connect-claude">CONECTAR CLAUDE CODE</button>
+      <label class="check"><input type="checkbox" id="claude-login"> Ler pelo login do Claude Code (para quem usa o painel do VS Code)</label>
+      <p class="dim">Usa a chave que o Claude Code já guardou; ela não sai deste computador.</p>
+      <p id="claude-login-msg" class="err" hidden></p>
     </div>
     <div class="panel row">
       <div id="qr"></div>
@@ -73,6 +76,7 @@
             <span id="g-connected" class="tag-ok" hidden>✓ CONECTADO</span>
             <a href="#" id="g-skip" class="link">Não uso</a>
           </div>
+          <p class="g-hint"><a href="#" id="g-login" class="link">USO NO PAINEL DO VS CODE</a> <span id="g-login-state"></span></p>
         </div>
       </article>
 

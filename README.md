@@ -222,7 +222,7 @@ O plano gratuito da Cloudflare permite 100 mil gravações por dia. O Mac só en
 |---|---|
 | iPhone diz "Mac não encontrado no Wi-Fi" | Mesmo Wi-Fi? Permissão de **Rede Local** ligada (Ajustes → Privacidade → Rede Local → TokenBar)? Firewall do Mac permitindo o TokenBar? |
 | iPhone diz "O Mac recusou a chave" | Escaneie o QR de novo. |
-| Claude não aparece | Clique em **Conectar Claude Code** e abra uma sessão do Claude Code. Confira se existe `~/.tokenbar/claude.json`. |
+| Claude não aparece | Clique em **Conectar Claude Code** e mande uma mensagem no Claude Code **pelo terminal**. Usa o **painel do VS Code**? Ali a statusline não roda: use `claude` no terminal do VS Code ou ligue **Ler pelo login do Claude Code** em Ajustes (o macOS pergunta uma vez: Permitir sempre). |
 | Codex não aparece | Use o Codex uma vez. Os limites aparecem nos arquivos de sessão depois da primeira resposta. |
 | Relógio: "integridade não pôde ser verificada" | Veja **Instalar → Apple Watch**. |
 | Ícone em branco no Dock | `killall Dock`. Se continuar, reinicie o Mac (cache de ícones do macOS). |

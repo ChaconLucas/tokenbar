@@ -29,6 +29,9 @@ h1 { font-size: 16px; letter-spacing: 4px; } h2 { font-size: 11px; letter-spacin
 .panel { background: linear-gradient(#050505, #111); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; font-size: 12px; }
 .panel.row { display: flex; gap: 14px; align-items: flex-start; }
 .panel p { margin-bottom: 8px; line-height: 1.4; } .dim { color: var(--dim); }
+.err { color: #ffb43a; }
+.check { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; cursor: pointer; }
+.check input { width: auto; margin: 0; accent-color: var(--cyan); }
 #qr svg { width: 140px; height: 140px; background: #fff; padding: 6px; border-radius: 8px; }
 .code { font-size: 22px; letter-spacing: 6px; font-weight: 800; margin-right: 8px; }
 button { font: inherit; font-size: 11px; letter-spacing: 1.5px; color: var(--cyan); background: rgba(90,216,255,0.08);
