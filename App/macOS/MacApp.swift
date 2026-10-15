@@ -190,10 +190,10 @@ struct TokenBarMacApp: App {
         .defaultSize(width: 620, height: 226)
 
         Window(Lang.t("Ajustes do TokenBar"), id: "settings") {
-            MacMainView().environmentObject(model)
+            SettingsView().environmentObject(model)
         }
         .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 520, height: 760)
+        .windowResizability(.contentSize)
 
         Window(Lang.t("Primeiros passos"), id: "setup") {
             SetupGuide().environmentObject(model)
@@ -235,6 +235,12 @@ struct MenuLabel: View {
                 } else {
                     delegate.openMain?()
                 }
+                #if DEBUG
+                // -TBOpenSettings YES: abre os Ajustes direto (capturas de tela).
+                if UserDefaults.standard.bool(forKey: "TBOpenSettings") {
+                    DispatchQueue.main.async { openWindow(id: "settings") }
+                }
+                #endif
                 // Primeira vez: o guia abre junto, por cima do aparelho.
                 if !UserDefaults.standard.bool(forKey: "setupDone") {
                     DispatchQueue.main.async { openWindow(id: "setup"); NSApp.activate() }
@@ -298,26 +304,6 @@ private struct MenuBackground: ViewModifier {
     }
 }
 
-struct UsageList: View {
-    var snapshot: UsageSnapshot
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { ctx in
-            VStack(alignment: .leading, spacing: 12) {
-                if snapshot.providers.isEmpty {
-                    ArcadePanel {
-                        Text(Lang.t("SEM SINAL. CONECTE O CLAUDE CODE OU USE O CODEX UMA VEZ."))
-                            .font(Arcade.label(11)).foregroundStyle(Arcade.dim)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                ForEach(snapshot.providers) { p in
-                    ArcadePanel { ProviderCard(provider: p, now: ctx.date) }
-                }
-            }
-        }
-    }
-}
 
 /// A janela principal: só o aparelho. Botão direito abre as opções; ⌘+ e ⌘− mudam o tamanho.
 struct DeviceWindow: View {
@@ -411,130 +397,6 @@ struct DeviceWindow: View {
     }
 }
 
-struct MacMainView: View {
-    @EnvironmentObject var model: MacModel
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("TOKENBAR").font(Arcade.digits(22)).tracking(4).foregroundStyle(.white)
-                        .shadow(color: Arcade.cyan.opacity(0.6), radius: 8)
-                    Spacer()
-                    Text("1UP").font(Arcade.label(11)).foregroundStyle(Arcade.amber)
-                        .shadow(color: Arcade.amber, radius: 4)
-                }
-                LangPicker()
-                Button(Lang.t("PRIMEIROS PASSOS: CONECTAR TUDO")) { openWindow(id: "setup") }
-                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.amber))
-                VersionRow()
-                SectionTitle(text: Lang.t("APARÊNCIA"))
-                ArcadePanel {
-                    ThemeEditor(theme: $model.theme).frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                SectionTitle(text: Lang.t("DETALHES"))
-                UsageList(snapshot: model.snapshot)
-
-                SectionTitle(text: "CLAUDE CODE")
-                ArcadePanel {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if model.claudeConnected {
-                            Label(Lang.t("CONECTADO PELA STATUSLINE"), systemImage: "checkmark.circle.fill")
-                                .font(Arcade.label(11)).foregroundStyle(Arcade.green)
-                            Text(Lang.t("Os números chegam enquanto alguma sessão do Claude Code estiver aberta."))
-                                .font(.caption).foregroundStyle(Arcade.dim)
-                        } else {
-                            Text(Lang.t("O Claude Code só entrega os limites para a statusline. O TokenBar passa a ler essa cópia e mantém a sua statusline atual."))
-                                .font(.caption).foregroundStyle(Arcade.dim)
-                            Button(Lang.t("CONECTAR CLAUDE CODE")) { model.connectClaude() }.buttonStyle(ArcadeButtonStyle())
-                        }
-                        if let e = model.claudeError { Text(e).foregroundStyle(Arcade.red).font(.caption) }
-                        Divider().overlay(.white.opacity(0.1))
-                        Toggle(Lang.t("Ler pelo login do Claude Code (para quem usa o painel do VS Code)"), isOn: $model.claudeLogin)
-                            .font(.caption).foregroundStyle(.white)
-                        Text(Lang.t("Usa a chave que o Claude Code já guardou; ela só vai para a Anthropic e não sai deste Mac. Na primeira vez, o macOS pergunta: responda Permitir sempre."))
-                            .font(.caption2).foregroundStyle(Arcade.dim)
-                        if let e = model.claudeLoginError { Text(e).foregroundStyle(Arcade.red).font(.caption) }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                SectionTitle(text: Lang.t("CELULAR E RELÓGIO"))
-                ArcadePanel {
-                    let p = model.pairing
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(alignment: .top, spacing: 14) {
-                            QRCode(text: p.link.absoluteString)
-                                .frame(width: 140, height: 140)
-                                .padding(6).background(.white, in: RoundedRectangle(cornerRadius: 8))
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(Lang.t("Aponte a câmera do iPhone para o código. O Watch recebe pelo iPhone."))
-                                    .font(.caption).foregroundStyle(.white)
-                                Text(p.server == nil
-                                     ? Lang.t("Modo Wi-Fi: o iPhone lê direto deste Mac quando estão na mesma rede.")
-                                     : Lang.t("Wi-Fi + servidor: na mesma rede lê direto; fora dela, pelo servidor."))
-                                    .font(.caption2).foregroundStyle(Arcade.dim)
-                                Button(Lang.t("COPIAR LINK")) {
-                                    NSPasteboard.general.clearContents()
-                                    NSPasteboard.general.setString(p.link.absoluteString, forType: .string)
-                                }
-                                .buttonStyle(ArcadeButtonStyle())
-                            }
-                        }
-                        Text(Lang.t("Quem tem o código vê os seus números. Não publique."))
-                            .font(.caption2).foregroundStyle(Arcade.dim)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                SectionTitle(text: Lang.t("RELÓGIO SEM CELULAR (WEAR OS)"))
-                ArcadePanel {
-                    TimelineView(.periodic(from: .now, by: 5)) { _ in
-                        HStack(spacing: 16) {
-                            Text(model.lan.currentCode())
-                                .font(Arcade.digits(30)).tracking(6).foregroundStyle(.white)
-                            Text(Lang.t("No relógio, abra o TokenBar e digite este código (mesmo Wi-Fi). Vale uma vez e troca a cada 10 min."))
-                                .font(.caption).foregroundStyle(Arcade.dim)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                SectionTitle(text: Lang.t("SERVIDOR (OPCIONAL)"))
-                ArcadePanel {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(Lang.t("Para ver fora de casa. Suba o seu (grátis, Cloudflare): veja o README. Deixe vazio para usar só o Wi-Fi."))
-                            .font(.caption).foregroundStyle(Arcade.dim)
-                        TextField("", text: $model.serverText, prompt: Text(Lang.t("https://tokenbar.sua-conta.workers.dev")).foregroundStyle(Arcade.dim))
-                            .textFieldStyle(.plain)
-                            .font(Arcade.label(12))
-                            .padding(8)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(.black).overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.white.opacity(0.1))))
-                        HStack {
-                            Button(Lang.t("SALVAR")) { model.saveServer() }.buttonStyle(ArcadeButtonStyle())
-                            if let t = model.lastPush {
-                                (Lang.isEN ? Text("SENT \(t, style: .relative) AGO") : Text("ENVIADO \(t, style: .relative) ATRÁS")).font(Arcade.label(9)).foregroundStyle(Arcade.dim)
-                            }
-                        }
-                        if let e = model.pushError { Text(e).font(.caption2).foregroundStyle(Arcade.red) }
-                        Text(Lang.t("Mudou o servidor? Escaneie o QR de novo no iPhone."))
-                            .font(.caption2).foregroundStyle(Arcade.dim)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(18)
-            .padding(.top, 14)
-        }
-        .scrollIndicators(.never)
-        .background(ArcadeBackground())
-        .environment(\.colorScheme, .dark)
-        .environment(\.locale, Lang.locale)
-        .frame(minWidth: 460, minHeight: 500)
-    }
-}
 
 struct QRCode: View {
     var text: String
@@ -557,21 +419,3 @@ struct QRCode: View {
     }
 }
 
-/// Versão instalada e, se houver, o botão da nova.
-struct VersionRow: View {
-    @ObservedObject private var updater = Updater.shared
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Text(Lang.f("VERSÃO %@", Updater.current)).font(Arcade.label(10)).foregroundStyle(Arcade.dim)
-            if let v = updater.available {
-                Button(updater.busy ? Lang.t("ATUALIZANDO…") : Lang.f("ATUALIZAR PARA %@", v)) { updater.install() }
-                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.green)).disabled(updater.busy)
-            } else {
-                Button(Lang.t("BUSCAR ATUALIZAÇÃO")) { Task { await updater.check() } }
-                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
-            }
-            if let e = updater.error { Text(e).font(.caption2).foregroundStyle(Arcade.red) }
-        }
-    }
-}

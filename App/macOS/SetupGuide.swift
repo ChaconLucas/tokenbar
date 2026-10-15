@@ -55,15 +55,27 @@ struct SetupGuide: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Text(Lang.t("PRIMEIROS PASSOS")).font(Arcade.label(11)).tracking(3).foregroundStyle(Arcade.dim)
+            // Os passos são as teclas do topo: o atual aceso, os feitos em verde.
+            HStack(spacing: 6) {
+                ForEach(0..<pages, id: \.self) { i in
+                    DotKey(text: stepName(i), on: i == page || done(i), color: done(i) ? Arcade.green : Arcade.cyan, dot: 1.5) {
+                        withAnimation(.easeOut(duration: 0.25)) { page = i }
+                    }
+                }
                 Spacer()
                 // Antes de ler: quem não fala português troca aqui, já na primeira tela.
                 if page == 0 { LangToggle() }
-                Button(Lang.t("PULAR")) { finish() }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
-                    .keyboardShortcut(.escape, modifiers: [])
+                DotKey(text: Lang.t("PULAR"), on: false, color: .white, dot: 1.5) { finish() }
             }
-            .padding(.horizontal, 18).padding(.top, 30)
+            .padding(.horizontal, 18).padding(.top, 34)
+            .background {
+                Group {
+                    Button("") { finish() }.keyboardShortcut(.escape, modifiers: [])
+                    Button("") { go(-1) }.keyboardShortcut(.leftArrow, modifiers: [])
+                    Button("") { page == pages - 1 ? finish() : go(1) }.keyboardShortcut(.rightArrow, modifiers: [])
+                }
+                .opacity(0)
+            }
 
             Group {
                 switch page {
@@ -76,15 +88,15 @@ struct SetupGuide: View {
             .id(page)
             .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
                                     removal: .move(edge: .leading).combined(with: .opacity)))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, 24)
 
             footer
         }
-        .background(ArcadeBackground())
+        .background(Color(red: 0.02, green: 0.02, blue: 0.03))
         .environment(\.colorScheme, .dark)
         .environment(\.locale, Lang.locale)
-        .frame(width: 560, height: 640)
+        .frame(width: 560, height: 620)
         .onAppear {
             #if DEBUG
             // -TBSetupPage N -TBSetupDevice android: abre direto numa tela (capturas de tela).
@@ -113,8 +125,7 @@ struct SetupGuide: View {
             } else if model.claudeConnected {
                 chip(Lang.t("Conectado. Mande uma mensagem no Claude Code…"), ok: false)
             } else {
-                Button(Lang.t("CONECTAR CLAUDE CODE")) { model.connectClaude() }
-                    .buttonStyle(ArcadeButtonStyle(tint: Art.claude)).controlSize(.large)
+                DotKey(text: Lang.t("CONECTAR"), on: true, color: Art.claude, dot: 2) { model.connectClaude() }
                 if skipClaude { chip(Lang.t("Pulado"), ok: true) } else { tiny(Lang.t("NÃO USO")) { skipClaude = true } }
             }
             if let e = model.claudeError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
@@ -145,18 +156,15 @@ struct SetupGuide: View {
 
     private var phone: some View {
         VStack(spacing: 14) {
-            HStack(spacing: 6) {
-                ForEach(Device.allCases, id: \.self) { d in
-                    Button { device = d.rawValue; androidStep = 0 } label: {
-                        VStack(spacing: 2) {
-                            Text(d.title)
-                            Text(d.note).font(.system(size: 8)).tracking(0).opacity(0.75)
-                        }
+            VStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    ForEach(Device.allCases, id: \.self) { d in
+                        DotKey(text: d.title, on: d == choice, color: Arcade.amber, dot: 1.4) { device = d.rawValue; androidStep = 0 }
                     }
-                    .buttonStyle(ArcadeButtonStyle(tint: d == choice ? Arcade.amber : Arcade.dim))
                 }
+                Text(choice.note).font(.caption).foregroundStyle(Arcade.amber.opacity(0.8))
             }
-            .padding(.top, 10)
+            .padding(.top, 14)
             switch choice {
             case .android:
                 let download = androidStep == 0
@@ -223,23 +231,12 @@ struct SetupGuide: View {
 
     private var footer: some View {
         HStack {
-            Button(Lang.t("VOLTAR")) { go(-1) }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+            DotKey(text: Lang.t("VOLTAR"), on: false, color: .white, dot: 1.6) { go(-1) }
                 .opacity(page == 0 ? 0 : 1).disabled(page == 0)
-                .keyboardShortcut(.leftArrow, modifiers: [])
-            Spacer()
-            HStack(spacing: 8) {
-                ForEach(0..<pages, id: \.self) { i in
-                    Circle()
-                        .fill(done(i) ? Arcade.green : (i == page ? .white : .white.opacity(0.2)))
-                        .frame(width: i == page ? 9 : 7, height: i == page ? 9 : 7)
-                        .onTapGesture { withAnimation(.easeOut(duration: 0.25)) { page = i } }
-                }
-            }
             Spacer()
             let last = page == pages - 1
-            Button(last ? Lang.t("COMEÇAR") : Lang.t("AVANÇAR")) { last ? finish() : go(1) }
-                .buttonStyle(ArcadeButtonStyle(tint: done(page) || last ? Arcade.green : Arcade.cyan))
-                .keyboardShortcut(.rightArrow, modifiers: [])
+            DotKey(text: last ? Lang.t("COMEÇAR") : Lang.t("AVANÇAR"), on: true,
+                   color: done(page) || last ? Arcade.green : Arcade.cyan, dot: 1.8) { last ? finish() : go(1) }
         }
         .padding(18)
     }
@@ -247,25 +244,25 @@ struct SetupGuide: View {
     // MARK: Peças
 
     private func slide<A: View, C: View>(art: A, title: String, text: String, @ViewBuilder action: () -> C) -> some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 16) {
             ArtFrame { art }
-                .frame(maxWidth: .infinity).frame(height: 250)
-                .padding(14)
-                .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.03)))
-            Text(title).font(Arcade.digits(24)).tracking(4).foregroundStyle(.white)
-                .shadow(color: Arcade.cyan.opacity(0.5), radius: 8)
-            Text(text).font(.callout).foregroundStyle(.white.opacity(0.75)).multilineTextAlignment(.center)
-            VStack(spacing: 8) { action() }
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity).frame(height: 230)
+            LEDText(text: title.replacingOccurrences(of: "· ", with: ""), color: .white, dot: 3)
+            Text(text).font(.title3).foregroundStyle(.white.opacity(0.78)).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 10) { action() }
         }
-        .padding(.top, 10)
     }
 
     private func chip(_ s: String, ok: Bool) -> some View {
-        Label(s, systemImage: ok ? "checkmark.circle.fill" : "hourglass")
-            .font(Arcade.label(11)).foregroundStyle(ok ? Arcade.green : .white.opacity(0.8))
-            .padding(.horizontal, 12).padding(.vertical, 6)
-            .background(Capsule().fill((ok ? Arcade.green : .white).opacity(0.1)))
+        LEDStatus(kind: ok ? .ok : .wait, text: s.uppercased())
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(Capsule().fill((ok ? Arcade.green : Arcade.amber).opacity(0.08)))
+    }
+
+    /// Nome curto do passo, na tecla do topo.
+    private func stepName(_ i: Int) -> String {
+        [Lang.t("CLAUDE"), "CODEX", Lang.t("CELULAR"), Lang.t("PRONTO")][i]
     }
 
     private func hint(_ s: String) -> some View {
@@ -275,7 +272,7 @@ struct SetupGuide: View {
     }
 
     private func tiny(_ title: String, _ action: @escaping () -> Void) -> some View {
-        Button(title, action: action).buttonStyle(.plain).font(Arcade.label(9)).foregroundStyle(Arcade.dim)
+        Button(title, action: action).buttonStyle(.plain).font(.caption).underline().foregroundStyle(.white.opacity(0.5))
     }
 
     /// No Android, o passo do celular tem duas partes (baixar, depois parear): AVANÇAR passa por elas.

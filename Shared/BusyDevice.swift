@@ -325,7 +325,7 @@ struct DotKeyFace: View {
             b.draw(text, x: 0, y: 0, value: 2)
             return b
         }()
-        let lit = on ? color : Color.white.opacity(0.32)
+        let lit = on ? color : Color.white.opacity(0.5)
         DotCanvas(bitmap: bitmap, dot: dot, textColor: lit, fieldColor: .clear, offColor: .clear, round: round)
             .shadow(color: on ? color.opacity(0.8) : .clear, radius: dot * 1.2)
             .padding(.horizontal, dot * 4)

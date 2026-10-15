@@ -25,7 +25,7 @@ enum DotFont {
         "A": [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
         "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
         "C": [".###.", "#...#", "#....", "#....", "#....", "#...#", ".###."],
-        "D": ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
+        "D": ["###..", "#..#.", "#...#", "#...#", "#...#", "#..#.", "###.."],
         "E": ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
         "F": ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
         "G": [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".####"],
@@ -53,8 +53,12 @@ enum DotFont {
         "Z": ["#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"],
     ]
 
+    /// Letra acentuada sem desenho próprio usa a base, como nos letreiros (Ç → C, Ã → A).
     static func glyph(_ c: Character) -> [String] {
-        glyphs[Character(c.uppercased())] ?? glyphs[" "]!
+        let up = Character(c.uppercased())
+        if let g = glyphs[up] { return g }
+        let base = String(up).folding(options: .diacriticInsensitive, locale: nil)
+        return base.first.flatMap { glyphs[$0] } ?? glyphs[" "]!
     }
 
     /// Largura em pontos de um texto, com 1 ponto entre letras (multiplicado pela escala).
