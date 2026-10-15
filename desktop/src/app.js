@@ -13,6 +13,7 @@ let snapshot = { providers: [], updatedAt: 0 };
 let windowChoice = localStorage.getItem("window") || "both";
 let hidden = new Set(JSON.parse(localStorage.getItem("hidden") || "[]"));
 let index = 0;
+let update = null, updating = false, updErr = false;   // versão nova; instalando agora; falhou há pouco
 
 const ids = () => {
   const have = snapshot.providers.map((p) => p.id);
@@ -73,6 +74,7 @@ function renderKeys() {
     right.appendChild(iconKey("✕", "Fechar", () => window.__TAURI__.window.getCurrentWindow().close()));
   } else {
     right.appendChild(iconKey("⧉", "Flutuante: pequeno, sempre na frente", () => invoke("open_mini")));
+    if (update) right.appendChild(key(updating ? "BAIXANDO" : updErr ? "ERRO" : "ATUALIZAR", "#59d973", true, installUpdate, `Atualizar para ${update}`));
     right.appendChild(iconKey("?", "Primeiros passos", openGuide));
     right.appendChild(iconKey("⚙", "Ajustes", openSettings));
   }
@@ -145,6 +147,9 @@ async function openSettings() {
   $("server").value = s.server || "";
   $("server-msg").textContent = s.pushError ? `Erro ao enviar: ${s.pushError}` : "";
   $("copy-link").onclick = () => navigator.clipboard.writeText(s.link);
+  $("version").textContent = s.version;
+  if (s.update) setUpdate(s.update);
+  $("update-msg").textContent = s.updateError ? `Erro: ${s.updateError}` : "";
   $("settings").hidden = false;
 }
 $("close-settings").onclick = () => { $("settings").hidden = true; };
@@ -163,6 +168,35 @@ $("save-server").onclick = async () => {
   try { await invoke("set_server", { url: $("server").value }); $("server-msg").textContent = "Salvo. Escaneie o QR de novo no celular."; }
   catch (e) { $("server-msg").textContent = String(e); }
 };
+
+// ---------- atualização (o Rust procura sozinho; aqui só mostra e instala) ----------
+function setUpdate(v) {
+  update = v;
+  $("install-update").textContent = `ATUALIZAR PARA ${v}`; $("install-update").hidden = false;
+  render();
+}
+async function installUpdate() {
+  if (updating) return;
+  updating = true; render(); $("update-msg").textContent = "Baixando…";
+  try { await invoke("install_update"); } catch (e) { updateError(e); }
+  updating = false; render();
+}
+let errTimer = 0;
+/** Erro breve: a tecla mostra ERRO por 4 s e o texto fica nos ajustes. */
+function updateError(e) {
+  $("update-msg").textContent = `Erro: ${e}`;
+  updErr = true; render();
+  clearTimeout(errTimer); errTimer = setTimeout(() => { updErr = false; render(); }, 4000);
+}
+$("check-update").onclick = async () => {
+  $("update-msg").textContent = "Buscando…";
+  try {
+    const v = await invoke("check_update");
+    if (v) setUpdate(v);
+    $("update-msg").textContent = v ? `Versão ${v} disponível.` : "Já está na versão mais nova.";
+  } catch (e) { $("update-msg").textContent = `Erro: ${e}`; }
+};
+$("install-update").onclick = installUpdate;
 
 // ---------- primeiros passos (carrossel: um passo por tela, desenho animado em cima) ----------
 const APK = "https://github.com/ChaconLucas/tokenbar/releases/latest/download/TokenBar-Android.apk";
@@ -358,7 +392,9 @@ document.addEventListener("keydown", (e) => {
 
 // ---------- dados ----------
 listen("snapshot", (e) => { snapshot = e.payload; render(); });
-invoke("status").then((s) => { snapshot = s.snapshot; render(); });
+listen("update-available", (e) => setUpdate(e.payload));
+listen("update-error", (e) => updateError(e.payload));
+invoke("status").then((s) => { snapshot = s.snapshot; if (s.update) setUpdate(s.update); else render(); });
 if (!isMini) {
   listen("show-guide", openGuide);
   if (store("guideDone") !== "1") openGuide();   // primeira abertura

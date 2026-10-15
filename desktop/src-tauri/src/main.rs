@@ -4,6 +4,7 @@
 mod collector;
 mod hook;
 mod net;
+mod update;
 
 use collector::UsageSnapshot;
 use net::{Lan, Pairing};
@@ -20,6 +21,9 @@ struct App {
     pairing: Mutex<Pairing>,
     lan: Arc<Mutex<Lan>>,
     push_error: Mutex<Option<String>>,
+    /// Versão nova encontrada (aparece na bandeja e na tecla ATUALIZAR).
+    update: Mutex<Option<String>>,
+    update_error: Mutex<Option<String>>,
 }
 
 #[derive(Serialize)]
@@ -35,6 +39,9 @@ struct Status {
     claude_login_error: Option<String>,
     push_error: Option<String>,
     last_client_ago: Option<u64>,
+    version: String,
+    update: Option<String>,
+    update_error: Option<String>,
 }
 
 fn qr_svg(text: &str) -> String {
@@ -44,7 +51,7 @@ fn qr_svg(text: &str) -> String {
 }
 
 #[tauri::command]
-fn status(app: State<Arc<App>>) -> Status {
+fn status(app: State<Arc<App>>, handle: AppHandle) -> Status {
     let p = app.pairing.lock().unwrap().clone();
     let link = p.link();
     let qr_svg = qr_svg(&link);
@@ -63,6 +70,9 @@ fn status(app: State<Arc<App>>) -> Status {
         claude_login_error: if claude_login { collector::claude_login_error() } else { None },
         push_error: app.push_error.lock().unwrap().clone(),
         last_client_ago,
+        version: handle.package_info().version.to_string(),
+        update: app.update.lock().unwrap().clone(),
+        update_error: app.update_error.lock().unwrap().clone(),
     }
 }
 
@@ -164,11 +174,16 @@ fn main() {
         pairing: Mutex::new(pairing),
         lan,
         push_error: Mutex::new(None),
+        update: Mutex::new(None),
+        update_error: Mutex::new(None),
     });
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, set_claude_login, set_server, open_mini, open_main, qr])
+        .invoke_handler(tauri::generate_handler![status, connect_claude, set_claude_login, set_server, open_mini, open_main, qr,
+            update::check_update, update::install_update])
         .setup(move |app| {
             let h = app.handle().clone();
             let open = MenuItem::with_id(app, "main", "Abrir aparelho", true, None::<&str>)?;
@@ -185,6 +200,7 @@ fn main() {
                     "main" => show_main(h),
                     "mini" => show_mini(h),
                     "guide" => { show_main(h); let _ = h.emit_to("main", "show-guide", ()); }
+                    "update" => update::install_bg(h),
                     "quit" => h.exit(0),
                     _ => {}
                 })
@@ -194,6 +210,7 @@ fn main() {
                     }
                 })
                 .build(app)?;
+            update::start(h.clone(), menu);
 
             // Coleta a cada 30 s: atualiza janelas, bandeja, Wi-Fi e servidor.
             let st = state.clone();

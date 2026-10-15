@@ -61,7 +61,7 @@ private val slides = listOf(
 
 /** Primeiros passos em 4 telas: o desenho mostra, a frase só confirma. */
 @Composable
-internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, onScan: () -> Unit, onSite: () -> Unit, onClose: () -> Unit) {
+internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, onScan: () -> Unit, onSite: () -> Unit, update: String?, onUpdate: () -> Unit, onClose: () -> Unit) {
     val pager = rememberPagerState { slides.size }
     val scope = rememberCoroutineScope()
     val loop = rememberInfiniteTransition(label = "guia")
@@ -77,6 +77,7 @@ internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, on
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("PRIMEIROS PASSOS  ${page + 1}/${slides.size}", gray)
                 Spacer(Modifier.weight(1f))
+                if (update != null) { Key(update, Palette.CODEX) { onUpdate() }; Spacer(Modifier.width(8.dp)) }
                 Key(if (paired) "FECHAR" else "PULAR", WHITE) { onClose() }
             }
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { p ->

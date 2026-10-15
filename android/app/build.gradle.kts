@@ -10,8 +10,8 @@ android {
         applicationId = "app.tokenbar"   // o relógio usa o mesmo id: é assim que o Wear OS liga os dois
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "0.3.0"
     }
     // Assinatura definitiva: a chave fica fora do repositório (~/.tokenbar-keys). Sem ela, gera só o debug.
     val keyFile = file(System.getProperty("user.home") + "/.tokenbar-keys/release.jks")
@@ -29,7 +29,7 @@ android {
             signingConfig = signingConfigs.findByName("release")
         }
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
 }

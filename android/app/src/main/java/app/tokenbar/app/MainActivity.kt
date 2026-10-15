@@ -33,6 +33,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import app.tokenbar.core.*
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val store by lazy { Store(this) }
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private var error by mutableStateOf<String?>(null)
     private var guide by mutableStateOf(false)
     private val prefs by lazy { getSharedPreferences("guia", MODE_PRIVATE) }
+    private val updater by lazy { Updater(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +64,9 @@ class MainActivity : ComponentActivity() {
         Sync.schedule(this)
 
         setContent {
+            val scope = rememberCoroutineScope()
+            LaunchedEffect(Unit) { updater.watch() }
+            val onUpdate = { scope.launch { updater.install() }; Unit }
             LaunchedEffect(pairing) {
                 while (pairing != null) {
                     Sync.refresh(this@MainActivity)
@@ -72,10 +77,10 @@ class MainActivity : ComponentActivity() {
             }
             Box(Modifier.fillMaxSize().background(Color.Black)) {
                 val paired = pairing != null
-                Device(snapshot, store, if (paired) error else null, paired, onGuide = { guide = true }, onUnpair = {
+                Device(snapshot, store, if (paired) error else null, paired, updater.label, onUpdate, onGuide = { guide = true }, onUnpair = {
                     store.pairing = null; pairing = null; guide = true
                 })
-                if (guide) Guide(paired, error, ::pairWith, ::scan, ::openSite) {
+                if (guide) Guide(paired, error, ::pairWith, ::scan, ::openSite, if (paired) null else updater.label, onUpdate) {
                     guide = false
                     if (!paired) { prefs.edit().putBoolean("pulou", true).apply(); error = null }
                 }
@@ -147,7 +152,7 @@ internal fun Key(label: String, color: Int, on: Boolean = true, big: Boolean = f
 
 /** O aparelho: teclas em cima, display de LED ocupando o resto; deslizar troca de IA. */
 @Composable
-private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired: Boolean, onGuide: () -> Unit, onUnpair: () -> Unit) {
+private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired: Boolean, update: String?, onUpdate: () -> Unit, onGuide: () -> Unit, onUnpair: () -> Unit) {
     var visible by remember { mutableStateOf(store.visible) }
     var window by remember { mutableStateOf(store.window) }
     val pager = rememberPagerState { visible.size }
@@ -166,6 +171,8 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired
                 Spacer(Modifier.width(8.dp))
             }
             Spacer(Modifier.weight(1f))
+            // Versão nova no GitHub: baixa e abre o instalador.
+            if (update != null) { Key(update, Palette.CODEX) { onUpdate() }; Spacer(Modifier.width(8.dp)) }
             Key(when (window) { "long" -> "7D"; "both" -> "5H 7D"; else -> "5H" }, 0xFFFFFFFF.toInt()) {
                 window = when (window) { "short" -> "long"; "long" -> "both"; else -> "short" }
                 store.window = window

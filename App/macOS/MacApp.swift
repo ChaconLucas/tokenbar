@@ -47,6 +47,7 @@ final class MacModel: ObservableObject {
 
     init() {
         refresh()
+        Updater.shared.start()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
             Task { @MainActor in self.refresh() }
         }
@@ -244,10 +245,16 @@ struct MenuLabel: View {
 
 struct MenuContent: View {
     @EnvironmentObject var model: MacModel
+    @ObservedObject private var updater = Updater.shared
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 10) {
+            if let v = updater.available {
+                menuButton(updater.busy ? "Atualizando…" : "Atualizar para a versão \(v)", "arrow.down.circle") { updater.install() }
+                    .disabled(updater.busy)
+                if let e = updater.error { Text(e).font(.caption).foregroundStyle(Arcade.red) }
+            }
             // O aparelho precisa de altura fixa: dentro do menu ele não tem de onde tirar o tamanho.
             BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
                        theme: model.theme, liquidGlass: true)
@@ -420,6 +427,7 @@ struct MacMainView: View {
                 }
                 Button("PRIMEIROS PASSOS: CONECTAR TUDO") { openWindow(id: "setup") }
                     .buttonStyle(ArcadeButtonStyle(tint: Arcade.amber))
+                VersionRow()
                 SectionTitle(text: "APARÊNCIA")
                 ArcadePanel {
                     ThemeEditor(theme: $model.theme).frame(maxWidth: .infinity, alignment: .leading)
@@ -544,5 +552,24 @@ struct QRCode: View {
         let img = NSImage(size: rep.size)
         img.addRepresentation(rep)
         return img
+    }
+}
+
+/// Versão instalada e, se houver, o botão da nova.
+struct VersionRow: View {
+    @ObservedObject private var updater = Updater.shared
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text("VERSÃO \(Updater.current)").font(Arcade.label(10)).foregroundStyle(Arcade.dim)
+            if let v = updater.available {
+                Button(updater.busy ? "ATUALIZANDO…" : "ATUALIZAR PARA \(v)") { updater.install() }
+                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.green)).disabled(updater.busy)
+            } else {
+                Button("BUSCAR ATUALIZAÇÃO") { Task { await updater.check() } }
+                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+            }
+            if let e = updater.error { Text(e).font(.caption2).foregroundStyle(Arcade.red) }
+        }
     }
 }
