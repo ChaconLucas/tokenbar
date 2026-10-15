@@ -50,59 +50,121 @@
     </div>
   </section>
 
-  <section id="guide" class="sheet" hidden>
-    <header data-tauri-drag-region><h1>PRIMEIROS PASSOS</h1><button id="close-guide">FECHAR</button></header>
-    <div class="panel step" id="step-claude">
-      <h2><b class="n">1</b>CLAUDE CODE</h2>
-      <p class="state" id="g-claude"></p>
-      <div id="g-claude-act"><button id="g-connect">CONECTAR CLAUDE CODE</button> <a href="#" id="g-skip" class="link">Não uso</a></div>
-    </div>
-    <div class="panel step" id="step-codex">
-      <h2><b class="n">2</b>CODEX</h2>
-      <p class="state" id="g-codex"></p>
-      <p class="dim">Outras IAs: veja docs/providers.md no GitHub.</p>
-    </div>
-    <div class="panel step" id="step-phone">
-      <h2><b class="n">3</b>CELULAR E RELÓGIO</h2>
-      <div class="choices">
-        <button data-dev="android">ANDROID</button><button data-dev="wear">WEAR OS</button><button data-dev="iphone">IPHONE</button><button data-dev="watch">APPLE WATCH</button><button data-dev="here">SÓ AQUI</button>
-      </div>
-      <div data-for="android" hidden>
-        <div class="row"><div class="qr" id="g-apk"></div><div>
-          <p><b>1.</b> Baixe o app no celular.</p>
-          <p class="dim">Abra o arquivo e permita instalar. Se o Play Protect avisar: Instalar assim mesmo.</p>
+  <section id="guide" class="sheet guide" hidden aria-label="Primeiros passos">
+    <button id="g-pular" class="g-pular" title="Pular (Esc)">PULAR</button>
+    <div class="g-view">
+
+      <article class="slide" data-key="claude">
+        <div class="g-art" data-tauri-drag-region><div class="stage s-term">
+          <div class="term">
+            <div class="term-bar"><i></i><i></i><i></i><span>claude</span></div>
+            <div class="term-in"><span class="type" style="--n:4">› oi</span><i class="caret"></i></div>
+            <div class="term-out">● Oi! Em que posso ajudar?</div>
+            <div class="term-status"><b>◆ Opus</b> · 5h 42% · 7d 18%</div>
+          </div>
+          <div class="flow"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i></div>
+          <div class="led" style="--c:#9e5cff"><span>CLAUDE</span><canvas data-draw="bar" data-color="#9e5cff" data-pct="42" style="width:84px;height:34px"></canvas></div>
         </div></div>
-        <div class="row"><div class="qr g-pair"></div><div>
-          <p><b>2.</b> No app, toque em ESCANEAR QR.</p>
-          <p class="state g-live"></p>
+        <div class="g-body">
+          <div class="g-head"><h2>CLAUDE CODE</h2><span class="chip" id="g-claude"></span></div>
+          <p class="g-say">Conecte e mande um “oi” no Claude Code.</p>
+          <div class="g-act">
+            <button id="g-connect" class="primary">CONECTAR CLAUDE CODE</button>
+            <span id="g-connected" class="tag-ok" hidden>✓ CONECTADO</span>
+            <a href="#" id="g-skip" class="link">Não uso</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-key="codex">
+        <div class="g-art" data-tauri-drag-region><div class="stage s-term">
+          <div class="term">
+            <div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div>
+            <div class="term-in"><span class="type" style="--n:7">$ codex</span><i class="caret"></i></div>
+            <div class="term-out">› Olá! O que vamos fazer?</div>
+            <div class="term-status"><b>◇ limites</b> · 5h 64% · 7d 30%</div>
+          </div>
+          <div class="flow"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i></div>
+          <div class="led" style="--c:#ee29c2"><span>CODEX</span><canvas data-draw="bar" data-color="#ee29c2" data-pct="64" style="width:84px;height:34px"></canvas></div>
         </div></div>
-      </div>
-      <div data-for="wear" hidden>
-        <p>Com celular Android pareado, o relógio recebe sozinho. Sem celular: instale o TokenBar-WearOS.apk (veja INSTALL.md) e digite este código no relógio:</p>
-        <p><span class="code" id="g-code"></span></p>
-        <p class="state g-live"></p>
-      </div>
-      <div data-for="iphone" hidden>
-        <p>O app de iPhone ainda não está na App Store: é instalado pelo Xcode num Mac (veja INSTALL.md no GitHub).</p>
-        <div class="row"><div class="qr g-pair"></div><div>
-          <p>Aponte a câmera → Abrir no TokenBar → permita Rede Local.</p>
-          <p class="state g-live"></p>
+        <div class="g-body">
+          <div class="g-head"><h2>CODEX</h2><span class="chip" id="g-codex"></span></div>
+          <p class="g-say">Use o Codex uma vez. Os números chegam sozinhos.</p>
+          <p class="g-hint">Outras IAs: docs/providers.md</p>
+        </div>
+      </article>
+
+      <article class="slide" data-key="phone">
+        <div class="g-art" data-tauri-drag-region><div class="stage s-phone">
+          <div class="scene-phone">
+            <canvas class="fakeqr" data-draw="qr" style="width:92px;height:92px"></canvas>
+            <div class="scan"></div>
+            <div class="phone">
+              <i class="notch"></i>
+              <div class="view"><i></i><i></i><i></i><i></i><b></b></div>
+              <canvas data-draw="phone" style="width:52px;height:96px"></canvas>
+            </div>
+          </div>
+          <div class="scene-watch">
+            <i class="strap up"></i><i class="strap down"></i><i class="crown"></i>
+            <div class="watch">
+              <span class="type w-digits" style="--n:6">000000</span>
+              <b class="w-ok">✓</b>
+              <canvas data-draw="watch" style="width:72px;height:44px"></canvas>
+            </div>
+            <div class="wifi"><i></i><i></i><i></i></div>
+          </div>
         </div></div>
-      </div>
-      <div data-for="watch" hidden><p>Vem junto com o app do iPhone. Pareie o iPhone e o relógio recebe sozinho.</p></div>
-      <div data-for="here" hidden><p class="state ok">Tudo certo: o TokenBar fica na bandeja do sistema.</p></div>
-      <p class="dim">Se o sistema perguntar sobre a rede/firewall, permita o TokenBar: é assim que o celular lê este computador.</p>
+        <div class="g-body">
+          <div class="g-head"><h2>CELULAR</h2><span class="chip" id="g-phone"></span></div>
+          <p class="g-say">Escolha o aparelho e aponte a câmera.</p>
+          <div class="choices">
+            <button data-dev="android">ANDROID</button><button data-dev="wear">WEAR OS</button><button data-dev="iphone">IPHONE</button><button data-dev="watch">APPLE WATCH</button><button data-dev="here">SÓ AQUI</button>
+          </div>
+          <div data-for="android" class="qrs" hidden>
+            <figure><div class="qr" id="g-apk"></div><figcaption><b>1</b> BAIXAR</figcaption></figure>
+            <figure><div class="qr g-pair"></div><figcaption><b>2</b> PAREAR</figcaption></figure>
+          </div>
+          <div data-for="iphone" class="qrs" hidden>
+            <figure><div class="qr g-pair"></div><figcaption>PAREAR</figcaption></figure>
+            <p class="g-line">Precisa do app instalado pelo Xcode (veja INSTALL.md).</p>
+          </div>
+          <div data-for="wear" hidden><span class="code big" id="g-code"></span><p class="g-line">Digite no relógio.</p></div>
+          <div data-for="watch" hidden><p class="g-line">Vem com o app do iPhone.</p></div>
+          <div data-for="here" hidden><p class="g-line">Os números ficam só neste computador.</p></div>
+          <p class="g-hint">Se pedir permissão de rede/firewall, permita.</p>
+        </div>
+      </article>
+
+      <article class="slide done" data-key="done">
+        <div class="g-art" data-tauri-drag-region><div class="stage s-done">
+          <div class="win">
+            <div class="win-keys"><i style="--c:#9e5cff"></i><i style="--c:#ee29c2"></i><s></s><s></s></div>
+            <canvas data-draw="device" style="width:156px;height:56px"></canvas>
+            <i class="finger"></i>
+          </div>
+          <div class="tray">
+            <i></i><i></i><i></i>
+            <span class="ring"><svg viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor">
+              <circle cx="10" cy="3" r="1.6"/><circle cx="15" cy="5" r="1.6"/><circle cx="17" cy="10" r="1.6"/><circle cx="15" cy="15" r="1.6"/>
+              <circle cx="10" cy="17" r="1.6"/><circle cx="5" cy="15" r="1.6"/><circle cx="3" cy="10" r="1.6"/><circle cx="5" cy="5" r="1.6"/></g></svg></span>
+            <em>14:32</em>
+          </div>
+          <svg class="cursor" viewBox="0 0 12 18" aria-hidden="true"><path d="M1 1 L1 15 L4.6 11.6 L7.2 17 L9.4 16 L6.8 10.8 L11.4 10.8 Z" fill="#fff" stroke="#000" stroke-width="1"/></svg>
+        </div></div>
+        <div class="g-body">
+          <div class="g-head"><h2>PRONTO</h2><span class="chip ok">✓ Tudo certo</span></div>
+          <p class="g-say">O TokenBar fica na bandeja, sempre à mão.</p>
+          <div class="tips"><span><b>◎</b> Clique no anel = aparelho</span><span><b>⇆</b> Arraste = troca de IA</span><span><b>?</b> = ver de novo</span></div>
+        </div>
+      </article>
+
     </div>
-    <div class="panel step" id="step-done">
-      <h2><b class="n">4</b>PRONTO</h2>
-      <ul>
-        <li>Clique no anel da bandeja para abrir o aparelho</li>
-        <li>⧉ abre o flutuante, sempre na frente</li>
-        <li>Arraste o display para trocar de IA</li>
-        <li>Reabra este guia no ?</li>
-      </ul>
-      <button id="g-start">COMEÇAR</button>
-    </div>
+    <nav class="g-nav" data-tauri-drag-region>
+      <button id="g-back">← VOLTAR</button>
+      <div id="g-dots" data-tauri-drag-region></div>
+      <button id="g-next">AVANÇAR →</button>
+    </nav>
   </section>
 <script type="module" src="app.js"></script>
 </body>

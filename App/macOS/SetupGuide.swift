@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Primeiros passos: leva a pessoa do zero ao celular conectado. Cada passo fica verde sozinho
-/// quando acontece (os números do Claude chegam, o celular lê o Mac pela primeira vez…).
+/// Primeiros passos: um passo por tela, com uma animação mostrando o gesto.
+/// Cada passo fica verde sozinho quando acontece; PULAR fecha, e o ? da barra de menu reabre.
 struct SetupGuide: View {
     @EnvironmentObject var model: MacModel
     @Environment(\.dismissWindow) private var dismissWindow
@@ -9,6 +9,8 @@ struct SetupGuide: View {
     @AppStorage("setupDevice") private var device = Device.android.rawValue
     @AppStorage("skipClaude") private var skipClaude = false
     @AppStorage("skipCodex") private var skipCodex = false
+    @State private var page = 0
+    @State private var androidStep = 0
     @State private var lastClient: Date?
 
     enum Device: String, CaseIterable {
@@ -26,33 +28,60 @@ struct SetupGuide: View {
 
     static let apkURL = "https://github.com/ChaconLucas/tokenbar/releases/latest/download/TokenBar-Android.apk"
     static let installURL = URL(string: "https://github.com/ChaconLucas/tokenbar/blob/main/INSTALL.md")!
+    private let pages = 4
 
     private var hasClaude: Bool { model.snapshot.providers.contains { $0.id == "claude" } }
     private var hasCodex: Bool { model.snapshot.providers.contains { $0.id == "codex" } }
     private var phoneConnected: Bool { lastClient.map { Date.now.timeIntervalSince($0) < 120 } ?? false }
+    private var choice: Device { Device(rawValue: device) ?? .android }
+
+    private func done(_ p: Int) -> Bool {
+        switch p {
+        case 0: hasClaude || skipClaude
+        case 1: hasCodex || skipCodex
+        case 2: phoneConnected || choice == .none
+        default: false
+        }
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("PRIMEIROS PASSOS").font(Arcade.digits(22)).tracking(4).foregroundStyle(.white)
-                    .shadow(color: Arcade.cyan.opacity(0.6), radius: 8)
-                Text("Quatro passos. Cada um fica verde sozinho quando der certo.")
-                    .font(.caption).foregroundStyle(Arcade.dim)
-
-                step(1, "CLAUDE CODE", done: hasClaude || skipClaude) { claude }
-                step(2, "CODEX", done: hasCodex || skipCodex) { codex }
-                step(3, "CELULAR E RELÓGIO", done: phoneConnected || device == Device.none.rawValue) { phone }
-                step(4, "PRONTO", done: false) { tips }
+        VStack(spacing: 0) {
+            HStack {
+                Text("PRIMEIROS PASSOS").font(Arcade.label(11)).tracking(3).foregroundStyle(Arcade.dim)
+                Spacer()
+                Button("PULAR") { finish() }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+                    .keyboardShortcut(.escape, modifiers: [])
             }
-            .padding(18)
-            .padding(.top, 14)
+            .padding(.horizontal, 18).padding(.top, 30)
+
+            Group {
+                switch page {
+                case 0: claude
+                case 1: codex
+                case 2: phone
+                default: ready
+                }
+            }
+            .id(page)
+            .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
+                                    removal: .move(edge: .leading).combined(with: .opacity)))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.horizontal, 24)
+
+            footer
         }
-        .scrollIndicators(.never)
         .background(ArcadeBackground())
         .environment(\.colorScheme, .dark)
-        .frame(minWidth: 480, minHeight: 520)
-        // Enquanto o guia está aberto, olha mais vezes: o passo fica verde logo que acontece.
+        .frame(width: 560, height: 640)
+        .onAppear {
+            #if DEBUG
+            // -TBSetupPage N -TBSetupDevice android: abre direto numa tela (capturas de tela).
+            page = UserDefaults.standard.integer(forKey: "TBSetupPage")
+            if let d = UserDefaults.standard.string(forKey: "TBSetupDevice") { device = d }
+            #endif
+        }
         .task {
+            // Enquanto o guia está aberto, olha mais vezes: o passo fica verde logo que acontece.
             while !Task.isCancelled {
                 lastClient = model.lan.lastClient
                 if !(hasClaude && hasCodex) { model.refresh() }
@@ -61,130 +90,176 @@ struct SetupGuide: View {
         }
     }
 
-    // MARK: Passos
+    // MARK: Telas
 
-    @ViewBuilder private var claude: some View {
-        if hasClaude {
-            ok("Recebendo os números do Claude Code.")
-        } else if model.claudeConnected {
-            wait("Conectado. Mande qualquer mensagem numa sessão do Claude Code para os números chegarem.")
-        } else {
-            note("O Claude Code só entrega os limites para a statusline. O TokenBar guarda uma cópia e mantém a statusline que você já tem (com backup do settings.json).")
-            HStack {
-                Button("CONECTAR CLAUDE CODE") { model.connectClaude() }.buttonStyle(ArcadeButtonStyle())
-                skip("NÃO USO") { skipClaude = true }
+    private var claude: some View {
+        slide(art: TerminalArt(command: "oi", color: Art.claude, fill: 0.62),
+              title: "CLAUDE CODE",
+              text: "Conecte uma vez. Depois, é só usar o Claude Code normalmente.") {
+            if hasClaude {
+                chip("Recebendo os números", ok: true)
+            } else if model.claudeConnected {
+                chip("Conectado. Mande uma mensagem no Claude Code…", ok: false)
+            } else {
+                Button("CONECTAR CLAUDE CODE") { model.connectClaude() }
+                    .buttonStyle(ArcadeButtonStyle(tint: Art.claude)).controlSize(.large)
+                if skipClaude { chip("Pulado", ok: true) } else { tiny("NÃO USO") { skipClaude = true } }
             }
+            if let e = model.claudeError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
         }
-        if let e = model.claudeError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
     }
 
-    @ViewBuilder private var codex: some View {
-        if hasCodex {
-            ok("Recebendo os números do Codex.")
-        } else {
-            wait("Nada a configurar: use o Codex uma vez e os limites chegam com a primeira resposta.")
-            skip("NÃO USO") { skipCodex = true }
+    private var codex: some View {
+        slide(art: TerminalArt(command: "codex", color: Art.codex, fill: 0.38),
+              title: "CODEX",
+              text: "Nada a configurar: use o Codex e os limites aparecem.") {
+            if hasCodex {
+                chip("Recebendo os números", ok: true)
+            } else if skipCodex {
+                chip("Pulado", ok: true)
+            } else {
+                chip("Esperando a primeira resposta do Codex…", ok: false)
+                tiny("NÃO USO") { skipCodex = true }
+            }
         }
-        note("Outras IAs: qualquer uma aparece com um arquivo em ~/.tokenbar/providers (veja docs/providers.md no GitHub).")
     }
 
-    @ViewBuilder private var phone: some View {
-        let choice = Device(rawValue: device) ?? .android
-        HStack(spacing: 6) {
-            ForEach(Device.allCases, id: \.self) { d in
-                Button(d.title) { device = d.rawValue }
-                    .buttonStyle(ArcadeButtonStyle(tint: d == choice ? Arcade.amber : Arcade.dim))
+    private var phone: some View {
+        VStack(spacing: 14) {
+            HStack(spacing: 6) {
+                ForEach(Device.allCases, id: \.self) { d in
+                    Button(d.title) { device = d.rawValue; androidStep = 0 }
+                        .buttonStyle(ArcadeButtonStyle(tint: d == choice ? Arcade.amber : Arcade.dim))
+                }
+            }
+            .padding(.top, 10)
+            switch choice {
+            case .android:
+                let download = androidStep == 0
+                slide(art: ScanArt { QRCode(text: download ? Self.apkURL : model.pairing.link.absoluteString) },
+                      title: download ? "1 · BAIXE O APP" : "2 · PAREIE",
+                      text: download ? "Aponte a câmera do celular e instale o arquivo." : "No app, toque em ESCANEAR QR.") {
+                    if download {
+                        Button("JÁ INSTALEI →") { withAnimation { androidStep = 1 } }.buttonStyle(ArcadeButtonStyle())
+                    } else {
+                        connection
+                    }
+                }
+            case .iphone:
+                slide(art: ScanArt { QRCode(text: model.pairing.link.absoluteString) },
+                      title: "IPHONE",
+                      text: "Câmera do iPhone no QR → Abrir no TokenBar.") {
+                    connection
+                    Link("O app de iPhone é instalado pelo Xcode: ver como", destination: Self.installURL)
+                        .font(.caption).foregroundStyle(Arcade.cyan)
+                }
+            case .wear:
+                TimelineView(.periodic(from: .now, by: 5)) { _ in
+                    let code = model.lan.currentCode()
+                    slide(art: WatchCodeArt(code: code),
+                          title: code,
+                          text: "Digite este código no relógio. Com celular Android, ele recebe sozinho.") {
+                        connection
+                    }
+                }
+            case .watch:
+                slide(art: ScanArt { QRCode(text: model.pairing.link.absoluteString) },
+                      title: "APPLE WATCH",
+                      text: "Vem junto com o app do iPhone: pareie o iPhone e pronto.") {
+                    connection
+                }
+            case .none:
+                slide(art: MenuBarArt(), title: "SÓ NO MAC", text: "Tudo certo: o TokenBar mora na barra de menu.") {
+                    chip("Pronto", ok: true)
+                }
             }
         }
-        switch choice {
-        case .android:
-            HStack(alignment: .top, spacing: 14) {
-                qr(Self.apkURL, "1. BAIXE O APP", "Aponte a câmera do celular. Abra o arquivo e permita instalar; se o Play Protect avisar, Instalar assim mesmo.")
-                qr(model.pairing.link.absoluteString, "2. PAREIE", "No app, toque em ESCANEAR QR e aponte para este código.")
+    }
+
+    private var ready: some View {
+        slide(art: MenuBarArt(),
+              title: "PRONTO",
+              text: "Clique nas barrinhas da barra de menu. Arraste o display para trocar de IA.") {
+            HStack(spacing: 6) {
+                hint("? = ver de novo")
+                hint("Mini = sempre na frente")
+                hint("Widgets: botão direito na mesa")
             }
-            connection
-        case .wear:
-            note("Com um celular Android pareado, o relógio recebe os números sozinho. Sem celular: instale o TokenBar-WearOS.apk (veja o guia de instalação) e digite no relógio:")
-            TimelineView(.periodic(from: .now, by: 5)) { _ in
-                Text(model.lan.currentCode()).font(Arcade.digits(30)).tracking(6).foregroundStyle(.white)
-            }
-            note("O código vale uma vez e troca a cada 10 minutos.")
-            Link("ABRIR GUIA DE INSTALAÇÃO", destination: Self.installURL).font(Arcade.label(10)).foregroundStyle(Arcade.cyan)
-            connection
-        case .iphone:
-            note("O app de iPhone ainda não está na App Store: ele é instalado pelo Xcode num Mac (o guia de instalação explica, ou peça para a sua IA).")
-            Link("ABRIR GUIA DE INSTALAÇÃO", destination: Self.installURL).font(Arcade.label(10)).foregroundStyle(Arcade.cyan)
-            qr(model.pairing.link.absoluteString, "PAREIE", "Com o app instalado, aponte a câmera do iPhone → Abrir no TokenBar → permita Rede Local.")
-            connection
-        case .watch:
-            note("O app do relógio vem junto com o do iPhone. Pareie o iPhone (escolha IPHONE acima) e o relógio recebe sozinho.")
-        case .none:
-            ok("Tudo certo: o TokenBar fica na barra de menu.")
         }
     }
 
     /// Verde quando um aparelho leu este Mac nos últimos 2 minutos.
     @ViewBuilder private var connection: some View {
         if phoneConnected {
-            ok("Aparelho conectado.")
+            chip("Aparelho conectado", ok: true)
         } else {
-            wait("Esperando o aparelho… Ele precisa estar no mesmo Wi-Fi que este Mac.")
-            note("Se o macOS perguntar sobre conexões de entrada, responda Permitir: é assim que o celular lê o Mac.")
+            chip("Esperando o aparelho (mesmo Wi-Fi)…", ok: false)
         }
     }
 
-    @ViewBuilder private var tips: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            note("• Clique nas barrinhas da barra de menu para o resumo; Mini abre o flutuante, sempre na frente.")
-            note("• Arraste o display para o lado para trocar de IA. Botão direito no aparelho: tamanho e tela cheia.")
-            note("• Widgets: botão direito na mesa → Editar Widgets → TokenBar. Central de Controle: Editar → TokenBar.")
-            note("• Este guia volta pelo botão Guia da barra de menu ou em Ajustes.")
+    private var footer: some View {
+        HStack {
+            Button("VOLTAR") { go(-1) }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+                .opacity(page == 0 ? 0 : 1).disabled(page == 0)
+                .keyboardShortcut(.leftArrow, modifiers: [])
+            Spacer()
+            HStack(spacing: 8) {
+                ForEach(0..<pages, id: \.self) { i in
+                    Circle()
+                        .fill(done(i) ? Arcade.green : (i == page ? .white : .white.opacity(0.2)))
+                        .frame(width: i == page ? 9 : 7, height: i == page ? 9 : 7)
+                        .onTapGesture { withAnimation(.easeOut(duration: 0.25)) { page = i } }
+                }
+            }
+            Spacer()
+            let last = page == pages - 1
+            Button(last ? "COMEÇAR" : "AVANÇAR") { last ? finish() : go(1) }
+                .buttonStyle(ArcadeButtonStyle(tint: done(page) || last ? Arcade.green : Arcade.cyan))
+                .keyboardShortcut(.rightArrow, modifiers: [])
         }
-        Button("COMEÇAR") {
-            setupDone = true
-            dismissWindow(id: "setup")
-        }
-        .buttonStyle(ArcadeButtonStyle(tint: Arcade.green))
+        .padding(18)
     }
 
     // MARK: Peças
 
-    private func step<C: View>(_ n: Int, _ title: String, done: Bool, @ViewBuilder content: () -> C) -> some View {
-        ArcadePanel {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Text(done ? "✓" : "\(n)")
-                        .font(Arcade.label(12)).foregroundStyle(.black)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(done ? Arcade.green : Arcade.amber))
-                    Text(title).font(Arcade.label(12)).tracking(2).foregroundStyle(.white)
-                }
-                content()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+    private func slide<A: View, C: View>(art: A, title: String, text: String, @ViewBuilder action: () -> C) -> some View {
+        VStack(spacing: 14) {
+            ArtFrame { art }
+                .frame(maxWidth: .infinity).frame(height: 250)
+                .padding(14)
+                .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.03)))
+            Text(title).font(Arcade.digits(24)).tracking(4).foregroundStyle(.white)
+                .shadow(color: Arcade.cyan.opacity(0.5), radius: 8)
+            Text(text).font(.callout).foregroundStyle(.white.opacity(0.75)).multilineTextAlignment(.center)
+            VStack(spacing: 8) { action() }
+            Spacer(minLength: 0)
         }
+        .padding(.top, 10)
     }
 
-    private func qr(_ text: String, _ title: String, _ caption: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(Arcade.label(10)).tracking(2).foregroundStyle(Arcade.amber)
-            QRCode(text: text).frame(width: 130, height: 130)
-                .padding(6).background(.white, in: RoundedRectangle(cornerRadius: 8))
-            Text(caption).font(.caption2).foregroundStyle(Arcade.dim).frame(width: 142, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+    private func chip(_ s: String, ok: Bool) -> some View {
+        Label(s, systemImage: ok ? "checkmark.circle.fill" : "hourglass")
+            .font(Arcade.label(11)).foregroundStyle(ok ? Arcade.green : .white.opacity(0.8))
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(Capsule().fill((ok ? Arcade.green : .white).opacity(0.1)))
     }
 
-    private func ok(_ s: String) -> some View {
-        Label(s, systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Arcade.green)
+    private func hint(_ s: String) -> some View {
+        Text(s).font(.caption2).foregroundStyle(Arcade.dim)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(Capsule().strokeBorder(.white.opacity(0.15)))
     }
-    private func wait(_ s: String) -> some View {
-        Label(s, systemImage: "hourglass").font(.caption).foregroundStyle(.white)
+
+    private func tiny(_ title: String, _ action: @escaping () -> Void) -> some View {
+        Button(title, action: action).buttonStyle(.plain).font(Arcade.label(9)).foregroundStyle(Arcade.dim)
     }
-    private func note(_ s: String) -> some View {
-        Text(s).font(.caption).foregroundStyle(Arcade.dim).fixedSize(horizontal: false, vertical: true)
+
+    private func go(_ step: Int) {
+        withAnimation(.easeOut(duration: 0.25)) { page = min(max(page + step, 0), pages - 1) }
     }
-    private func skip(_ title: String, _ action: @escaping () -> Void) -> some View {
-        Button(title, action: action).buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+
+    private func finish() {
+        setupDone = true
+        dismissWindow(id: "setup")
     }
 }

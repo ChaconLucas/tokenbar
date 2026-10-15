@@ -16,15 +16,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +39,8 @@ class MainActivity : ComponentActivity() {
     private var pairing by mutableStateOf<Pairing?>(null)
     private var snapshot by mutableStateOf(UsageSnapshot.EMPTY)
     private var error by mutableStateOf<String?>(null)
+    private var guide by mutableStateOf(false)
+    private val prefs by lazy { getSharedPreferences("guia", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +56,8 @@ class MainActivity : ComponentActivity() {
 
         pairing = store.pairing
         snapshot = store.snapshot
+        // O guia abre sozinho só para quem nunca pareou nem pulou.
+        guide = pairing == null && !prefs.getBoolean("pulou", false)
         handle(intent)
         Sync.schedule(this)
 
@@ -71,9 +71,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
             Box(Modifier.fillMaxSize().background(Color.Black)) {
-                if (pairing == null) PairScreen(error, ::pairWith, ::scan, ::openSite) else Device(snapshot, store, error, onUnpair = {
-                    store.pairing = null; pairing = null
+                val paired = pairing != null
+                Device(snapshot, store, if (paired) error else null, paired, onGuide = { guide = true }, onUnpair = {
+                    store.pairing = null; pairing = null; guide = true
                 })
+                if (guide) Guide(paired, error, ::pairWith, ::scan, ::openSite) {
+                    guide = false
+                    if (!paired) { prefs.edit().putBoolean("pulou", true).apply(); error = null }
+                }
             }
         }
     }
@@ -92,6 +97,7 @@ class MainActivity : ComponentActivity() {
         store.pairing = p
         pairing = p
         error = null
+        guide = false
     }
 
     private fun openSite() {
@@ -106,53 +112,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val mono = TextStyle(fontFamily = FontFamily.Monospace, color = Color.White, fontSize = 15.sp)
-
-/** Sem pareamento: o passo a passo para quem acabou de instalar. */
-@Composable
-private fun PairScreen(error: String?, onLink: (String) -> Unit, onScan: () -> Unit, onSite: () -> Unit) {
-    var text by remember { mutableStateOf("") }
-    val gray = mono.copy(color = Color.Gray, fontSize = 13.sp)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 32.dp, vertical = 20.dp)) {
-        Text("PRIMEIROS PASSOS", mono.copy(fontSize = 20.sp))
-        Spacer(Modifier.height(14.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("1. Instale o TokenBar no computador", mono)
-            Spacer(Modifier.width(16.dp))
-            Key("ABRIR SITE", 0xFFFFFFFF.toInt()) { onSite() }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text("Mac: curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh",
-            mono.copy(color = Color.Gray, fontSize = 11.sp))
-        Text("Windows: TokenBar-Windows-setup.exe nos Releases", gray)
-        Spacer(Modifier.height(12.dp))
-
-        Text("2. No computador, abra Primeiros passos → Celular e relógio", mono)
-        Text("Ele mostra um QR.", gray)
-        Spacer(Modifier.height(12.dp))
-
-        Text("3. Toque em ESCANEAR QR e aponte para o código", mono)
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Key("ESCANEAR QR", Palette.CODEX) { onScan() }
-            Spacer(Modifier.width(16.dp))
-            Text("ou cole o link", gray)
-            Spacer(Modifier.width(10.dp))
-            BasicTextField(text, { text = it }, textStyle = mono, cursorBrush = SolidColor(Color.White), singleLine = true,
-                modifier = Modifier.weight(1f).border(1.dp, Color.DarkGray, RoundedCornerShape(8.dp)).padding(10.dp))
-            Spacer(Modifier.width(10.dp))
-            Key("PAREAR", Palette.CLAUDE) { onLink(text) }
-        }
-        Spacer(Modifier.height(12.dp))
-
-        Text("Celular e computador no mesmo Wi-Fi. Para ver fora de casa, configure o servidor (opcional).", gray)
-        if (error != null) {
-            Spacer(Modifier.height(8.dp))
-            Text(error, mono.copy(color = Color(0xFFFF8A8A), fontSize = 13.sp))
-        }
-    }
-}
+internal val mono = TextStyle(fontFamily = FontFamily.Monospace, color = Color.White, fontSize = 15.sp)
 
 /** Quando não chega número: o que conferir. */
 @Composable
@@ -174,20 +134,20 @@ private fun Help(onClose: () -> Unit) {
 }
 
 @Composable
-private fun Text(s: String, style: TextStyle) = androidx.compose.foundation.text.BasicText(s, style = style)
+internal fun Text(s: String, style: TextStyle) = androidx.compose.foundation.text.BasicText(s, style = style)
 
 @Composable
-private fun Key(label: String, color: Int, on: Boolean = true, onClick: () -> Unit) {
+internal fun Key(label: String, color: Int, on: Boolean = true, big: Boolean = false, onClick: () -> Unit) {
     val c = Color(if (on) color else 0xFF666666.toInt())
     Box(
         Modifier.border(1.dp, c.copy(alpha = 0.6f), RoundedCornerShape(50)).background(Color.Black, RoundedCornerShape(50))
-            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 6.dp)
-    ) { Text(label, mono.copy(color = c, fontSize = 14.sp)) }
+            .clickable(onClick = onClick).padding(horizontal = if (big) 24.dp else 14.dp, vertical = if (big) 12.dp else 6.dp)
+    ) { Text(label, mono.copy(color = c, fontSize = if (big) 18.sp else 14.sp)) }
 }
 
 /** O aparelho: teclas em cima, display de LED ocupando o resto; deslizar troca de IA. */
 @Composable
-private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, onUnpair: () -> Unit) {
+private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired: Boolean, onGuide: () -> Unit, onUnpair: () -> Unit) {
     var visible by remember { mutableStateOf(store.visible) }
     var window by remember { mutableStateOf(store.window) }
     val pager = rememberPagerState { visible.size }
@@ -211,7 +171,12 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, onUnpa
                 store.window = window
             }
             Spacer(Modifier.width(8.dp))
-            Key("SAIR", 0xFFFF6B6B.toInt(), true) { onUnpair() }
+            // Sem pareamento não há número: a tecla leva de volta ao guia.
+            if (paired) {
+                Key("?", 0xFFFFFFFF.toInt()) { onGuide() }
+                Spacer(Modifier.width(8.dp))
+                Key("SAIR", 0xFFFF6B6B.toInt(), true) { onUnpair() }
+            } else Key("PAREAR", Palette.CLAUDE) { onGuide() }
         }
         Spacer(Modifier.height(8.dp))
         HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { page ->

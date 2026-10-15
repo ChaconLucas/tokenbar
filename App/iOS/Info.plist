@@ -37,6 +37,8 @@
 	<array>
 		<string>_tokenbar._tcp</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>A câmera lê o QR code que o computador mostra, para parear.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>O TokenBar procura o seu Mac no Wi-Fi para ler os limites direto dele, sem servidor.</string>
 	<key>TBAppGroup</key>

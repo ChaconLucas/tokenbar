@@ -163,7 +163,7 @@ struct TokenBarMacApp: App {
             SetupGuide().environmentObject(model)
         }
         .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 560, height: 780)
+        .windowResizability(.contentSize)
 
         MenuBarExtra {
             MenuContent().environmentObject(model)

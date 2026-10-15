@@ -38,6 +38,7 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         pairing = p
         SharedStore.savePairing(p)
         sendPairingToWatch()
+        UsageAlerts.requestPermission()
         Task { await refresh() }
     }
 
@@ -119,7 +120,8 @@ struct TokenBarPhoneApp: App {
             PhoneRootView()
                 .environmentObject(model)
                 .onAppear {
-                    UsageAlerts.requestPermission()
+                    // Avisos só fazem sentido com números chegando: sem pareamento, pede depois.
+                    if model.pairing != nil { UsageAlerts.requestPermission() }
                     PhoneModel.scheduleBackgroundRefresh()
                 }
                 .onOpenURL { model.pair(with: $0) }
@@ -142,6 +144,8 @@ struct PhoneRootView: View {
     @State private var visible = Prefs.visible
     @State private var windowChoice = Prefs.window
     @State private var showDetails = false
+    @State private var showGuide = false
+    @AppStorage("guideSkipped") private var guideSkipped = false
     @State private var theme = Prefs.theme
 
     var body: some View {
@@ -155,7 +159,7 @@ struct PhoneRootView: View {
             }
 
             if let hint {
-                Button { showDetails = true } label: {
+                Button { if model.pairing == nil { showGuide = true } else { showDetails = true } } label: {
                     Text(hint)
                         .font(Arcade.label(10)).tracking(1)
                         .padding(.horizontal, 12).padding(.vertical, 6)
@@ -169,14 +173,17 @@ struct PhoneRootView: View {
         .preferredColorScheme(.dark)
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
-        .sheet(isPresented: $showDetails) { PhoneDetails(theme: $theme).environmentObject(model) }
+        .sheet(isPresented: $showDetails) {
+            PhoneDetails(theme: $theme, showGuide: { showDetails = false; showGuide = true }).environmentObject(model)
+        }
+        .fullScreenCover(isPresented: $showGuide) { PhoneGuide().environmentObject(model) }
         .onChange(of: theme) { _, t in Prefs.theme = t; WidgetCenter.shared.reloadAllTimelines(); model.sendToWatch() }
         .onChange(of: visible) { _, v in Prefs.visible = v; WidgetCenter.shared.reloadAllTimelines() }
         .onChange(of: windowChoice) { _, v in Prefs.window = v; WidgetCenter.shared.reloadAllTimelines() }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
-            // Sem pareamento, o guia abre sozinho: sem ele o display não tem o que mostrar.
-            if model.pairing == nil { showDetails = true }
+            // Sem pareamento, o tutorial abre sozinho (a menos que a pessoa já tenha pulado).
+            if model.pairing == nil && !guideSkipped { showGuide = true }
         }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .task {
@@ -190,7 +197,8 @@ struct PhoneRootView: View {
     /// Aviso curto por cima do display quando falta algo; toca para resolver.
     /// Só erros: a falta de pareamento ou de dados o próprio letreiro de pontos já diz.
     private var hint: String? {
-        guard model.pairing != nil, let e = model.error else { return nil }
+        guard model.pairing != nil else { return "TOQUE PARA CONECTAR AO COMPUTADOR" }
+        guard let e = model.error else { return nil }
         return e.uppercased()
     }
 }
@@ -199,6 +207,7 @@ struct PhoneRootView: View {
 struct PhoneDetails: View {
     @EnvironmentObject var model: PhoneModel
     @Binding var theme: Theme
+    var showGuide: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
     @State private var pasted = ""
 
@@ -209,16 +218,9 @@ struct PhoneDetails: View {
                     SectionTitle(text: "PRIMEIROS PASSOS")
                     ArcadePanel {
                         VStack(alignment: .leading, spacing: 12) {
-                            GuideStep(n: 1, title: "INSTALE NO COMPUTADOR",
-                                      text: "O computador é quem lê os limites das IAs. No Mac, um comando no Terminal; no Windows, o instalador. Está tudo no GitHub.")
-                            Link("ABRIR GITHUB.COM/CHACONLUCAS/TOKENBAR", destination: URL(string: "https://github.com/ChaconLucas/tokenbar")!)
-                                .font(Arcade.label(10)).foregroundStyle(Arcade.cyan).padding(.leading, 30)
-                            GuideStep(n: 2, title: "ABRA O GUIA NO COMPUTADOR",
-                                      text: "No TokenBar do computador: Primeiros passos → Celular e relógio → IPHONE. Aparece um QR code.")
-                            GuideStep(n: 3, title: "APONTE A CÂMERA",
-                                      text: "Abra a Câmera do iPhone, aponte para o QR e toque em Abrir no TokenBar.")
-                            GuideStep(n: 4, title: "PERMITA A REDE LOCAL",
-                                      text: "Quando o iPhone perguntar, permita: é assim que ele acha o computador. Os dois precisam estar no mesmo Wi-Fi.")
+                            Text("Ainda não está conectado ao computador.").font(.callout).foregroundStyle(Arcade.dim)
+                            Button("VER COMO CONECTAR") { showGuide() }
+                                .buttonStyle(ArcadeButtonStyle(tint: Arcade.amber))
                             Divider().overlay(.white.opacity(0.1))
                             Text("OU COLE O LINK").font(Arcade.label(9)).tracking(2).foregroundStyle(Arcade.dim)
                             TextField("", text: $pasted, prompt: Text("tokenbar://pair?…").foregroundStyle(Arcade.dim))
@@ -264,6 +266,8 @@ struct PhoneDetails: View {
                     Text("MAC ENVIOU \(model.snapshot.updatedAt, style: .relative) ATRÁS")
                         .font(Arcade.label(9)).foregroundStyle(Arcade.dim)
                 }
+                Button("VER TUTORIAL") { showGuide() }
+                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
                 if model.pairing != nil {
                     Button("DESPAREAR") { model.unpair(); dismiss() }
                         .buttonStyle(ArcadeButtonStyle(tint: Arcade.red))

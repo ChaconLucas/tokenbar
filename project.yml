@@ -43,6 +43,7 @@ targets:
         TBAppGroup: $(TB_APP_GROUP)
         NSLocalNetworkUsageDescription: O TokenBar procura o seu Mac no Wi-Fi para ler os limites direto dele, sem servidor.
         NSBonjourServices: [_tokenbar._tcp]
+        NSCameraUsageDescription: A câmera lê o QR code que o computador mostra, para parear.
         UIBackgroundModes: [fetch]
         BGTaskSchedulerPermittedIdentifiers: [tokenbar.refresh]
         CFBundleURLTypes:
