@@ -78,3 +78,19 @@ pub fn install() -> Result<(), String> {
     if let Some(dir) = file.parent() { let _ = fs::create_dir_all(dir); }
     fs::write(&file, serde_json::to_string_pretty(&v).unwrap()).map_err(|e| e.to_string())
 }
+
+/// Desfaz a conexão: a statusline volta a ser a que a pessoa tinha (ou some, se não havia nenhuma).
+pub fn uninstall() -> Result<(), String> {
+    if !is_installed() { return Ok(()) }
+    let original = fs::read_to_string(tokenbar_dir().join("statusline-original")).unwrap_or_default();
+    let file = settings();
+    let mut v: Value = serde_json::from_str(&fs::read_to_string(&file).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    if original.trim().is_empty() {
+        if let Some(o) = v.as_object_mut() { o.remove("statusLine"); }
+    } else {
+        v["statusLine"] = serde_json::json!({ "type": "command", "command": original.trim() });
+    }
+    fs::write(&file, serde_json::to_string_pretty(&v).unwrap()).map_err(|e| e.to_string())?;
+    let _ = fs::remove_file(tokenbar_dir().join("claude.json"));
+    Ok(())
+}

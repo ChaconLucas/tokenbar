@@ -91,6 +91,22 @@ fn qr(text: String) -> String { qr_svg(&text) }
 #[tauri::command]
 fn connect_claude() -> Result<(), String> { hook::install() }
 
+#[tauri::command]
+fn disconnect_claude(app: State<Arc<App>>, handle: AppHandle) -> Result<(), String> {
+    hook::uninstall()?;
+    let snap = collector::collect();
+    *app.snapshot.lock().unwrap() = snap.clone();
+    let _ = handle.emit("snapshot", &snap);
+    Ok(())
+}
+
+/// Desconecta todos os aparelhos: chave nova e reinício (o anúncio no Wi-Fi leva a chave nova).
+#[tauri::command]
+fn reset_pairing(app: State<Arc<App>>, handle: AppHandle) {
+    app.pairing.lock().unwrap().renew();
+    handle.restart();
+}
+
 /// Ler o Claude pelo login salvo (para quem usa o painel do VS Code). Ao ligar, já tenta uma leitura.
 #[tauri::command]
 fn set_claude_login(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result<(), String> {
@@ -213,7 +229,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, set_claude_login, set_server, set_lang, open_mini, open_main, qr,
+        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_server, set_lang, open_mini, open_main, qr,
             update::check_update, update::install_update])
         .setup(move |app| {
             let h = app.handle().clone();

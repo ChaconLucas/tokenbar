@@ -38,6 +38,14 @@ impl Pairing {
 
     pub fn lan_id(&self) -> String { self.token.chars().take(8).collect() }
 
+    /// Chave nova: todo celular/relógio pareado perde o acesso até escanear o QR de novo.
+    pub fn renew(&mut self) {
+        let mut bytes = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut bytes);
+        self.token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes);
+        self.save();
+    }
+
     pub fn link(&self) -> String {
         let mut s = format!("tokenbar://pair?token={}", self.token);
         if let Some(srv) = &self.server { s.push_str("&server="); s.push_str(&urlencode(srv)); }

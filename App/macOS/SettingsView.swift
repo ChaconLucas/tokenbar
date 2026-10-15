@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Environment(\.openWindow) private var openWindow
     @AppStorage("settingsTab") private var tab = "general"
     @State private var lastClient: Date?
+    @State private var confirmReset = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -84,6 +85,7 @@ struct SettingsView: View {
                 LEDRow(label: "CLAUDE CODE", info: Lang.t("O Claude Code só entrega os limites para a statusline do terminal. O TokenBar guarda uma cópia e mantém a statusline que você já tem (com backup do settings.json).")) {
                     if model.claudeConnected {
                         status("claude")
+                        DotKey(text: Lang.t("DESCONECTAR"), on: false, color: .white, dot: 1.3) { model.disconnectClaude() }
                     } else {
                         DotKey(text: Lang.t("CONECTAR"), on: true, color: Art.claude, dot: 1.5) { model.connectClaude() }
                     }
@@ -140,6 +142,11 @@ struct SettingsView: View {
                             }
                             InfoTip(text: Lang.t("Quem tem o código vê os seus números. Não publique."))
                         }
+                        DotKey(text: Lang.t("DESCONECTAR APARELHOS"), on: true, color: Arcade.red, dot: 1.3) { confirmReset = true }
+                            .confirmationDialog(Lang.t("Desconectar todos os celulares e relógios? Eles vão precisar escanear o QR de novo."),
+                                                isPresented: $confirmReset) {
+                                Button(Lang.t("DESCONECTAR"), role: .destructive) { model.resetPairing() }
+                            }
                     }
                     Spacer(minLength: 0)
                 }

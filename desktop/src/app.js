@@ -78,6 +78,10 @@ function renderKeys() {
     if (update) right.appendChild(key(t(updating ? "BAIXANDO" : updErr ? "ERRO" : "ATUALIZAR"), "#59d973", true, installUpdate, f("Atualizar para {0}", update)));
     right.appendChild(iconKey("?", t("Primeiros passos"), openGuide));
     right.appendChild(iconKey("⚙", t("Ajustes"), openSettings));
+    // Sem moldura: minimizar e fechar moram aqui. Fechar esconde (segue coletando na bandeja).
+    const win = window.__TAURI__.window.getCurrentWindow();
+    right.appendChild(iconKey("—", t("Minimizar"), () => win.minimize()));
+    right.appendChild(iconKey("✕", t("Fechar (continua na bandeja; Sair no ícone)"), () => win.hide()));
   }
 }
 
@@ -141,6 +145,7 @@ async function openSettings() {
     ? t("Conectado pela statusline. Os números chegam enquanto alguma sessão do Claude Code estiver aberta.")
     : t("O Claude Code só entrega os limites para a statusline. O TokenBar lê essa cópia e mantém a sua statusline atual.");
   $("connect-claude").hidden = s.claudeConnected;
+  $("disconnect-claude").hidden = !s.claudeConnected;
   $("claude-login").checked = s.claudeLogin;
   loginMsg($("claude-login-msg"), s.claudeLoginError);
   $("qr").innerHTML = s.qrSvg;
@@ -154,6 +159,13 @@ async function openSettings() {
   $("settings").hidden = false;
 }
 $("close-settings").onclick = () => { $("settings").hidden = true; };
+$("disconnect-claude").onclick = async () => {
+  try { await invoke("disconnect_claude"); openSettings(); } catch (e) { $("claude-state").textContent = String(e); }
+};
+$("reset-pairing").onclick = async () => {
+  if (!confirm(t("Desconectar todos os celulares e relógios? Eles vão precisar escanear o QR de novo."))) return;
+  await invoke("reset_pairing");
+};
 $("connect-claude").onclick = async () => {
   try { await invoke("connect_claude"); openSettings(); } catch (e) { $("claude-state").textContent = String(e); }
 };

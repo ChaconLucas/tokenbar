@@ -80,4 +80,19 @@ enum ClaudeHook {
         let data = try! JSONSerialization.data(withJSONObject: [s], options: [.withoutEscapingSlashes])
         return String(decoding: data, as: UTF8.self).dropFirst().dropLast().description
     }
+
+    /// Desfaz a conexão: a statusline volta a ser a que a pessoa tinha (ou some, se não havia).
+    static func uninstall() throws {
+        guard isInstalled, let data = try? Data(contentsOf: settingsURL),
+              var obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        let original = ((try? String(contentsOf: originalFile, encoding: .utf8)) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if original.isEmpty {
+            obj.removeValue(forKey: "statusLine")
+        } else {
+            obj["statusLine"] = ["type": "command", "command": original]
+        }
+        let out = try JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .withoutEscapingSlashes])
+        try out.write(to: settingsURL, options: .atomic)
+        try? FileManager.default.removeItem(at: Collector.claudeFile)
+    }
 }

@@ -59,6 +59,9 @@ enum Lang {
 
     static let en: [String: String] = [
         // Ajustes em LED e guia
+        "DESCONECTAR": "DISCONNECT",
+        "DESCONECTAR APARELHOS": "DISCONNECT DEVICES",
+        "Desconectar todos os celulares e relógios? Eles vão precisar escanear o QR de novo.": "Disconnect all phones and watches? They will need to scan the QR again.",
         "GERAL": "GENERAL",
         "IAS": "AIS",
         "APARELHOS": "DEVICES",

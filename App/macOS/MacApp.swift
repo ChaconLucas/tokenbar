@@ -125,6 +125,25 @@ final class MacModel: ObservableObject {
         }
     }
 
+    func disconnectClaude() {
+        do {
+            try ClaudeHook.uninstall()
+            claudeError = nil
+        } catch {
+            claudeError = error.localizedDescription
+        }
+        refresh()
+    }
+
+    /// Chave nova: todo celular/relógio pareado perde o acesso até escanear o QR de novo.
+    func resetPairing() {
+        let p = Pairing(server: pairing.server, token: Pairing.newToken())
+        pairing = p
+        SharedStore.savePairing(p)
+        lastPush = nil
+        refresh()
+    }
+
     func connectClaude() {
         do {
             try ClaudeHook.install()

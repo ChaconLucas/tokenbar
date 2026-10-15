@@ -228,3 +228,4 @@ button.wide { align-self: stretch; padding: 8px; }
   .guide *, .guide *::before, .guide *::after { animation: none !important; transition-duration: 0s !important; }
   .slide, .slide.prev { transform: none; }
 }
+button.quiet { color: #ff8a8a; background: rgba(255,90,90,0.06); border-color: rgba(255,90,90,0.35); }

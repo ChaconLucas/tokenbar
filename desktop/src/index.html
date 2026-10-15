@@ -27,6 +27,7 @@
       <h2>CLAUDE CODE</h2>
       <p id="claude-state"></p>
       <button id="connect-claude" data-t>CONECTAR CLAUDE CODE</button>
+      <button id="disconnect-claude" class="quiet" data-t hidden>DESCONECTAR</button>
       <label class="check"><input type="checkbox" id="claude-login"> <span data-t>Ler pelo login do Claude Code (para quem usa o painel do VS Code)</span></label>
       <p class="dim" data-t>Usa a chave que o Claude Code já guardou; ela não sai deste computador.</p>
       <p id="claude-login-msg" class="err" hidden></p>
@@ -37,6 +38,7 @@
         <h2 data-t>CELULAR E RELÓGIO</h2>
         <p data-t>Aponte a câmera do celular para o código (app TokenBar → Escanear QR).</p>
         <button id="copy-link" data-t>COPIAR LINK</button>
+        <button id="reset-pairing" class="quiet" data-t>DESCONECTAR APARELHOS</button>
         <p class="dim" data-t>Quem tem o código vê os seus números. Não publique.</p>
       </div>
     </div>
