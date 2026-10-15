@@ -73,10 +73,11 @@ struct LiveSmall: View {
     var theme: Theme
 
     var body: some View {
-        MiniLEDRows(lines: Self.lines(state), theme: theme, header: "TOKENBAR",
+        // No relógio cabem 3 faixas sem cortar; as quinas arredondadas do cartão pedem margem.
+        MiniLEDRows(lines: Array(Self.lines(state).prefix(3)), theme: theme, header: "TOKENBAR",
                     badge: state.all ? MiniLine.windowLabel(state.window)
                         : "\(state.rows.first.map { UsageStyle.abbr($0.id) } ?? "") \(MiniLine.windowLabel(state.window))")
-            .padding(.horizontal, 8).padding(.vertical, 6)
+            .padding(.horizontal, 14).padding(.vertical, 10)
             .opacity(stale ? 0.55 : 1)
     }
 
