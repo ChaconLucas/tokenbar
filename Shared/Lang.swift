@@ -59,6 +59,11 @@ enum Lang {
 
     static let en: [String: String] = [
         // Ajustes em LED e guia
+        "MOSTRAR A %": "SHOW THE %",
+        "BARRA": "MENU BAR",
+        "OS DOIS": "BOTH",
+        "AJUSTES": "SETTINGS",
+        "Onde ver os números. NOTCH: uma pílula preta em volta da câmera (passe o mouse para abrir) e, na barra, só um anel pequeno. BARRA: as barrinhas com a % na barra de menu.": "Where to see the numbers. NOTCH: a black pill around the camera (hover to open) and just a small ring in the menu bar. MENU BAR: the little bars with the % in the menu bar.",
         "LIGAR": "TURN ON",
         "Lendo pelo login…": "Reading from the login…",
         "Claude sem números. Usa no painel do VS Code?": "No Claude numbers. Using the VS Code panel?",

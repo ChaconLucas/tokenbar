@@ -4,6 +4,31 @@ import AppKit
 /// Rótulo da barra de menu: uma mini barra de LED por IA, cheia até o gasto, com a % ao lado.
 enum MenuBarImage {
     @MainActor
+    /// Só o notch mostra os números: na barra fica um anel pequeno de 12 pontos (o maior gasto), sem duplicar.
+    static func ring(snapshot: UsageSnapshot, visible: [String], windowChoice: String, theme: Theme) -> NSImage {
+        let top = snapshot.providers.filter { visible.contains($0.id) }.compactMap { p -> (String, Double)? in
+            guard let w = Prefs.pickFrom(p, windowChoice == "both" ? "short" : windowChoice) else { return nil }
+            return (p.id, w.used())
+        }.max { $0.1 < $1.1 }
+        let view = Canvas { ctx, size in
+            let lit = Int(((top?.1 ?? 0) / 100 * 12).rounded())
+            let color = top.map { theme.fill($0.0, percent: $0.1) } ?? .white
+            for i in 0..<12 {
+                let a = Double(i) / 12 * 2 * .pi - .pi / 2
+                let c = CGPoint(x: 8 + 6 * cos(a), y: 9 + 6 * sin(a))
+                ctx.fill(Path(ellipseIn: CGRect(x: c.x - 1.4, y: c.y - 1.4, width: 2.8, height: 2.8)),
+                         with: .color(i < lit ? color : .white.opacity(0.3)))
+            }
+        }
+        .frame(width: 16, height: 18)
+        let r = ImageRenderer(content: view)
+        r.scale = NSScreen.main?.backingScaleFactor ?? 2
+        let img = r.nsImage ?? NSImage()
+        img.isTemplate = false
+        return img
+    }
+
+    @MainActor
     static func make(snapshot: UsageSnapshot, visible: [String], windowChoice: String, theme: Theme) -> NSImage {
         let items = Prefs.allProviders.filter { visible.contains($0) }.map { id -> (String, Double?) in
             let w = Prefs.pickFrom(snapshot.provider(id), windowChoice == "both" ? "short" : windowChoice)

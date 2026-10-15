@@ -58,8 +58,8 @@ struct SettingsView: View {
                           selection: Binding(get: { LangStore.shared.lang }, set: { LangStore.shared.lang = $0 }),
                           color: Arcade.amber)
             }
-            LEDRow(label: Lang.t("ILHA NO NOTCH"), info: Lang.t("Uma pílula preta em volta da câmera com a % de cada IA; passe o mouse para abrir.")) {
-                LEDSwitch(isOn: $model.notchIsland)
+            LEDRow(label: Lang.t("MOSTRAR A %"), info: Lang.t("Onde ver os números. NOTCH: uma pílula preta em volta da câmera (passe o mouse para abrir) e, na barra, só um anel pequeno. BARRA: as barrinhas com a % na barra de menu.")) {
+                LEDChoice(options: [("bar", Lang.t("BARRA")), ("notch", "NOTCH"), ("both", Lang.t("OS DOIS"))], selection: $model.showIn)
             }
             LEDRow(label: "CLAUDE") { LEDSwatches(value: $model.theme.claude) }
             LEDRow(label: "CODEX") { LEDSwatches(value: $model.theme.codex) }

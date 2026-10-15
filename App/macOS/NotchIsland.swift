@@ -16,6 +16,8 @@ final class NotchIsland: NSObject {
     private let state = NotchState()
     private weak var model: MacModel?
     private var openMain: (() -> Void)?
+    /// Abre os Ajustes (com a % só no notch, a ilha é a porta de entrada).
+    var openSettings: (() -> Void)?
     private var expandWork: DispatchWorkItem?
     private var collapseWork: DispatchWorkItem?
     private var shrinkWork: DispatchWorkItem?
@@ -196,7 +198,7 @@ struct NotchGeometry: Equatable {
     /// Curvinha côncava nos cantos de cima: a pílula "escorre" da borda da tela, como o próprio notch.
     static let flare: CGFloat = 7
     /// Cada asa (fora do notch) da pílula fechada.
-    static let wing: CGFloat = 74
+    static let wing: CGFloat = 62
 
     var collapsedSize: CGSize {
         CGSize(width: hasNotch ? notchWidth + 2 * Self.wing : 2 * Self.wing + 16, height: band)
@@ -449,6 +451,11 @@ struct NotchIslandView: View {
                     }
                     .buttonStyle(PressDown())
                     .help(Lang.t("Trocar a janela"))
+                    Button { NotchIsland.shared.openSettings?() } label: {
+                        NotchPill(text: Lang.t("AJUSTES"), color: .white.opacity(0.8), dot: 1.15)
+                    }
+                    .buttonStyle(PressDown())
+                    .help(Lang.t("Ajustes"))
                 }
             }
             .padding(.horizontal, 18)

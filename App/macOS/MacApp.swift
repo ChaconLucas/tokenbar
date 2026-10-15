@@ -46,12 +46,14 @@ final class MacModel: ObservableObject {
         didSet { Prefs.window = windowChoice; WidgetCenter.shared.reloadAllTimelines() }
     }
     /// Ilha no notch: ligada por padrão nos Macs com notch.
-    @Published var notchIsland = UserDefaults.standard.object(forKey: "notchIsland") as? Bool ?? NotchIsland.screenHasNotch {
+    /// Onde a % aparece: "bar" (barra de menu), "notch" (ilha; a barra vira só um anel) ou "both".
+    @Published var showIn = UserDefaults.standard.string(forKey: "showIn") ?? (NotchIsland.screenHasNotch ? "notch" : "bar") {
         didSet {
-            UserDefaults.standard.set(notchIsland, forKey: "notchIsland")
+            UserDefaults.standard.set(showIn, forKey: "showIn")
             NotchIsland.shared.setEnabled(notchIsland)
         }
     }
+    var notchIsland: Bool { showIn != "bar" }
 
     private var timer: Timer?
     private var lastPushed: UsageSnapshot?
@@ -197,7 +199,9 @@ final class MacModel: ObservableObject {
 
     /// Mini barras de LED da barra de menu (refeitas quando muda o número, a IA visível ou a cor).
     var menuImage: NSImage {
-        MenuBarImage.make(snapshot: snapshot, visible: visible, windowChoice: windowChoice, theme: theme)
+        showIn == "notch"
+            ? MenuBarImage.ring(snapshot: snapshot, visible: visible, windowChoice: windowChoice, theme: theme)
+            : MenuBarImage.make(snapshot: snapshot, visible: visible, windowChoice: windowChoice, theme: theme)
     }
 
     /// Texto curto: "C 32% · X 54%".
@@ -286,6 +290,7 @@ struct MenuLabel: View {
                 // Só na abertura do app: o rótulo da barra reaparece a cada clique, e isso não pode reabrir janela.
                 guard !MenuLabel.launched else { return }
                 MenuLabel.launched = true
+                NotchIsland.shared.openSettings = { openWindow(id: "settings"); NSApp.activate() }
                 NotchIsland.shared.start(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })
                 // Abre um só: o flutuante, se era ele que estava aberto; senão, o aparelho grande.
                 if UserDefaults.standard.bool(forKey: "miniOpen") || UserDefaults.standard.bool(forKey: "TBMini") {
