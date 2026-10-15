@@ -417,7 +417,7 @@ struct NotchIslandView: View {
     }
 
     private func blockHeight(dot: CGFloat) -> CGFloat {
-        window == "both" ? 14 * dot + dot * 2 : 9 * dot
+        window == "both" ? 18 * dot + dot * 2 : 9 * dot
     }
 
     private func blockSpacing(dot: CGFloat) -> CGFloat { window == "both" ? dot * 5.5 : 10 }
@@ -469,8 +469,8 @@ struct NotchIslandView: View {
                     ForEach(rows) { row in
                         if window == "both" {
                             VStack(spacing: dot * 2) {
-                                NotchLine(row: row, window: "short", left: row.name, right: "5H", now: now, theme: theme, dot: dot, rows: 7)
-                                NotchLine(row: row, window: "long", left: nil, right: "7D", now: now, theme: theme, dot: dot, rows: 7)
+                                NotchLine(row: row, window: "short", left: row.name, right: "5H", now: now, theme: theme, dot: dot, rows: 9)
+                                NotchLine(row: row, window: "long", left: nil, right: "7D", now: now, theme: theme, dot: dot, rows: 9)
                             }
                         } else {
                             NotchLine(row: row, window: window, left: row.name, right: nil, now: now, theme: theme, dot: dot, rows: 9)
