@@ -10,7 +10,7 @@ android {
         applicationId = "app.tokenbar"   // igual ao do celular: o Wear OS só liga apps com o mesmo id
         minSdk = 30
         targetSdk = 34
-        versionCode = 3
+        versionCode = 4
         versionName = "0.3.0"
     }
     // Assinatura definitiva: a chave fica fora do repositório (~/.tokenbar-keys). Sem ela, gera só o debug.
