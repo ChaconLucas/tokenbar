@@ -238,6 +238,8 @@ export async function collect(): Promise<Snapshot> {
 const KNOWN: Record<string, { abbr: string; color: string }> = {
   claude: { abbr: "CL", color: "#9e5cff" },
   codex: { abbr: "CX", color: "#ee29c2" },
+  copilot: { abbr: "CP", color: "#3fb950" },
+  windsurf: { abbr: "WS", color: "#14b8a6" },
 };
 const EXTRA = ["#ff9e33", "#59d973", "#ffd940", "#6699ff", "#ff73a6"];
 const hash = (s: string) => [...s].reduce((h, c) => (h * 33 + c.charCodeAt(0)) | 0, 5381);

@@ -1,0 +1,6 @@
+{
+  "view.usage": "Usage",
+  "config.statusStyle": "How the status bar shows each AI.",
+  "config.statusStyle.dots": "One item per AI, in its color, with a 10-dot meter and the countdown: CL ●●●○○○○○○○ 28% · 4:12",
+  "config.statusStyle.compact": "A single item with the percentages only: CL 28% · CX 0%"
+}

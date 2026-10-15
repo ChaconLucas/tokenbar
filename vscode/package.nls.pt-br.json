@@ -1,0 +1,6 @@
+{
+  "view.usage": "Uso",
+  "config.statusStyle": "Como a barra de status mostra cada IA.",
+  "config.statusStyle.dots": "Um item por IA, na cor dela, com medidor de 10 pontos e o tempo até zerar: CL ●●●○○○○○○○ 28% · 4:12",
+  "config.statusStyle.compact": "Um item só, apenas com as porcentagens: CL 28% · CX 0%"
+}

@@ -85,8 +85,10 @@ function drawPage(ctx, w, h, windows, base) {
     if (win) {
       const label = (win.label || "").toUpperCase();
       const big = `${Math.min(Math.round(pct), 999)}%`;
-      L.draw(label, 3, Math.floor((bandRows - 7) / 2));
-      L.draw(big, leftCols - 3 - textWidth(big, k), Math.floor((bandRows - 7 * k) / 2), k);
+      const bigX = leftCols - 3 - textWidth(big, k);
+      // Narrow block: the big % wins; the window label goes only when it does not collide.
+      if (3 + textWidth(label) + 5 <= bigX) L.draw(label, 3, Math.floor((bandRows - 7) / 2));
+      L.draw(big, bigX, Math.floor((bandRows - 7 * k) / 2), k);
     } else {
       L.center(tr("SEM DADOS"), Math.floor((bandRows - 7) / 2));
     }
@@ -94,7 +96,8 @@ function drawPage(ctx, w, h, windows, base) {
     const R = new Grid(rightCols, bandRows);
     let t = timeLeft(win, now(), true);
     if (textWidth(t, k) + 4 > rightCols) t = timeLeft(win, now(), false);
-    R.center(t, Math.floor((bandRows - 7 * k) / 2), k);
+    const kr = textWidth(t, k) + 4 > rightCols ? 1 : k;
+    R.center(t, Math.floor((bandRows - 7 * kr) / 2), kr);
     paint(ctx, R, offX + (leftCols + gapCols) * dot, y, dot, "#ffffff", "#ffffff", false);
   });
 }

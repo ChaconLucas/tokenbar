@@ -10,13 +10,19 @@ import {
 import { t, setLanguage } from "./i18n";
 
 type WindowChoice = "5h" | "7d" | "both";
+type StatusStyle = "dots" | "compact";
 const REPO = "https://github.com/ChaconLucas/tokenbar";
 const WARN_AT = 85;
+const ERROR_AT = 95;
 const REFRESH_MS = 30_000;
+const PRIORITY = 100;
+const VIEW_ID = "tokenbar.usage";
+const CONTAINER_CMD = "workbench.view.extension.tokenbar";
 
-let item: vscode.StatusBarItem;
+/** Status bar items, keyed by provider id ("" = the single compact / empty item). */
+const items = new Map<string, vscode.StatusBarItem>();
 let snapshot: Snapshot | undefined;
-let panel: vscode.WebviewPanel | undefined;
+let usageView: UsageViewProvider | undefined;
 const watchers = new Map<string, fs.FSWatcher>();
 let debounce: NodeJS.Timeout | undefined;
 let refreshing = false;
@@ -26,6 +32,7 @@ const windowChoice = (): WindowChoice => {
   const v = cfg().get<string>("window", "5h");
   return v === "7d" || v === "both" ? v : "5h";
 };
+const statusStyle = (): StatusStyle => (cfg().get<string>("statusStyle", "dots") === "compact" ? "compact" : "dots");
 
 function visibleProviders(): Provider[] {
   const all = snapshot?.providers ?? [];
@@ -36,6 +43,9 @@ function visibleProviders(): Provider[] {
 /** First window = the short one (5h), second = the long one (7d). */
 const shortW = (p: Provider) => p.windows[0];
 const longW = (p: Provider) => p.windows[1];
+/** The windows the status bar shows for one AI under the current choice. */
+const shownWindows = (p: Provider, choice: WindowChoice): (UsageWindow | undefined)[] =>
+  choice === "7d" ? [longW(p) ?? shortW(p)] : choice === "both" && longW(p) ? [shortW(p), longW(p)] : [shortW(p)];
 
 function duration(sec: number): string {
   const s = Math.max(0, Math.floor(sec));
@@ -43,6 +53,14 @@ function duration(sec: number): string {
   if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}h ${m}m`;
   return `${Math.max(m, s > 0 ? 1 : 0)}m`;
+}
+
+/** Compact countdown for the status bar: "4:12" under a day, "5d" beyond. */
+function countdown(w: UsageWindow | undefined, now = Date.now() / 1000): string | undefined {
+  if (!w?.resetsAt || w.resetsAt <= now) return undefined;
+  const s = Math.floor(w.resetsAt - now);
+  if (s >= 86400) return `${Math.floor(s / 86400)}d`;
+  return `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`;
 }
 
 function resetText(w: UsageWindow, now: number): string {
@@ -53,30 +71,90 @@ function resetText(w: UsageWindow, now: number): string {
 
 const pct = (w: UsageWindow | undefined) => `${Math.round(usedNow(w))}%`;
 
+/** "●●●○○○○○○○": lit dots = used. Any usage lights at least one dot. */
+function dots(used: number, n: number): string {
+  const lit = used <= 0 ? 0 : Math.min(n, Math.max(1, Math.round((used / 100) * n)));
+  return "●".repeat(lit) + "○".repeat(n - lit);
+}
+
+function getItem(key: string, priority: number, name: string): vscode.StatusBarItem {
+  let it = items.get(key);
+  if (!it) {
+    it = vscode.window.createStatusBarItem(key ? `tokenbar.status.${key}` : "tokenbar.status", vscode.StatusBarAlignment.Right, priority);
+    it.command = "tokenbar.toggleWindow";
+    items.set(key, it);
+  }
+  it.name = name;
+  return it;
+}
+
+function dropItemsExcept(keep: Set<string>) {
+  for (const [k, it] of items) if (!keep.has(k)) { it.dispose(); items.delete(k); }
+}
+
+const heat = (used: number) =>
+  used >= ERROR_AT ? new vscode.ThemeColor("statusBarItem.errorBackground")
+  : used >= WARN_AT ? new vscode.ThemeColor("statusBarItem.warningBackground")
+  : undefined;
+
 function render() {
   const providers = visibleProviders();
   const choice = windowChoice();
+  postToView();
+
   if (!providers.length) {
-    item.text = "$(pulse) TokenBar";
-    item.backgroundColor = undefined;
-    item.tooltip = new vscode.MarkdownString(`**${t("No AI usage data yet")}**\n\n${t("Install the TokenBar app, or use Claude Code / Codex once, so the limits show up here.")}`);
-    item.show();
+    dropItemsExcept(new Set([""]));
+    const it = getItem("", PRIORITY, "TokenBar");
+    it.text = "$(pulse) TokenBar";
+    it.color = undefined;
+    it.backgroundColor = undefined;
+    it.tooltip = new vscode.MarkdownString(`**${t("No AI usage data yet")}**\n\n${t("Install the TokenBar app, or use Claude Code / Codex once, so the limits show up here.")}`);
+    it.show();
     return;
   }
 
-  const parts = providers.map((p) => {
-    const s = shortW(p), l = longW(p);
-    if (choice === "7d") return `${abbrOf(p)} ${pct(l ?? s)}`;
-    if (choice === "both" && l) return `${abbrOf(p)} ${Math.round(usedNow(s))}/${pct(l)}`;
-    return `${abbrOf(p)} ${pct(s)}`;
-  });
-  item.text = `$(pulse) ${parts.join(" · ")}`;
+  const tip = tooltip(providers, choice);
 
-  const hot = providers.some((p) => p.windows.some((w) => usedNow(w) >= WARN_AT));
-  item.backgroundColor = hot ? new vscode.ThemeColor("statusBarItem.warningBackground") : undefined;
-  item.tooltip = tooltip(providers, choice);
-  item.show();
-  postToPanel();
+  if (statusStyle() === "compact") {
+    dropItemsExcept(new Set([""]));
+    const it = getItem("", PRIORITY, "TokenBar");
+    const parts = providers.map((p) => {
+      const s = shortW(p), l = longW(p);
+      if (choice === "7d") return `${abbrOf(p)} ${pct(l ?? s)}`;
+      if (choice === "both" && l) return `${abbrOf(p)} ${Math.round(usedNow(s))}/${pct(l)}`;
+      return `${abbrOf(p)} ${pct(s)}`;
+    });
+    it.text = `$(pulse) ${parts.join(" · ")}`;
+    it.color = undefined;
+    const hot = Math.max(...providers.flatMap((p) => p.windows.map((w) => usedNow(w))));
+    it.backgroundColor = hot >= WARN_AT ? new vscode.ThemeColor("statusBarItem.warningBackground") : undefined;
+    it.tooltip = tip;
+    it.show();
+    return;
+  }
+
+  // "dots": one item per AI, in the AI's color, grouped on the right in the providers' order.
+  dropItemsExcept(new Set(providers.map((p) => p.id)));
+  providers.forEach((p, i) => {
+    const it = getItem(p.id, PRIORITY - i * 0.001, `TokenBar — ${p.name}`);
+    const ws = shownWindows(p, choice);
+    let text: string;
+    if (ws.length > 1) {
+      text = `${abbrOf(p)} ${ws.map((w) => `${dots(usedNow(w), 5)} ${Math.round(usedNow(w))}`).join(" · ")}`;
+    } else {
+      const w = ws[0];
+      const cd = countdown(w);
+      text = `${abbrOf(p)} ${dots(usedNow(w), 10)} ${pct(w)}${cd ? ` · ${cd}` : ""}`;
+    }
+    it.text = text;
+    it.color = colorOf(p);
+    it.backgroundColor = heat(Math.max(0, ...ws.map((w) => usedNow(w))));
+    it.tooltip = tip;
+    it.accessibilityInformation = {
+      label: `${p.name}: ${ws.map((w) => `${w?.label || w?.id || ""} ${pct(w)}`).join(", ")}`,
+    };
+    it.show();
+  });
 }
 
 function tooltip(providers: Provider[], choice: WindowChoice): vscode.MarkdownString {
@@ -151,10 +229,25 @@ async function ensureWatchers() {
 
 // MARK: Commands
 
+async function setWindow(choice: WindowChoice) {
+  await cfg().update("window", choice, vscode.ConfigurationTarget.Global);
+}
+
 async function toggleWindow() {
   const order: WindowChoice[] = ["5h", "7d", "both"];
-  const next = order[(order.indexOf(windowChoice()) + 1) % order.length];
-  await cfg().update("window", next, vscode.ConfigurationTarget.Global);
+  await setWindow(order[(order.indexOf(windowChoice()) + 1) % order.length]);
+}
+
+/** Shows / hides one AI (the `tokenbar.providers` setting); at least one stays visible. */
+async function toggleProvider(id: string) {
+  const all = (snapshot?.providers ?? []).map((p) => p.id);
+  if (!all.includes(id)) return;
+  const only = cfg().get<string[]>("providers", []).filter(Boolean);
+  const current = only.length ? only : all;
+  const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+  if (!all.some((x) => next.includes(x))) return;
+  const value = all.every((x) => next.includes(x)) && next.every((x) => all.includes(x)) ? [] : next;
+  await cfg().update("providers", value, vscode.ConfigurationTarget.Global);
 }
 
 function openApp() {
@@ -175,18 +268,25 @@ function openApp() {
   } catch { fallback(); }
 }
 
-function showDetails(ctx: vscode.ExtensionContext) {
-  if (panel) { panel.reveal(); return; }
-  const media = vscode.Uri.joinPath(ctx.extensionUri, "media");
-  panel = vscode.window.createWebviewPanel("tokenbar.details", "TokenBar", vscode.ViewColumn.Active, {
-    enableScripts: true,
-    localResourceRoots: [media],
-  });
-  panel.iconPath = vscode.Uri.joinPath(media, "icon.png");
-  const uri = (f: string) => panel!.webview.asWebviewUri(vscode.Uri.joinPath(media, f)).toString();
-  const nonce = [...Array(32)].map(() => Math.floor(Math.random() * 36).toString(36)).join("");
-  const csp = `default-src 'none'; img-src ${panel.webview.cspSource}; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';`;
-  panel.webview.html = `<!doctype html>
+async function showDetails() {
+  try { await vscode.commands.executeCommand(`${VIEW_ID}.focus`); }
+  catch { await vscode.commands.executeCommand(CONTAINER_CMD); }
+}
+
+// MARK: Usage view (Activity Bar → TokenBar → Usage)
+
+class UsageViewProvider implements vscode.WebviewViewProvider {
+  view?: vscode.WebviewView;
+  constructor(private readonly media: vscode.Uri) {}
+
+  resolveWebviewView(view: vscode.WebviewView) {
+    this.view = view;
+    const webview = view.webview;
+    webview.options = { enableScripts: true, localResourceRoots: [this.media] };
+    const uri = (f: string) => webview.asWebviewUri(vscode.Uri.joinPath(this.media, f)).toString();
+    const nonce = [...Array(32)].map(() => Math.floor(Math.random() * 36).toString(36)).join("");
+    const csp = `default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';`;
+    webview.html = `<!doctype html>
 <html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -197,23 +297,36 @@ function showDetails(ctx: vscode.ExtensionContext) {
 <script nonce="${nonce}" src="${uri("led.js")}"></script>
 <script nonce="${nonce}" src="${uri("panel.js")}"></script>
 </body></html>`;
-  panel.webview.onDidReceiveMessage((m) => {
-    if (m?.type === "ready") postToPanel();
-    if (m?.type === "openApp") openApp();
-  });
-  panel.onDidDispose(() => { panel = undefined; });
+    webview.onDidReceiveMessage((m) => {
+      if (m?.type === "ready") postToView();
+      if (m?.type === "openApp") openApp();
+      if (m?.type === "refresh") refresh();
+      if (m?.type === "setWindow" && ["5h", "7d", "both"].includes(m.choice)) setWindow(m.choice);
+      if (m?.type === "toggleProvider" && typeof m.id === "string") toggleProvider(m.id);
+    });
+    view.onDidChangeVisibility(() => { if (view.visible) postToView(); });
+    view.onDidDispose(() => { if (this.view === view) this.view = undefined; });
+  }
 }
 
-function postToPanel() {
-  if (!panel) return;
-  const providers = visibleProviders().map((p) => ({
-    id: p.id, name: p.name, color: colorOf(p), windows: p.windows, observedAt: p.observedAt,
+function postToView() {
+  const view = usageView?.view;
+  if (!view) return;
+  const visible = new Set(visibleProviders().map((p) => p.id));
+  const providers = (snapshot?.providers ?? []).map((p) => ({
+    id: p.id, name: p.name, abbr: abbrOf(p), color: colorOf(p), windows: p.windows,
+    observedAt: p.observedAt, on: visible.has(p.id),
   }));
-  panel.webview.postMessage({
+  view.webview.postMessage({
     type: "snapshot",
     providers,
+    choice: windowChoice(),
     source: snapshot?.source,
-    strings: { noData: t("NO DATA"), empty: t("No AI usage data yet"), openApp: t("Open TokenBar app") },
+    strings: {
+      noData: t("NO DATA"), empty: t("No AI usage data yet"), openApp: t("Open TokenBar app"),
+      hint: t("Install the TokenBar app, or use Claude Code / Codex once, so the limits show up here."),
+      window: t("Switch window (5h / 7d / both)"), toggleAi: t("Show / hide {0}"),
+    },
   });
 }
 
@@ -221,19 +334,19 @@ function postToPanel() {
 
 export function activate(ctx: vscode.ExtensionContext) {
   setLanguage(vscode.env.language);
-  item = vscode.window.createStatusBarItem("tokenbar.status", vscode.StatusBarAlignment.Right, 100);
-  item.name = "TokenBar";
-  item.command = "tokenbar.toggleWindow";
-  item.text = "$(pulse) TokenBar";
-  item.show();
+  const first = getItem("", PRIORITY, "TokenBar");
+  first.text = "$(pulse) TokenBar";
+  first.show();
 
+  usageView = new UsageViewProvider(vscode.Uri.joinPath(ctx.extensionUri, "media"));
   ctx.subscriptions.push(
-    item,
+    vscode.window.registerWebviewViewProvider(VIEW_ID, usageView),
     vscode.commands.registerCommand("tokenbar.toggleWindow", toggleWindow),
-    vscode.commands.registerCommand("tokenbar.showDetails", () => showDetails(ctx)),
+    vscode.commands.registerCommand("tokenbar.showDetails", showDetails),
     vscode.commands.registerCommand("tokenbar.openApp", openApp),
     vscode.commands.registerCommand("tokenbar.refresh", refresh),
     vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration("tokenbar")) render(); }),
+    { dispose: () => { items.forEach((it) => it.dispose()); items.clear(); } },
     { dispose: () => { watchers.forEach((w) => w.close()); watchers.clear(); clearTimeout(debounce); } },
   );
 

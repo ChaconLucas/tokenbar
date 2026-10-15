@@ -17,6 +17,8 @@ const PT: Record<string, string> = {
   "both": "ambas",
   "NO DATA": "SEM DADOS",
   "TokenBar — AI usage": "TokenBar — uso das IAs",
+  "Switch window (5h / 7d / both)": "Trocar janela (5h / 7d / ambas)",
+  "Show / hide {0}": "Mostrar / esconder {0}",
 };
 
 let pt = false;

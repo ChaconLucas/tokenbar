@@ -1,13 +1,35 @@
-:root { color-scheme: dark; }
-body { margin: 0; padding: 24px 16px; background: #0b0b0d; color: #d8d8de;
-  font-family: var(--vscode-font-family, system-ui, sans-serif); }
-#root { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
-.device { background: #000; border-radius: 14px; padding: 14px 16px 16px;
-  box-shadow: 0 0 0 1px #1d1d22, 0 8px 30px rgba(0,0,0,.6); }
-.device header { display: flex; align-items: center; margin-bottom: 12px; min-height: 16px; }
-canvas.display { display: block; width: 100%; height: 74px; }
-.device.empty canvas.display { height: 74px; }
-p { margin: 0; text-align: center; opacity: .8; }
-button { align-self: center; background: #9e5cff; color: #fff; border: 0; border-radius: 8px;
-  padding: 8px 16px; font: inherit; cursor: pointer; }
-button:hover { filter: brightness(1.1); }
+/* Usage view: a black "device" card (like the TokenBar apps) on the theme's own background. */
+body { margin: 0; padding: 10px 12px 16px; background: transparent;
+  color: var(--vscode-foreground, #ccc);
+  font-family: var(--vscode-font-family, system-ui, sans-serif); font-size: var(--vscode-font-size, 13px); }
+#root { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+.device { background: #000; border-radius: 14px; padding: 10px 12px 14px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 6px 22px rgba(0,0,0,.35); }
+
+.keys { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.keys .ais { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.key { display: inline-flex; align-items: center; justify-content: center; height: 22px; padding: 0 9px;
+  border-radius: 99px; border: 1px solid rgba(255,255,255,.08); background: #111114; cursor: pointer;
+  transition: transform .12s ease, border-color .15s ease, background-color .15s ease; }
+.key.on { border-color: color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 12%, #0c0c0f); }
+.key.win { flex: none; }
+.key:hover { border-color: rgba(255,255,255,.28); }
+.key:active { transform: scale(.94); }
+.key:focus-visible { outline: 1px solid var(--vscode-focusBorder, #0090f1); outline-offset: 2px; }
+.key canvas { display: block; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 16px 22px; }
+.ai { min-width: 0; }
+.ai + .ai { position: relative; }
+.name { height: 10px; margin: 0 0 7px 1px; display: flex; align-items: center; }
+.name canvas { display: block; }
+canvas.display { display: block; width: 100%; height: 52px; }
+
+.device.empty { padding: 14px 12px; }
+.hint { margin: 0; text-align: center; opacity: .8; line-height: 1.45; }
+.cta { align-self: center; background: var(--vscode-button-background, #9e5cff); color: var(--vscode-button-foreground, #fff);
+  border: 0; border-radius: 4px; padding: 6px 14px; font: inherit; cursor: pointer; }
+.cta:hover { background: var(--vscode-button-hoverBackground, #8a48f0); }
+
+@media (prefers-reduced-motion: reduce) { .key { transition: none; } .key:active { transform: none; } }

@@ -45,7 +45,8 @@
       {
         "command": "tokenbar.toggleWindow",
         "title": "Switch window (5h / 7d / both)",
-        "category": "TokenBar"
+        "category": "TokenBar",
+        "icon": "$(history)"
       },
       {
         "command": "tokenbar.openApp",
@@ -55,7 +56,8 @@
       {
         "command": "tokenbar.refresh",
         "title": "Refresh",
-        "category": "TokenBar"
+        "category": "TokenBar",
+        "icon": "$(refresh)"
       }
     ],
     "configuration": {
@@ -83,8 +85,55 @@
           },
           "default": [],
           "description": "Ids of the AIs to show (e.g. \"claude\", \"codex\", \"gemini\"). Empty = all."
+        },
+        "tokenbar.statusStyle": {
+          "type": "string",
+          "enum": [
+            "dots",
+            "compact"
+          ],
+          "enumDescriptions": [
+            "%config.statusStyle.dots%",
+            "%config.statusStyle.compact%"
+          ],
+          "default": "dots",
+          "description": "%config.statusStyle%"
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tokenbar",
+          "title": "TokenBar",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "tokenbar": [
+        {
+          "type": "webview",
+          "id": "tokenbar.usage",
+          "name": "%view.usage%",
+          "icon": "media/activity.svg",
+          "contextualTitle": "TokenBar"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "tokenbar.toggleWindow",
+          "when": "view == tokenbar.usage",
+          "group": "navigation@1"
+        },
+        {
+          "command": "tokenbar.refresh",
+          "when": "view == tokenbar.usage",
+          "group": "navigation@2"
+        }
+      ]
     }
   },
   "scripts": {
