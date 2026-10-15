@@ -15,6 +15,8 @@ struct BusyDevice: View {
     /// Mac: tecla que troca entre o aparelho grande e o pequeno flutuante. Nil esconde a tecla.
     var swapKey: (label: String, action: () -> Void)? = nil
     var onSettings: (() -> Void)?
+    /// Janela sem moldura (Mac): minimizar e fechar viram teclas no fim da fileira.
+    var windowControls: (minimize: () -> Void, close: () -> Void)? = nil
     /// Celular: sem moldura e o display ocupando a área inteira.
     var fullBleed = false
     /// Vidro líquido (macOS 26 / iOS 26) no lugar do vidro preto.
@@ -227,15 +229,9 @@ struct BusyDevice: View {
             }
             if let swapKey {
                 // Ícone em vez de palavra: "destacar" (vira flutuante) ou "expandir" (volta ao grande).
-                Button(action: swapKey.action) {
-                    Image(systemName: swapKey.label == "GRANDE" ? "arrow.up.left.and.arrow.down.right" : "pip.exit")
-                        .font(.system(size: max(10, dot * 5), weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .padding(.horizontal, dot * 4).padding(.vertical, dot * 2.4)
-                        .background(Capsule().fill(.black.opacity(0.72)).overlay(Capsule().strokeBorder(.white.opacity(0.25))))
-                }
-                .buttonStyle(PressDown())
-                .help(swapKey.label == "GRANDE" ? Lang.t("Voltar ao aparelho grande") : Lang.t("Destacar: janelinha flutuante, sempre na frente"))
+                iconKey(swapKey.label == "GRANDE" ? "arrow.up.left.and.arrow.down.right" : "pip.exit",
+                        swapKey.label == "GRANDE" ? Lang.t("Voltar ao aparelho grande") : Lang.t("Destacar: janelinha flutuante, sempre na frente"),
+                        dot: dot, action: swapKey.action)
             }
             #if !os(watchOS)
             if let binding = editableTheme {
@@ -253,7 +249,26 @@ struct BusyDevice: View {
             if editableTheme == nil, let onSettings {
                 DotKey(text: "SET", on: true, color: theme.timer.color, dot: dot, round: theme.roundDots, action: onSettings)
             }
+            if let windowControls {
+                iconKey("minus", Lang.t("Minimizar"), dot: dot, action: windowControls.minimize)
+                iconKey("xmark", Lang.t("Fechar"), dot: dot, action: windowControls.close)
+            }
         }
+    }
+
+    /// Tecla com ícone, na mesma pílula escura das teclas de LED.
+    private func iconKey(_ icon: String, _ help: String, dot: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: max(10, dot * 5), weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(minWidth: max(10, dot * 5))
+                .padding(.horizontal, dot * 4).padding(.vertical, dot * 2.4)
+                .background(Capsule().fill(.black.opacity(0.72)).overlay(Capsule().strokeBorder(.white.opacity(0.25))))
+        }
+        .buttonStyle(PressDown())
+        .help(help)
+        .accessibilityLabel(help)
     }
 
     private func save() {

@@ -394,7 +394,8 @@ struct DeviceWindow: View {
                    swapKey: ("FLUTUAR", {
                        MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })
                        dismissWindow(id: "main")
-                   }))
+                   }),
+                   windowControls: (minimize: { mainWindow?.miniaturize(nil) }, close: { dismissWindow(id: "main") }))
             .frame(width: size.width, height: size.height)
         .environment(\.colorScheme, .dark)
             .contextMenu {
@@ -431,6 +432,8 @@ struct DeviceWindow: View {
         NSApp.activate()
     }
 
+    private var mainWindow: NSWindow? { NSApp.windows.first { $0.identifier?.rawValue.hasPrefix("main") == true } }
+
     /// Janela normal por padrão; "Sempre na frente" é escolha da pessoa.
     private func applyLevel() {
         DispatchQueue.main.async {
@@ -442,6 +445,8 @@ struct DeviceWindow: View {
             w.isMovable = true
             w.collectionBehavior = alwaysOnTop ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.managed]
             w.hidesOnDeactivate = false
+            // Sem moldura, mas minimizável pela tecla —.
+            w.styleMask.insert(.miniaturizable)
         }
     }
 
