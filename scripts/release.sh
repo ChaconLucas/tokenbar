@@ -82,4 +82,13 @@ else
   say "Homebrew: tap chaconlucas/tokenbar não está instalada (brew tap chaconlucas/tokenbar)"
 fi
 
+# Extensão do VS Code: a loja da Microsoft só aceita envio pela página (sem token). Se o código dela mudou
+# desde a versão anterior, deixa o .vsix na Mesa e abre a página para arrastar (⋮ → Update).
+PREV=$(git tag --sort=-v:refname | grep -v "^v$V$" | head -1)
+if [ -n "$PREV" ] && ! git diff --quiet "$PREV" "v$V" -- vscode/src vscode/media vscode/README.md; then
+  cp "$OUT/TokenBar-VSCode.vsix" "$HOME/Desktop/TokenBar-VSCode.vsix"
+  open "https://marketplace.visualstudio.com/manage/publishers/chaconlucas"
+  say "VS Code: a extensão mudou. Arraste ~/Desktop/TokenBar-VSCode.vsix na página que abriu (⋮ → Update)."
+fi
+
 printf '\n✓ TokenBar %s publicado. Mac, Windows e Android avisam a atualização em até 6 horas.\n' "$V"
