@@ -13,6 +13,7 @@ final class LANServer {
     private(set) var pairCode = LANServer.newCode()
     private var codeBorn = Date.now
     private var failures = 0
+    private var lastClientAt: Date?
     private var lockedUntil = Date.distantPast
 
     static func newCode() -> String { String(format: "%06d", Int.random(in: 0..<1_000_000)) }
@@ -24,6 +25,9 @@ final class LANServer {
             return pairCode
         }
     }
+
+    /// Quando um celular ou relógio leu os números pela última vez (o guia mostra "conectado").
+    var lastClient: Date? { queue.sync { lastClientAt } }
 
     /// Atualiza o que é servido; liga o anúncio na primeira vez.
     func publish(_ snapshot: UsageSnapshot, pairing: Pairing) {
@@ -63,6 +67,7 @@ final class LANServer {
             } else if !authorized {
                 response = Self.http(401, Data(#"{"error":"unauthorized"}"#.utf8))
             } else {
+                self.lastClientAt = .now
                 response = Self.http(200, self.body)
             }
             c.send(content: response, completion: .contentProcessed { _ in c.cancel() })

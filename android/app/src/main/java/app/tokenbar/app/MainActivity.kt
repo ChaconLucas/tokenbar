@@ -2,6 +2,7 @@ package app.tokenbar.app
 
 import android.Manifest
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -15,6 +16,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.*
@@ -68,7 +71,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             Box(Modifier.fillMaxSize().background(Color.Black)) {
-                if (pairing == null) PairScreen(::pairWith, ::scan) else Device(snapshot, store, error, onUnpair = {
+                if (pairing == null) PairScreen(error, ::pairWith, ::scan, ::openSite) else Device(snapshot, store, error, onUnpair = {
                     store.pairing = null; pairing = null
                 })
             }
@@ -91,6 +94,10 @@ class MainActivity : ComponentActivity() {
         error = null
     }
 
+    private fun openSite() {
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ChaconLucas/tokenbar"))) }
+    }
+
     /** Leitor de QR do Google Play (sem pedir permissão de câmera). */
     private fun scan() {
         GmsBarcodeScanning.getClient(this).startScan()
@@ -101,21 +108,67 @@ class MainActivity : ComponentActivity() {
 
 private val mono = TextStyle(fontFamily = FontFamily.Monospace, color = Color.White, fontSize = 15.sp)
 
+/** Sem pareamento: o passo a passo para quem acabou de instalar. */
 @Composable
-private fun PairScreen(onLink: (String) -> Unit, onScan: () -> Unit) {
+private fun PairScreen(error: String?, onLink: (String) -> Unit, onScan: () -> Unit, onSite: () -> Unit) {
     var text by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center) {
-        Text("PAREAR COM O MAC", mono.copy(fontSize = 20.sp))
-        Spacer(Modifier.height(10.dp))
-        Text("No Mac: TokenBar → Editar → Mais ajustes. Escaneie o QR ou cole o link.", mono.copy(color = Color.Gray))
-        Spacer(Modifier.height(18.dp))
+    val gray = mono.copy(color = Color.Gray, fontSize = 13.sp)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 32.dp, vertical = 20.dp)) {
+        Text("PRIMEIROS PASSOS", mono.copy(fontSize = 20.sp))
+        Spacer(Modifier.height(14.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("1. Instale o TokenBar no computador", mono)
+            Spacer(Modifier.width(16.dp))
+            Key("ABRIR SITE", 0xFFFFFFFF.toInt()) { onSite() }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text("Mac: curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh",
+            mono.copy(color = Color.Gray, fontSize = 11.sp))
+        Text("Windows: TokenBar-Windows-setup.exe nos Releases", gray)
+        Spacer(Modifier.height(12.dp))
+
+        Text("2. No computador, abra Primeiros passos → Celular e relógio", mono)
+        Text("Ele mostra um QR.", gray)
+        Spacer(Modifier.height(12.dp))
+
+        Text("3. Toque em ESCANEAR QR e aponte para o código", mono)
+        Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Key("ESCANEAR QR", Palette.CODEX) { onScan() }
             Spacer(Modifier.width(16.dp))
-            BasicTextField(text, { text = it }, textStyle = mono, cursorBrush = SolidColor(Color.White),
+            Text("ou cole o link", gray)
+            Spacer(Modifier.width(10.dp))
+            BasicTextField(text, { text = it }, textStyle = mono, cursorBrush = SolidColor(Color.White), singleLine = true,
                 modifier = Modifier.weight(1f).border(1.dp, Color.DarkGray, RoundedCornerShape(8.dp)).padding(10.dp))
             Spacer(Modifier.width(10.dp))
             Key("PAREAR", Palette.CLAUDE) { onLink(text) }
+        }
+        Spacer(Modifier.height(12.dp))
+
+        Text("Celular e computador no mesmo Wi-Fi. Para ver fora de casa, configure o servidor (opcional).", gray)
+        if (error != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(error, mono.copy(color = Color(0xFFFF8A8A), fontSize = 13.sp))
+        }
+    }
+}
+
+/** Quando não chega número: o que conferir. */
+@Composable
+private fun Help(onClose: () -> Unit) {
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f)).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
+        Column(Modifier.border(1.dp, Color.DarkGray, RoundedCornerShape(12.dp)).background(Color.Black, RoundedCornerShape(12.dp)).padding(24.dp)) {
+            Text("NÃO CHEGA NÚMERO?", mono.copy(fontSize = 18.sp))
+            Spacer(Modifier.height(12.dp))
+            listOf(
+                "O computador está ligado e com o TokenBar aberto?",
+                "Celular e computador no mesmo Wi-Fi?",
+                "No Mac, permita conexões de entrada para o TokenBar (firewall).",
+                "Escaneie o QR de novo (SAIR e parear outra vez).",
+            ).forEach { Text("• $it", mono.copy(color = Color.LightGray, fontSize = 14.sp)); Spacer(Modifier.height(6.dp)) }
+            Spacer(Modifier.height(8.dp))
+            Key("FECHAR", 0xFFFFFFFF.toInt()) { onClose() }
         }
     }
 }
@@ -139,8 +192,10 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, onUnpa
     var window by remember { mutableStateOf(store.window) }
     val pager = rememberPagerState { visible.size }
     var tick by remember { mutableLongStateOf(0L) }
+    var help by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
 
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Providers.all.forEach { id ->
@@ -172,6 +227,12 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, onUnpa
                 }
             }
         }
-        if (error != null) Text(error.uppercase(), mono.copy(color = Color(0xFFFF8A8A), fontSize = 12.sp))
+        if (error != null) Row(Modifier.clickable { help = true }, verticalAlignment = Alignment.CenterVertically) {
+            Text(error.uppercase(), mono.copy(color = Color(0xFFFF8A8A), fontSize = 12.sp))
+            Spacer(Modifier.width(10.dp))
+            Key("AJUDA", 0xFFFF8A8A.toInt()) { help = true }
+        }
+    }
+    if (help) Help { help = false }
     }
 }

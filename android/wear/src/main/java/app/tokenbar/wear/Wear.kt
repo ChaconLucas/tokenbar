@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.watchface.complications.data.*
@@ -146,16 +147,31 @@ class UsageComplication : SuspendingComplicationDataSourceService() {
     }
 }
 
-/** Teclado numérico: o código de 6 números que o Mac mostra em Ajustes. */
+/** Teclado numérico: o código de 6 números que o computador mostra em Primeiros passos. Antes, uma tela que explica. */
 @Composable
 private fun CodeEntry(submit: suspend (String, (String?) -> Unit) -> Unit) {
+    var intro by remember { mutableStateOf(true) }
     var code by remember { mutableStateOf("") }
     var msg by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    if (intro) {
+        Column(Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 28.dp, vertical = 24.dp),
+               horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            val t = TextStyle(color = Color.White, fontSize = 12.sp, textAlign = TextAlign.Center)
+            BasicText("No computador: Primeiros passos → Celular e relógio.", style = t)
+            Spacer(Modifier.height(4.dp))
+            BasicText("Digite o código de 6 números.", style = t)
+            Spacer(Modifier.height(6.dp))
+            BasicText("Com celular Android pareado, ele recebe sozinho.", style = t.copy(color = Color.Gray, fontSize = 10.sp))
+            Spacer(Modifier.height(8.dp))
+            Key("DIGITAR", 0xFF33D9F2.toInt()) { intro = false }
+        }
+        return
+    }
     Column(Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 34.dp, vertical = 26.dp),
            horizontalAlignment = Alignment.CenterHorizontally) {
-        BasicText(if (busy) "Procurando o Mac…" else (msg ?: "Código do Mac"),
+        BasicText(if (busy) "Procurando o computador…" else (msg ?: "Código do computador"),
             style = TextStyle(color = if (msg != null) Color(0xFFFF8A8A) else Color.Gray, fontSize = 11.sp))
         BasicText(code.padEnd(6, '_'), style = TextStyle(fontFamily = FontFamily.Monospace, color = Color.White, fontSize = 20.sp, letterSpacing = 3.sp))
         Spacer(Modifier.height(4.dp))

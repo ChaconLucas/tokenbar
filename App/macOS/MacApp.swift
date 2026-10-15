@@ -159,6 +159,12 @@ struct TokenBarMacApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 520, height: 760)
 
+        Window("Primeiros passos", id: "setup") {
+            SetupGuide().environmentObject(model)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 560, height: 780)
+
         MenuBarExtra {
             MenuContent().environmentObject(model)
         } label: {
@@ -193,6 +199,10 @@ struct MenuLabel: View {
                 } else {
                     delegate.openMain?()
                 }
+                // Primeira vez: o guia abre junto, por cima do aparelho.
+                if !UserDefaults.standard.bool(forKey: "setupDone") {
+                    DispatchQueue.main.async { openWindow(id: "setup"); NSApp.activate() }
+                }
             }
     }
 }
@@ -212,6 +222,7 @@ struct MenuContent: View {
                 menuButton("Mini", "pip") { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
                 menuButton("Ajustes", "gearshape") { openWindow(id: "settings"); NSApp.activate() }
                 Spacer(minLength: 4)
+                menuButton(nil, "questionmark") { openWindow(id: "setup"); NSApp.activate() }.help("Guia: primeiros passos")
                 menuButton(nil, "arrow.clockwise") { model.refresh() }.help("Atualizar")
                 menuButton(nil, "power") { NSApp.terminate(nil) }.help("Sair do TokenBar")
             }
@@ -290,6 +301,7 @@ struct DeviceWindow: View {
         .environment(\.colorScheme, .dark)
             .contextMenu {
                 Button("Ajustes…", action: openSettings)
+                Button("Primeiros passos…") { openWindow(id: "setup"); NSApp.activate() }
                 Button("Atualizar agora") { model.refresh() }
                 Divider()
                 Button("Maior") { resize(1.15) }.keyboardShortcut("+")
@@ -359,6 +371,7 @@ struct DeviceWindow: View {
 
 struct MacMainView: View {
     @EnvironmentObject var model: MacModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         ScrollView {
@@ -370,6 +383,8 @@ struct MacMainView: View {
                     Text("1UP").font(Arcade.label(11)).foregroundStyle(Arcade.amber)
                         .shadow(color: Arcade.amber, radius: 4)
                 }
+                Button("PRIMEIROS PASSOS: CONECTAR TUDO") { openWindow(id: "setup") }
+                    .buttonStyle(ArcadeButtonStyle(tint: Arcade.amber))
                 SectionTitle(text: "APARÊNCIA")
                 ArcadePanel {
                     ThemeEditor(theme: $model.theme).frame(maxWidth: .infinity, alignment: .leading)

@@ -173,7 +173,11 @@ struct PhoneRootView: View {
         .onChange(of: theme) { _, t in Prefs.theme = t; WidgetCenter.shared.reloadAllTimelines(); model.sendToWatch() }
         .onChange(of: visible) { _, v in Prefs.visible = v; WidgetCenter.shared.reloadAllTimelines() }
         .onChange(of: windowChoice) { _, v in Prefs.window = v; WidgetCenter.shared.reloadAllTimelines() }
-        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+            // Sem pareamento, o guia abre sozinho: sem ele o display não tem o que mostrar.
+            if model.pairing == nil { showDetails = true }
+        }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .task {
             while !Task.isCancelled {
@@ -202,12 +206,22 @@ struct PhoneDetails: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if model.pairing == nil {
-                    SectionTitle(text: "PAREAR COM O MAC")
+                    SectionTitle(text: "PRIMEIROS PASSOS")
                     ArcadePanel {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("No Mac, abra o TokenBar em Editar → Mais ajustes e aponte a câmera do iPhone para o QR.")
-                                .font(.callout).foregroundStyle(Arcade.dim)
-                            TextField("", text: $pasted, prompt: Text("ou cole o link tokenbar://…").foregroundStyle(Arcade.dim))
+                        VStack(alignment: .leading, spacing: 12) {
+                            GuideStep(n: 1, title: "INSTALE NO COMPUTADOR",
+                                      text: "O computador é quem lê os limites das IAs. No Mac, um comando no Terminal; no Windows, o instalador. Está tudo no GitHub.")
+                            Link("ABRIR GITHUB.COM/CHACONLUCAS/TOKENBAR", destination: URL(string: "https://github.com/ChaconLucas/tokenbar")!)
+                                .font(Arcade.label(10)).foregroundStyle(Arcade.cyan).padding(.leading, 30)
+                            GuideStep(n: 2, title: "ABRA O GUIA NO COMPUTADOR",
+                                      text: "No TokenBar do computador: Primeiros passos → Celular e relógio → IPHONE. Aparece um QR code.")
+                            GuideStep(n: 3, title: "APONTE A CÂMERA",
+                                      text: "Abra a Câmera do iPhone, aponte para o QR e toque em Abrir no TokenBar.")
+                            GuideStep(n: 4, title: "PERMITA A REDE LOCAL",
+                                      text: "Quando o iPhone perguntar, permita: é assim que ele acha o computador. Os dois precisam estar no mesmo Wi-Fi.")
+                            Divider().overlay(.white.opacity(0.1))
+                            Text("OU COLE O LINK").font(Arcade.label(9)).tracking(2).foregroundStyle(Arcade.dim)
+                            TextField("", text: $pasted, prompt: Text("tokenbar://pair?…").foregroundStyle(Arcade.dim))
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .font(Arcade.label(12))
@@ -218,6 +232,21 @@ struct PhoneDetails: View {
                             }
                             .buttonStyle(ArcadeButtonStyle())
                             .disabled(pasted.isEmpty)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                } else if let e = model.error {
+                    SectionTitle(text: "NÃO CONSEGUI LER O COMPUTADOR")
+                    ArcadePanel {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(e).font(.callout).foregroundStyle(Arcade.red)
+                            GuideStep(n: 1, title: "O TOKENBAR ESTÁ ABERTO?", text: "O computador precisa estar ligado, com o TokenBar aberto.")
+                            GuideStep(n: 2, title: "MESMO WI-FI?", text: "Sem o servidor opcional, o iPhone só lê o computador na mesma rede.")
+                            GuideStep(n: 3, title: "REDE LOCAL LIGADA?", text: "Ajustes → Privacidade e Segurança → Rede Local → TokenBar.")
+                            GuideStep(n: 4, title: "FIREWALL", text: "No Mac, permita conexões de entrada para o TokenBar.")
+                            GuideStep(n: 5, title: "AINDA NÃO?", text: "Toque em DESPAREAR lá embaixo e escaneie o QR de novo.")
+                            Button("TENTAR DE NOVO") { Task { await model.refresh() } }
+                                .buttonStyle(ArcadeButtonStyle())
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -246,5 +275,24 @@ struct PhoneDetails: View {
         .background(ArcadeBackground())
         .preferredColorScheme(.dark)
         .presentationDetents([.large])
+    }
+}
+
+/// Um passo numerado do guia.
+struct GuideStep: View {
+    var n: Int
+    var title: String
+    var text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(n)").font(Arcade.label(12)).foregroundStyle(.black)
+                .frame(width: 20, height: 20)
+                .background(Circle().fill(Arcade.amber))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(Arcade.label(11)).tracking(1.5).foregroundStyle(.white)
+                Text(text).font(.callout).foregroundStyle(Arcade.dim).fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }

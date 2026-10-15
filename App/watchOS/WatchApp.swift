@@ -111,7 +111,7 @@ struct WatchRootView: View {
                     }
                     .overlay(alignment: .bottom) {
                         if model.pairing == nil {
-                            Text("Pareie no app TokenBar do iPhone.").font(.footnote).foregroundStyle(.secondary)
+                            Text("1. Instale o TokenBar no computador.\n2. Pareie o iPhone: Câmera → QR do computador.\n3. O relógio recebe sozinho.").font(.footnote).foregroundStyle(.secondary)
                         } else if let e = model.error {
                             Text(e).font(.footnote).foregroundStyle(.red)
                         }

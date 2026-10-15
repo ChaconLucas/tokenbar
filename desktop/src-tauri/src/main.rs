@@ -32,24 +32,38 @@ struct Status {
     server: Option<String>,
     claude_connected: bool,
     push_error: Option<String>,
+    last_client_ago: Option<u64>,
+}
+
+fn qr_svg(text: &str) -> String {
+    qrcode::QrCode::new(text.as_bytes()).map(|q| q.render::<qrcode::render::svg::Color>()
+        .min_dimensions(180, 180).dark_color(qrcode::render::svg::Color("#000")).light_color(qrcode::render::svg::Color("#fff")).build())
+        .unwrap_or_default()
 }
 
 #[tauri::command]
 fn status(app: State<Arc<App>>) -> Status {
     let p = app.pairing.lock().unwrap().clone();
     let link = p.link();
-    let qr_svg = qrcode::QrCode::new(link.as_bytes()).map(|q| q.render::<qrcode::render::svg::Color>()
-        .min_dimensions(180, 180).dark_color(qrcode::render::svg::Color("#000")).light_color(qrcode::render::svg::Color("#fff")).build())
-        .unwrap_or_default();
+    let qr_svg = qr_svg(&link);
+    let (code, last_client_ago) = {
+        let mut l = app.lan.lock().unwrap();
+        (l.current_code(), l.last_client.map(|t| t.elapsed().as_secs()))
+    };
     Status {
         snapshot: app.snapshot.lock().unwrap().clone(),
         link, qr_svg,
-        code: app.lan.lock().unwrap().current_code(),
+        code,
         server: p.server,
         claude_connected: hook::is_installed(),
         push_error: app.push_error.lock().unwrap().clone(),
+        last_client_ago,
     }
 }
+
+/// QR de qualquer texto (o guia usa para o link do app Android).
+#[tauri::command]
+fn qr(text: String) -> String { qr_svg(&text) }
 
 #[tauri::command]
 fn connect_claude() -> Result<(), String> { hook::install() }
@@ -139,13 +153,14 @@ fn main() {
 
     tauri::Builder::default()
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, set_server, open_mini, open_main])
+        .invoke_handler(tauri::generate_handler![status, connect_claude, set_server, open_mini, open_main, qr])
         .setup(move |app| {
             let h = app.handle().clone();
             let open = MenuItem::with_id(app, "main", "Abrir aparelho", true, None::<&str>)?;
             let mini = MenuItem::with_id(app, "mini", "Flutuante", true, None::<&str>)?;
+            let guide = MenuItem::with_id(app, "guide", "Primeiros passos", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &mini, &quit])?;
+            let menu = Menu::with_items(app, &[&open, &mini, &guide, &quit])?;
             TrayIconBuilder::with_id("tokenbar")
                 .icon(tray_icon(0.0))
                 .tooltip("TokenBar")
@@ -154,6 +169,7 @@ fn main() {
                 .on_menu_event(|h, e| match e.id.as_ref() {
                     "main" => show_main(h),
                     "mini" => show_mini(h),
+                    "guide" => { show_main(h); let _ = h.emit_to("main", "show-guide", ()); }
                     "quit" => h.exit(0),
                     _ => {}
                 })

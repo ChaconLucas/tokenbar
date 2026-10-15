@@ -61,12 +61,14 @@ pub struct Lan {
     code_born: Instant,
     failures: u32,
     locked_until: Instant,
+    /// Última leitura autorizada de um celular/relógio (o guia mostra "conectado").
+    pub last_client: Option<Instant>,
 }
 
 impl Lan {
     pub fn new(p: &Pairing) -> Lan {
         Lan { body: "{}".into(), token: p.token.clone(), link: p.link(), code: new_code(),
-              code_born: Instant::now(), failures: 0, locked_until: Instant::now() }
+              code_born: Instant::now(), failures: 0, locked_until: Instant::now(), last_client: None }
     }
 
     /// Código de 6 números para relógios sem celular; troca a cada 10 min.
@@ -116,6 +118,7 @@ fn handle(mut s: TcpStream, lan: Arc<Mutex<Lan>>) {
         } else if !first.starts_with("GET /v1/usage") {
             (404, r#"{"error":"not_found"}"#.to_string())
         } else if !l.token.is_empty() && req.contains(&format!("Authorization: Bearer {}", l.token)) {
+            l.last_client = Some(Instant::now());
             (200, l.body.clone())
         } else {
             (401, r#"{"error":"unauthorized"}"#.to_string())

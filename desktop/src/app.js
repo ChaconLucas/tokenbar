@@ -73,6 +73,7 @@ function renderKeys() {
     right.appendChild(iconKey("✕", "Fechar", () => window.__TAURI__.window.getCurrentWindow().close()));
   } else {
     right.appendChild(iconKey("⧉", "Flutuante: pequeno, sempre na frente", () => invoke("open_mini")));
+    right.appendChild(iconKey("?", "Primeiros passos", openGuide));
     right.appendChild(iconKey("⚙", "Ajustes", openSettings));
   }
 }
@@ -153,8 +154,73 @@ $("save-server").onclick = async () => {
   catch (e) { $("server-msg").textContent = String(e); }
 };
 
+// ---------- primeiros passos ----------
+const APK = "https://github.com/ChaconLucas/tokenbar/releases/latest/download/TokenBar-Android.apk";
+const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } };
+let guideTimer = null, device = store("guideDevice");
+
+function mark(stepId, done) { $(stepId).classList.toggle("done", done); }
+function say(el, text, ok) { el.textContent = text; el.classList.toggle("ok", !!ok); }
+
+async function refreshGuide() {
+  let s; try { s = await invoke("status"); } catch { return; }
+  snapshot = s.snapshot;
+  const has = (id) => s.snapshot.providers.some((p) => p.id === id);
+
+  const skip = store("claudeSkip") === "1";
+  const claudeOk = has("claude");
+  if (claudeOk) say($("g-claude"), "✓ Recebendo os números", true);
+  else if (skip) say($("g-claude"), "Pulado.", true);
+  else if (s.claudeConnected) say($("g-claude"), "Conectado. Mande qualquer mensagem numa sessão do Claude Code para os números chegarem.");
+  else say($("g-claude"), "O Claude Code só entrega os limites para a statusline. O TokenBar guarda uma cópia e mantém a sua statusline.");
+  $("g-claude-act").hidden = claudeOk || skip || s.claudeConnected;
+  mark("step-claude", claudeOk || skip);
+
+  const codexOk = has("codex");
+  say($("g-codex"), codexOk ? "✓ Recebendo os números" : "Use o Codex uma vez: os limites chegam com a primeira resposta.", codexOk);
+  mark("step-codex", codexOk);
+
+  const live = s.lastClientAgo != null && s.lastClientAgo < 120;
+  document.querySelectorAll(".g-pair").forEach((e) => { if (e.dataset.svg !== s.qrSvg) { e.innerHTML = s.qrSvg; e.dataset.svg = s.qrSvg; } });
+  document.querySelectorAll(".g-live").forEach((e) => say(e, live ? "✓ Celular conectado" : "Esperando o celular… (mesmo Wi-Fi)", live));
+  $("g-code").textContent = s.code;
+  mark("step-phone", live || device === "here");
+}
+
+function showDevice() {
+  document.querySelectorAll(".choices button").forEach((b) => b.classList.toggle("on", b.dataset.dev === device));
+  document.querySelectorAll("[data-for]").forEach((d) => { d.hidden = d.dataset.for !== device; });
+  if (device === "android" && !$("g-apk").innerHTML) invoke("qr", { text: APK }).then((svg) => { $("g-apk").innerHTML = svg; });
+}
+document.querySelectorAll(".choices button").forEach((b) => b.onclick = () => {
+  device = b.dataset.dev; store("guideDevice", device); showDevice(); refreshGuide();
+});
+
+function openGuide() {
+  if (isMini) return;
+  $("settings").hidden = true;
+  $("guide").hidden = false; $("guide").scrollTop = 0;
+  showDevice(); refreshGuide();
+  clearInterval(guideTimer); guideTimer = setInterval(refreshGuide, 3000);
+}
+function closeGuide() {
+  $("guide").hidden = true; clearInterval(guideTimer); guideTimer = null;
+  store("guideDone", "1"); render();
+}
+$("close-guide").onclick = closeGuide;
+$("g-start").onclick = closeGuide;
+$("open-guide").onclick = openGuide;
+$("g-connect").onclick = async () => {
+  try { await invoke("connect_claude"); refreshGuide(); } catch (e) { say($("g-claude"), String(e)); }
+};
+$("g-skip").onclick = (e) => { e.preventDefault(); store("claudeSkip", "1"); refreshGuide(); };
+
 // ---------- dados ----------
 listen("snapshot", (e) => { snapshot = e.payload; render(); });
 invoke("status").then((s) => { snapshot = s.snapshot; render(); });
+if (!isMini) {
+  listen("show-guide", openGuide);
+  if (store("guideDone") !== "1") openGuide();   // primeira abertura
+}
 new ResizeObserver(renderDisplay).observe(canvas);
 setInterval(renderDisplay, 1000);   // contagem regressiva

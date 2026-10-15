@@ -16,8 +16,9 @@
     <div id="screen"><canvas id="display"></canvas></div>
   </main>
 
-  <section id="settings" hidden>
+  <section id="settings" class="sheet" hidden>
     <header data-tauri-drag-region><h1>AJUSTES</h1><button id="close-settings">FECHAR</button></header>
+    <button id="open-guide" class="wide">PRIMEIROS PASSOS</button>
     <div class="panel">
       <h2>CLAUDE CODE</h2>
       <p id="claude-state"></p>
@@ -46,6 +47,61 @@
     <div class="panel">
       <h2>OUTRAS IAS</h2>
       <p class="dim">Qualquer IA aparece aqui ao gravar um arquivo em <code>~/.tokenbar/providers/</code> (veja docs/providers.md no GitHub).</p>
+    </div>
+  </section>
+
+  <section id="guide" class="sheet" hidden>
+    <header data-tauri-drag-region><h1>PRIMEIROS PASSOS</h1><button id="close-guide">FECHAR</button></header>
+    <div class="panel step" id="step-claude">
+      <h2><b class="n">1</b>CLAUDE CODE</h2>
+      <p class="state" id="g-claude"></p>
+      <div id="g-claude-act"><button id="g-connect">CONECTAR CLAUDE CODE</button> <a href="#" id="g-skip" class="link">Não uso</a></div>
+    </div>
+    <div class="panel step" id="step-codex">
+      <h2><b class="n">2</b>CODEX</h2>
+      <p class="state" id="g-codex"></p>
+      <p class="dim">Outras IAs: veja docs/providers.md no GitHub.</p>
+    </div>
+    <div class="panel step" id="step-phone">
+      <h2><b class="n">3</b>CELULAR E RELÓGIO</h2>
+      <div class="choices">
+        <button data-dev="android">ANDROID</button><button data-dev="wear">WEAR OS</button><button data-dev="iphone">IPHONE</button><button data-dev="watch">APPLE WATCH</button><button data-dev="here">SÓ AQUI</button>
+      </div>
+      <div data-for="android" hidden>
+        <div class="row"><div class="qr" id="g-apk"></div><div>
+          <p><b>1.</b> Baixe o app no celular.</p>
+          <p class="dim">Abra o arquivo e permita instalar. Se o Play Protect avisar: Instalar assim mesmo.</p>
+        </div></div>
+        <div class="row"><div class="qr g-pair"></div><div>
+          <p><b>2.</b> No app, toque em ESCANEAR QR.</p>
+          <p class="state g-live"></p>
+        </div></div>
+      </div>
+      <div data-for="wear" hidden>
+        <p>Com celular Android pareado, o relógio recebe sozinho. Sem celular: instale o TokenBar-WearOS.apk (veja INSTALL.md) e digite este código no relógio:</p>
+        <p><span class="code" id="g-code"></span></p>
+        <p class="state g-live"></p>
+      </div>
+      <div data-for="iphone" hidden>
+        <p>O app de iPhone ainda não está na App Store: é instalado pelo Xcode num Mac (veja INSTALL.md no GitHub).</p>
+        <div class="row"><div class="qr g-pair"></div><div>
+          <p>Aponte a câmera → Abrir no TokenBar → permita Rede Local.</p>
+          <p class="state g-live"></p>
+        </div></div>
+      </div>
+      <div data-for="watch" hidden><p>Vem junto com o app do iPhone. Pareie o iPhone e o relógio recebe sozinho.</p></div>
+      <div data-for="here" hidden><p class="state ok">Tudo certo: o TokenBar fica na bandeja do sistema.</p></div>
+      <p class="dim">Se o sistema perguntar sobre a rede/firewall, permita o TokenBar: é assim que o celular lê este computador.</p>
+    </div>
+    <div class="panel step" id="step-done">
+      <h2><b class="n">4</b>PRONTO</h2>
+      <ul>
+        <li>Clique no anel da bandeja para abrir o aparelho</li>
+        <li>⧉ abre o flutuante, sempre na frente</li>
+        <li>Arraste o display para trocar de IA</li>
+        <li>Reabra este guia no ?</li>
+      </ul>
+      <button id="g-start">COMEÇAR</button>
     </div>
   </section>
 <script type="module" src="app.js"></script>

@@ -1,4 +1,4 @@
-:root { color-scheme: dark; --cyan: #5ad8ff; --dim: #8a8f9c; }
+:root { color-scheme: dark; --cyan: #5ad8ff; --dim: #8a8f9c; --ok: #59d973; }
 * { box-sizing: border-box; margin: 0; }
 html, body { height: 100%; background: transparent; overflow: hidden; font-family: ui-monospace, "Cascadia Mono", "DejaVu Sans Mono", monospace; color: #fff; user-select: none; }
 
@@ -21,10 +21,10 @@ html, body { height: 100%; background: transparent; overflow: hidden; font-famil
 #screen { flex: 1; position: relative; overflow: hidden; border-radius: 12px; touch-action: pan-y; cursor: grab; }
 #display { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-#settings { position: fixed; inset: 0; overflow: auto; padding: 14px; background: #07070a; border-radius: 22px;
+.sheet { position: fixed; inset: 0; overflow: auto; padding: 14px; background: #07070a; border-radius: 22px;
   border: 1px solid rgba(255,255,255,0.16); display: flex; flex-direction: column; gap: 10px; user-select: text; }
-#settings[hidden] { display: none; }
-#settings header { display: flex; justify-content: space-between; align-items: center; }
+.sheet[hidden] { display: none; }
+.sheet header { display: flex; justify-content: space-between; align-items: center; }
 h1 { font-size: 16px; letter-spacing: 4px; } h2 { font-size: 11px; letter-spacing: 3px; color: var(--dim); margin-bottom: 6px; }
 .panel { background: linear-gradient(#050505, #111); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; font-size: 12px; }
 .panel.row { display: flex; gap: 14px; align-items: flex-start; }
@@ -35,3 +35,18 @@ button { font: inherit; font-size: 11px; letter-spacing: 1.5px; color: var(--cya
   border: 1px solid rgba(90,216,255,0.4); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
 input { font: inherit; width: 100%; padding: 8px; margin-bottom: 8px; color: #fff; background: #000; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; }
 code { color: #fff; }
+
+/* guia */
+button.wide { align-self: stretch; padding: 8px; }
+.step h2 { display: flex; align-items: center; gap: 8px; }
+.n { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; letter-spacing: 0;
+  color: #000; background: var(--dim); }
+.step.done .n { background: var(--ok); }
+.step.done h2::after { content: "✓"; color: var(--ok); font-size: 13px; }
+.state.ok { color: var(--ok); }
+.link { color: var(--dim); font-size: 11px; margin-left: 8px; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.choices button.on { color: #000; background: var(--cyan); }
+.step .row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+.qr svg { width: 110px; height: 110px; background: #fff; padding: 5px; border-radius: 8px; display: block; }
+.step ul { padding-left: 16px; margin-bottom: 10px; line-height: 1.6; }
