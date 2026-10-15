@@ -346,6 +346,10 @@ enum Lang {
         "AMBAS": "BOTH",
         "Trocar a IA": "Switch AI",
         "Trocar a janela": "Switch window",
+        // Ilha no notch (Mac)
+        "ILHA NO NOTCH": "NOTCH ISLAND",
+        "Uma pílula preta em volta da câmera com a % de cada IA; passe o mouse para abrir.": "A black pill around the camera with each AI's %; hover to open it.",
+        "Abrir o aparelho": "Open the device",
     ]
 }
 

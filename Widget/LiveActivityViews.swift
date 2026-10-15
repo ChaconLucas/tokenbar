@@ -9,7 +9,7 @@ import WidgetKit
 struct UsageLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: UsageActivityAttributes.self) { ctx in
-            LiveLockScreen(state: ctx.state, stale: ctx.isStale, theme: Prefs.theme)
+            LiveContent(state: ctx.state, stale: ctx.isStale, theme: Prefs.theme)
                 .activityBackgroundTint(.black)
                 .activitySystemActionForegroundColor(.white)
                 .widgetURL(URL(string: "\(TB.urlScheme)://open"))
@@ -43,6 +43,57 @@ struct UsageLiveActivity: Widget {
             }
             .keylineTint(color)
             .widgetURL(URL(string: "\(TB.urlScheme)://open"))
+        }
+        // Apple Watch (Smart Stack) e CarPlay: o cartão pequeno, desenhado em LiveSmall.
+        .supplementalActivityFamilies([.small])
+    }
+}
+
+/// Tela bloqueada (família média) ou o cartão pequeno do relógio.
+struct LiveContent: View {
+    @Environment(\.activityFamily) private var family
+    var state: UsageActivityAttributes.ContentState
+    var stale: Bool
+    var theme: Theme
+
+    var body: some View {
+        if family == .small {
+            LiveSmall(state: state, stale: stale, theme: theme)
+        } else {
+            LiveLockScreen(state: state, stale: stale, theme: theme)
+        }
+    }
+}
+
+/// Cartão pequeno (Apple Watch, ~160×70 pt): uma faixa de LED por IA (ou 5H e 7D de cada),
+/// com a contagem ao lado. Sem teclas: no pulso não há onde tocar com folga.
+struct LiveSmall: View {
+    var state: UsageActivityAttributes.ContentState
+    var stale: Bool
+    var theme: Theme
+
+    var body: some View {
+        MiniLEDRows(lines: Self.lines(state), theme: theme, header: "TOKENBAR",
+                    badge: state.all ? MiniLine.windowLabel(state.window)
+                        : "\(state.rows.first.map { UsageStyle.abbr($0.id) } ?? "") \(MiniLine.windowLabel(state.window))")
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .opacity(stale ? 0.55 : 1)
+    }
+
+    static func lines(_ state: UsageActivityAttributes.ContentState) -> [MiniLine] {
+        let both = state.window == "both"
+        return state.rows.prefix(both ? 2 : 3).flatMap { r -> [MiniLine] in
+            if both {
+                var out = [MiniLine(id: r.id + "-5", providerID: r.id, name: r.name, tag: "5H", percent: r.used,
+                                    resetsAt: r.resetsAt)]
+                if let w = r.week {
+                    out.append(MiniLine(id: r.id + "-7", providerID: r.id, name: nil, tag: "7D", percent: w,
+                                        resetsAt: r.weekResetsAt, groupStart: false, dim: true))
+                }
+                return out
+            }
+            return [MiniLine(id: r.id, providerID: r.id, name: r.name, tag: nil, percent: r.percent(state.window),
+                             resetsAt: r.resets(state.window), dim: state.window == "long")]
         }
     }
 }

@@ -19,7 +19,15 @@ struct WidgetContent: View {
         } else {
             switch family {
             case .accessoryRectangular:
+                #if os(watchOS)
+                // Relógio (mostrador e Smart Stack): o mesmo LED da Atividade ao Vivo no pulso.
+                MiniLEDRows(lines: MiniLine.lines(snapshot, agent: agent, window: window, now: now), theme: theme, now: now,
+                            header: "TOKENBAR",
+                            badge: (agent == "all" ? "" : UsageStyle.abbr(agent) + " ") + MiniLine.windowLabel(window))
+                    .widgetAccentable()
+                #else
                 AccessoryRows(items: Array(items.prefix(3)), now: now, theme: theme)
+                #endif
             case .accessoryCircular:
                 AccessoryRing(item: items.first, now: now, theme: theme)
             case .accessoryInline:

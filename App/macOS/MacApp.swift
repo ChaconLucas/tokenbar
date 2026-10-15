@@ -45,6 +45,13 @@ final class MacModel: ObservableObject {
     @Published var windowChoice = Prefs.window {
         didSet { Prefs.window = windowChoice; WidgetCenter.shared.reloadAllTimelines() }
     }
+    /// Ilha no notch: ligada por padrão nos Macs com notch.
+    @Published var notchIsland = UserDefaults.standard.object(forKey: "notchIsland") as? Bool ?? NotchIsland.screenHasNotch {
+        didSet {
+            UserDefaults.standard.set(notchIsland, forKey: "notchIsland")
+            NotchIsland.shared.setEnabled(notchIsland)
+        }
+    }
 
     private var timer: Timer?
     private var lastPushed: UsageSnapshot?
@@ -279,6 +286,7 @@ struct MenuLabel: View {
                 // Só na abertura do app: o rótulo da barra reaparece a cada clique, e isso não pode reabrir janela.
                 guard !MenuLabel.launched else { return }
                 MenuLabel.launched = true
+                NotchIsland.shared.start(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })
                 // Abre um só: o flutuante, se era ele que estava aberto; senão, o aparelho grande.
                 if UserDefaults.standard.bool(forKey: "miniOpen") || UserDefaults.standard.bool(forKey: "TBMini") {
                     MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() })

@@ -53,6 +53,14 @@ struct UsageEntry: TimelineEntry {
     var agent: String = "all"
     var window: String = "short"
     var cycling = false
+    /// Smart Stack (relógio e iPhone): sobe o widget com uso alto ou reset perto.
+    var relevance: TimelineEntryRelevance? = nil
+
+    func withRelevance() -> UsageEntry {
+        var e = self
+        e.relevance = MiniRelevance.make(MiniLine.lines(snapshot, agent: agent, window: window, now: date), at: date)
+        return e
+    }
 }
 
 struct ConfigProvider: AppIntentTimelineProvider {
@@ -76,11 +84,12 @@ struct ConfigProvider: AppIntentTimelineProvider {
         let snapshot = await Self.load()
         let now = Date.now
         // Um entry agora e outro em cada reset das próximas horas: a barra zera na hora certa sem rede.
-        let dates = Array(([now] + snapshot.upcomingResets(after: now).filter { $0 < now.addingTimeInterval(6 * 3600) }).prefix(8))
+        // (e 30 min antes de cada reset: a relevância da Smart Stack sobe ali).
+        let dates = MiniRelevance.dates(snapshot, now: now)
         let paired = SharedStore.loadPairing() != nil || !snapshot.providers.isEmpty
         let entries = dates.map {
             UsageEntry(date: $0, snapshot: snapshot, paired: paired, agent: Self.agent(config), window: config.window.rawValue,
-                       cycling: config.agent == .cycle)
+                       cycling: config.agent == .cycle).withRelevance()
         }
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60)))
     }
@@ -199,9 +208,11 @@ struct PresetProvider: TimelineProvider {
         Task {
             let snapshot = await ConfigProvider.load()
             let now = Date.now
-            let dates = Array(([now] + snapshot.upcomingResets(after: now).filter { $0 < now.addingTimeInterval(6 * 3600) }).prefix(8))
+            let dates = MiniRelevance.dates(snapshot, now: now)
             let paired = SharedStore.loadPairing() != nil || !snapshot.providers.isEmpty
-            let entries = dates.map { UsageEntry(date: $0, snapshot: snapshot, paired: paired, agent: agent, window: window) }
+            let entries = dates.map {
+                UsageEntry(date: $0, snapshot: snapshot, paired: paired, agent: agent, window: window).withRelevance()
+            }
             completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60))))
         }
     }

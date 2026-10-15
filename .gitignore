@@ -16,3 +16,5 @@ vscode/out/
 *.vsix
 build-providers/
 build-la/
+build-notch/
+build-watch/
