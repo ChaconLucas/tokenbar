@@ -13,11 +13,38 @@ num display de LED no Mac, no iPhone e no Apple Watch.
 
 ---
 
+## Instalar
+
+**Mac** (macOS 15+), um comando no Terminal:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh
+```
+
+**Ou peça para a sua IA.** Abra o Claude Code, o Codex ou outra IA com terminal e diga:
+
+> Leia https://github.com/ChaconLucas/tokenbar/blob/main/INSTALL.md e instale o TokenBar para mim.
+
+O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos você tem, roda os comandos e só pede a sua mão quando precisa (uma permissão, o celular, o relógio).
+
+| Aparelho | Como |
+|---|---|
+| **Mac** | o comando acima |
+| **Windows / Linux** | instalador nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) (ou compilar, veja o `INSTALL.md`) |
+| **Android** | `TokenBar-Android.apk` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
+| **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
+| **iPhone / Apple Watch** | só compilando no Xcode (conta Apple gratuita: o app expira a cada 7 dias). Veja [Instalar pelo Xcode](#instalar-pelo-xcode-iphone-e-apple-watch) |
+
+**O computador é quem coleta os números.** Celular e relógio só mostram o que ele manda pelo Wi-Fi, então comece sempre por ele.
+
+---
+
 ## O que ele faz
 
 - **Mac:** um "aparelho" de LED na tela (dá para aumentar, diminuir e pôr em tela cheia) e, na barra de menu, mini barras de pontos de LED coloridas, uma por IA, com a %. Clicar nelas abre um resumo com o aparelho e botões de vidro (*liquid glass* no macOS 26): Aparelho, Mini, Ajustes, atualizar e sair.
-- **Mini (Mac):** o aparelho pequeno, num painel flutuante (NSPanel) sempre na frente, inclusive de apps em tela cheia, e em todas as mesas (Spaces). Dá para redimensionar mantendo a proporção; posição e tamanho ficam salvos. Abre pelo botão **Mini** da barra de menu, pela tecla **FLUTUAR** do aparelho ou pelo controle da Central de Controle. Para fechar, o **×** que aparece ao passar o mouse, ou clique com o botão direito → Fechar Mini.
+- **Mini (Mac):** o aparelho pequeno, num painel flutuante (NSPanel) sempre na frente, inclusive de apps em tela cheia, e em todas as mesas (Spaces). Dá para redimensionar mantendo a proporção; posição e tamanho ficam salvos. Abre pelo botão **Mini** da barra de menu, pela tecla de destacar do aparelho (o ícone de janelinha saindo, no canto direito) ou pelo controle da Central de Controle. Para fechar, o **×** que aparece ao passar o mouse, ou clique com o botão direito → Fechar Mini.
 - **Central de Controle (macOS 26 / iOS 18):** controles **TokenBar** (todas as IAs), **Claude**, **Codex**, **TokenBar flutuante** e **TokenBar aparelho**. O ícone é um anel de 12 pontos de LED que acende conforme o gasto; aumentado, o controle mostra duas linhas (a % em cima, quando reseta embaixo). A Apple só permite ícone + 2 linhas de texto, e todo controle novo entra pequeno: aumente-o uma vez para ver as linhas.
+- **Windows e Linux:** o mesmo aparelho de LED, o flutuante e um anel de pontos na bandeja do sistema (app em [`desktop/`](desktop), feito com Tauri).
 - **iPhone:** abre deitado, em tela cheia, com a tela sempre acesa, para usar como relógio de mesa. Tem widgets na tela inicial e na tela bloqueada.
 - **Apple Watch:** um app e complicações no mostrador (anel, canto e linha). No app, a tecla **TODOS / CLAUDE / CODEX** (ou girar a coroa digital) escolhe ver todas as IAs ou só uma (com o 5H e o 7D dela), e **5H / 7D** troca a janela. As cores seguem as do iPhone. Com o servidor opcional, o relógio busca os números sozinho, sem o iPhone por perto.
 - **Duas IAs:** Claude Code e Codex. Você escolhe qual aparecer e arrasta para o lado para trocar.
@@ -91,7 +118,9 @@ adb -s <relógio> install wear/build/outputs/apk/debug/wear-debug.apk   # no rel
 - Uma conta Apple (a gratuita serve para rodar nos seus próprios aparelhos; veja **Distribuição**)
 - Claude Code e/ou Codex instalados no Mac
 
-## Instalar
+## Instalar pelo Xcode (iPhone e Apple Watch)
+
+Para o Mac sozinho não precisa disso: use o comando do topo.
 
 ### 1. Baixar e configurar a assinatura
 

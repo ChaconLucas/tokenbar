@@ -15,11 +15,38 @@ on an LED display on your Mac, iPhone and Apple Watch.
 
 ---
 
+## Install
+
+**Mac** (macOS 15+), one command in Terminal:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh
+```
+
+**Or ask your AI.** Open Claude Code, Codex or any AI with a terminal and say:
+
+> Read https://github.com/ChaconLucas/tokenbar/blob/main/INSTALL.md and install TokenBar for me.
+
+[`INSTALL.md`](INSTALL.md) is written for the AI: it asks which devices you have, runs the commands, and only asks for your hands when needed (a permission, the phone, the watch).
+
+| Device | How |
+|---|---|
+| **Mac** | the command above |
+| **Windows / Linux** | installer in [Releases](https://github.com/ChaconLucas/tokenbar/releases) (or build it, see `INSTALL.md`) |
+| **Android** | `TokenBar-Android.apk` in [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
+| **Wear OS** | `TokenBar-WearOS.apk` in Releases, installed with `adb` |
+| **iPhone / Apple Watch** | build with Xcode only (free Apple account: the app expires every 7 days). See [Install with Xcode](#install-with-xcode-iphone-and-apple-watch) |
+
+**The computer collects the numbers.** Phones and watches only show what it sends over Wi-Fi, so always start there.
+
+---
+
 ## What it does
 
 - **Mac:** an LED "device" on screen (you can make it bigger, smaller or full screen) and, in the menu bar, small colored LED dot bars, one per AI, with the %. Clicking them opens a summary with the device and glass buttons (*liquid glass* on macOS 26): Aparelho (device), Mini, Ajustes (settings), refresh and quit.
-- **Mini (Mac):** the device in a small floating panel (NSPanel) that stays on top of everything, including full-screen apps, and on every Space. It can be resized while keeping its aspect ratio; position and size are remembered. Open it from the **Mini** button in the menu bar, the device's **FLUTUAR** (float) key, or the Control Center control. To close it, use the **×** that appears on hover, or right-click → Fechar Mini.
+- **Mini (Mac):** the device in a small floating panel (NSPanel) that stays on top of everything, including full-screen apps, and on every Space. It can be resized while keeping its aspect ratio; position and size are remembered. Open it from the **Mini** button in the menu bar, the device's pop-out key (the small window icon on the right), or the Control Center control. To close it, use the **×** that appears on hover, or right-click → Fechar Mini.
 - **Control Center (macOS 26 / iOS 18):** controls **TokenBar** (all AIs), **Claude**, **Codex**, **TokenBar flutuante** (floating) and **TokenBar aparelho** (device). The icon is a ring of 12 LED dots that lights up with your usage; when enlarged, the control shows two lines (the % on top, time to reset below). Apple only allows an icon plus 2 lines of text, and every new control starts small: enlarge it once to see the lines.
+- **Windows and Linux:** the same LED device, the floating mini and a dot ring in the system tray (app in [`desktop/`](desktop), built with Tauri).
 - **iPhone:** opens in landscape, full screen, with the screen always on, to use as a desk clock. Widgets on the Home Screen and Lock Screen.
 - **Apple Watch:** an app and watch-face complications (circular, corner and inline). In the app, the **TODOS / CLAUDE / CODEX** key (or turning the Digital Crown) shows all AIs or just one (with its 5H and 7D), and **5H / 7D** switches the window. Colors follow the iPhone's. With the optional server, the watch fetches the numbers by itself, without the iPhone nearby.
 - **Two AIs:** Claude Code and Codex. Choose which ones to show and swipe sideways to switch.
@@ -93,7 +120,9 @@ adb -s <watch> install wear/build/outputs/apk/debug/wear-debug.apk   # watch (wi
 - An Apple account (the free one is enough to run on your own devices; see **Distribution**)
 - Claude Code and/or Codex installed on the Mac
 
-## Install
+## Install with Xcode (iPhone and Apple Watch)
+
+You don't need this for the Mac alone: use the command at the top.
 
 ### 1. Clone and set up signing
 
