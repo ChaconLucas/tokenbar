@@ -38,6 +38,8 @@ struct Status {
     code: String,
     server: Option<String>,
     claude_connected: bool,
+    /// O Claude Code existe neste computador (a pasta ~/.claude): se não chega número, vale oferecer o login.
+    claude_installed: bool,
     claude_login: bool,
     claude_login_error: Option<String>,
     push_error: Option<String>,
@@ -72,6 +74,7 @@ fn status(app: State<Arc<App>>, handle: AppHandle) -> Status {
         code,
         server: p.server,
         claude_connected: hook::is_installed(),
+        claude_installed: collector::home().join(".claude").is_dir(),
         claude_login,
         claude_login_error: if claude_login { collector::claude_login_error().map(|e| i18n::tr(&e)) } else { None },
         push_error: app.push_error.lock().unwrap().clone(),

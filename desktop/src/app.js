@@ -103,7 +103,32 @@ function renderDisplay() {
     ctx.restore();
   }
 }
-function render() { renderKeys(); renderDisplay(); }
+function render() { renderKeys(); renderDisplay(); renderHint(); }
+
+// Claude instalado mas sem números (o painel do VS Code não roda a statusline): o aparelho oferece ler pelo login.
+let flags = {};
+const store2 = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } };
+function renderHint() {
+  const el = document.getElementById("hint"); if (!el) return;
+  const hasClaude = snapshot.providers.some((p) => p.id === "claude");
+  const show = !isMini && flags.claudeInstalled && !hasClaude && store2("hintClaudeOff") !== "1";
+  el.hidden = !show;
+  if (!show) return;
+  document.getElementById("hint-text").textContent = flags.claudeLogin
+    ? (flags.claudeLoginError || t("Lendo pelo login…"))
+    : t("Claude sem números. Usa no painel do VS Code?");
+  document.getElementById("hint-on").hidden = !!flags.claudeLogin;
+}
+async function refreshFlags() {
+  try { const s = await invoke("status"); flags = s; renderHint(); } catch {}
+}
+if (!isMini) { refreshFlags(); setInterval(refreshFlags, 30000); }
+document.getElementById("hint-on").onclick = async (e) => {
+  e.stopPropagation();
+  try { await invoke("set_claude_login", { on: true }); } catch {}
+  refreshFlags();
+};
+document.getElementById("hint-x").onclick = (e) => { e.stopPropagation(); store2("hintClaudeOff", "1"); renderHint(); };
 
 function go(step) {
   const n = visible().length; if (n < 2) return;

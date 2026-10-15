@@ -397,6 +397,7 @@ struct DeviceWindow: View {
                    }),
                    windowControls: (minimize: { mainWindow?.miniaturize(nil) }, close: { dismissWindow(id: "main") }))
             .frame(width: size.width, height: size.height)
+            .overlay(alignment: .bottom) { claudeHint.padding(.bottom, 14) }
         .environment(\.colorScheme, .dark)
             .contextMenu {
                 Button(Lang.t("Ajustes…"), action: openSettings)
@@ -430,6 +431,25 @@ struct DeviceWindow: View {
     private func openSettings() {
         openWindow(id: "settings")
         NSApp.activate()
+    }
+
+    @AppStorage("hintClaudeOff") private var hintOff = false
+
+    /// Claude instalado mas sem números (o painel do VS Code não roda a statusline): oferece ler pelo login.
+    @ViewBuilder private var claudeHint: some View {
+        let installed = FileManager.default.fileExists(atPath: Collector.home.appending(path: ".claude").path)
+        if installed, !hintOff, model.snapshot.provider("claude") == nil {
+            HStack(spacing: 10) {
+                Text(model.claudeLogin ? (model.claudeLoginError ?? Lang.t("Lendo pelo login…")) : Lang.t("Claude sem números. Usa no painel do VS Code?"))
+                    .font(.system(size: 12)).foregroundStyle(.white).lineLimit(1)
+                if !model.claudeLogin {
+                    Button(Lang.t("LIGAR")) { model.claudeLogin = true }.buttonStyle(ArcadeButtonStyle(tint: Art.claude))
+                }
+                Button { hintOff = true } label: { Image(systemName: "xmark").foregroundStyle(.white.opacity(0.5)) }.buttonStyle(.plain)
+            }
+            .padding(.leading, 14).padding(.trailing, 10).padding(.vertical, 6)
+            .background(Capsule().fill(.black.opacity(0.92)).overlay(Capsule().strokeBorder(Art.claude.opacity(0.5))))
+        }
     }
 
     private var mainWindow: NSWindow? { NSApp.windows.first { $0.identifier?.rawValue.hasPrefix("main") == true } }

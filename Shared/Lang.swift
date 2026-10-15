@@ -59,6 +59,9 @@ enum Lang {
 
     static let en: [String: String] = [
         // Ajustes em LED e guia
+        "LIGAR": "TURN ON",
+        "Lendo pelo login…": "Reading from the login…",
+        "Claude sem números. Usa no painel do VS Code?": "No Claude numbers. Using the VS Code panel?",
         "Minimizar": "Minimize",
         "DESCONECTAR": "DISCONNECT",
         "DESCONECTAR APARELHOS": "DISCONNECT DEVICES",

@@ -229,3 +229,11 @@ button.wide { align-self: stretch; padding: 8px; }
   .slide, .slide.prev { transform: none; }
 }
 button.quiet { color: #ff8a8a; background: rgba(255,90,90,0.06); border-color: rgba(255,90,90,0.35); }
+
+#hint { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px 6px 14px; border-radius: 99px; background: rgba(10,10,14,0.92); border: 1px solid rgba(158,92,255,0.5);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6); font-size: 12px; white-space: nowrap; z-index: 5; }
+#hint[hidden] { display: none; }
+#hint button { font-size: 11px; padding: 4px 10px; color: #c7a6ff; border-color: rgba(158,92,255,0.6); background: rgba(158,92,255,0.12); }
+#hint button.x { color: rgba(255,255,255,0.5); border: 0; background: none; padding: 4px 6px; }
+#device { position: fixed; }
