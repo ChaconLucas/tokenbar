@@ -36,6 +36,8 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 | **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
 | **iPhone / Apple Watch** | só compilando no Xcode (conta Apple gratuita: o app expira a cada 7 dias). Veja [Instalar pelo Xcode](#instalar-pelo-xcode-iphone-e-apple-watch) |
 
+**Atualizações:** a partir da 0.3.0, Mac, Windows e Android avisam quando sai versão nova (botão **Atualizar**). Um clique e pronto. iPhone, Apple Watch e Wear OS se atualizam instalando de novo.
+
 **O computador é quem coleta os números.** Celular e relógio só mostram o que ele manda pelo Wi-Fi, então comece sempre por ele.
 
 ---

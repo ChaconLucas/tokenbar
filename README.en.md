@@ -38,6 +38,8 @@ curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/i
 | **Wear OS** | `TokenBar-WearOS.apk` in Releases, installed with `adb` |
 | **iPhone / Apple Watch** | build with Xcode only (free Apple account: the app expires every 7 days). See [Install with Xcode](#install-with-xcode-iphone-and-apple-watch) |
 
+**Updates:** from 0.3.0 on, Mac, Windows and Android show an **Atualizar** (update) button when a new version is out. One click. iPhone, Apple Watch and Wear OS update by installing again.
+
 **The computer collects the numbers.** Phones and watches only show what it sends over Wi-Fi, so always start there.
 
 ---
