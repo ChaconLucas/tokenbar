@@ -46,7 +46,7 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 | **Linux** | por enquanto compilando (veja o `INSTALL.md`) |
 | **Mac (Homebrew)** | `brew install --cask chaconlucas/tokenbar/tokenbar` |
 | **Windows (winget)** | `winget install ChaconLucas.TokenBar` (em análise pela Microsoft) |
-| **VS Code** | a % na barra de baixo do VS Code: baixe `TokenBar-VSCode.vsix` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) → no VS Code, **Extensões → ⋯ → Instalar do VSIX** |
+| **VS Code** | a % na barra de baixo do VS Code: procure **TokenBar** em Extensões ([loja](https://marketplace.visualstudio.com/items?itemName=chaconlucas.tokenbar)) |
 | **Android** | `TokenBar-Android.apk` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
 | **iPhone** | no Mac com o Xcode (grátis) e o iPhone no cabo: `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh`. Rodar de novo atualiza e renova os 7 dias da conta gratuita da Apple |

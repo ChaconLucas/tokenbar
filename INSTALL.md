@@ -151,8 +151,8 @@ that's how the phone and watch read the Mac over Wi-Fi.
 
 ## VS Code extension (optional, any OS)
 
-Shows the % in VS Code's status bar. Download `TokenBar-VSCode.vsix` from the latest release and run
-`code --install-extension TokenBar-VSCode.vsix` (or Extensions → ⋯ → Install from VSIX). It reads
+Shows the % in VS Code's status bar. Install from the Marketplace: `code --install-extension chaconlucas.tokenbar`
+(or search **TokenBar** in Extensions). Cursor/Windsurf: use `TokenBar-VSCode.vsix` from the latest release → Install from VSIX. It reads
 `~/.tokenbar/snapshot.json` written by the TokenBar app, or the Claude/Codex files directly if the app isn't installed.
 
 ## Windows / Linux
