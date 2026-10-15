@@ -236,6 +236,15 @@ struct MenuLabel: View {
                     delegate.openMain?()
                 }
                 #if DEBUG
+                // -TBMenuPreview YES: o resumo da barra numa janela (capturas de tela sem clicar na barra).
+                if UserDefaults.standard.bool(forKey: "TBMenuPreview") {
+                    let w = NSWindow(contentRect: NSRect(x: 200, y: 300, width: 424, height: 240),
+                                     styleMask: [.titled, .fullSizeContentView], backing: .buffered, defer: false)
+                    w.title = "MenuPreview"
+                    w.titlebarAppearsTransparent = true
+                    w.contentView = NSHostingView(rootView: MenuContent().environmentObject(model))
+                    w.makeKeyAndOrderFront(nil)
+                }
                 // -TBOpenSettings YES: abre os Ajustes direto (capturas de tela).
                 if UserDefaults.standard.bool(forKey: "TBOpenSettings") {
                     DispatchQueue.main.async { openWindow(id: "settings") }
@@ -255,25 +264,17 @@ struct MenuContent: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(spacing: 10) {
-            if let v = updater.available {
-                menuButton(updater.busy ? Lang.t("Atualizando…") : Lang.f("Atualizar para a versão %@", v), "arrow.down.circle") { updater.install() }
-                    .disabled(updater.busy)
-                if let e = updater.error { Text(e).font(.caption).foregroundStyle(Arcade.red) }
-            }
+        VStack(spacing: 12) {
             // O aparelho precisa de altura fixa: dentro do menu ele não tem de onde tirar o tamanho.
             BusyDevice(snapshot: model.snapshot, visible: $model.visible, windowChoice: $model.windowChoice,
                        theme: model.theme, liquidGlass: true)
                 .frame(width: 400, height: 150)
-            HStack(spacing: 6) {
-                menuButton(Lang.t("Aparelho"), "rectangle.inset.filled") { openWindow(id: "main"); NSApp.activate() }
-                menuButton("Mini", "pip") { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
-                menuButton(Lang.t("Ajustes"), "gearshape") { openWindow(id: "settings"); NSApp.activate() }
-                Spacer(minLength: 4)
-                menuButton(nil, "questionmark") { openWindow(id: "setup"); NSApp.activate() }.help(Lang.t("Guia: primeiros passos"))
-                menuButton(nil, "arrow.clockwise") { model.refresh() }.help(Lang.t("Atualizar"))
-                menuButton(nil, "power") { NSApp.terminate(nil) }.help(Lang.t("Sair do TokenBar"))
+            if #available(macOS 26.0, *) {
+                glassRow
+            } else {
+                classicRow
             }
+            if let e = updater.error { Text(e).font(.caption).foregroundStyle(Arcade.red) }
         }
         .padding(12)
         .frame(width: 424)
@@ -281,18 +282,68 @@ struct MenuContent: View {
         .environment(\.colorScheme, .dark)
     }
 
-    /// Botão de vidro do sistema (macOS 26); antes disso, o botão de fliperama.
-    @ViewBuilder
-    private func menuButton(_ title: String?, _ icon: String, action: @escaping () -> Void) -> some View {
-        let label = Group {
-            if let title { Label(title, systemImage: icon) } else { Image(systemName: icon) }
-        }
-        if #available(macOS 26.0, *) {
-            Button(action: action) { label.padding(.horizontal, 2) }
-                .buttonStyle(.glass)
+    private func openMain() { openWindow(id: "main"); NSApp.activate() }
+    private func openMini() { MiniPanel.shared.show(model: model, openMain: { openWindow(id: "main"); NSApp.activate() }) }
+
+    /// Bolhas de vidro líquido: perto umas das outras, se fundem e deformam ao passar e apertar.
+    @available(macOS 26.0, *)
+    private var glassRow: some View {
+        HStack(spacing: 8) {
+            GlassEffectContainer(spacing: 14) {
+                HStack(spacing: 6) {
+                    bubble("rectangle.inset.filled", Lang.t("Aparelho"), action: openMain)
+                    bubble("pip", "Mini", action: openMini)
+                    bubble("gearshape", Lang.t("Ajustes")) { openWindow(id: "settings"); NSApp.activate() }
+                    bubble("questionmark", Lang.t("Guia: primeiros passos")) { openWindow(id: "setup"); NSApp.activate() }
+                }
+            }
+            Spacer(minLength: 0)
+            if let v = updater.available {
+                Button { updater.install() } label: {
+                    Label(updater.busy ? Lang.t("Atualizando…") : v, systemImage: "arrow.down.circle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .buttonStyle(.glassProminent)
+                .tint(.green)
                 .controlSize(.large)
-        } else {
-            Button(action: action) { label }.buttonStyle(ArcadeButtonStyle())
+                .disabled(updater.busy)
+                .help(Lang.f("Atualizar para a versão %@", v))
+            }
+            GlassEffectContainer(spacing: 14) {
+                HStack(spacing: 6) {
+                    bubble("arrow.clockwise", Lang.t("Atualizar")) { model.refresh() }
+                    bubble("power", Lang.t("Sair do TokenBar")) { NSApp.terminate(nil) }
+                }
+            }
+        }
+    }
+
+    @available(macOS 26.0, *)
+    private func bubble(_ icon: String, _ name: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 40, height: 40)
+                .contentShape(Circle())
+                .glassEffect(.regular.interactive(), in: .circle)
+        }
+        .buttonStyle(.plain)
+        .help(name)
+        .accessibilityLabel(name)
+    }
+
+    /// Antes do macOS 26: os botões de fliperama.
+    private var classicRow: some View {
+        HStack(spacing: 6) {
+            Button(Lang.t("Aparelho"), action: openMain).buttonStyle(ArcadeButtonStyle())
+            Button("Mini", action: openMini).buttonStyle(ArcadeButtonStyle())
+            Button(Lang.t("Ajustes")) { openWindow(id: "settings"); NSApp.activate() }.buttonStyle(ArcadeButtonStyle())
+            Spacer(minLength: 4)
+            if let v = updater.available {
+                Button(v) { updater.install() }.buttonStyle(ArcadeButtonStyle(tint: Arcade.green)).disabled(updater.busy)
+            }
+            Button { model.refresh() } label: { Image(systemName: "arrow.clockwise") }.buttonStyle(ArcadeButtonStyle())
+            Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }.buttonStyle(ArcadeButtonStyle())
         }
     }
 }
