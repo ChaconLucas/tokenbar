@@ -51,7 +51,7 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 | **VS Code** | usage in VS Code's status bar: download `TokenBar-VSCode.vsix` from [Releases](https://github.com/ChaconLucas/tokenbar/releases) → in VS Code, **Extensions → ⋯ → Install from VSIX** |
 | **Android** | `TokenBar-Android.apk` in [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` in Releases, installed with `adb` |
-| **iPhone / Apple Watch** | build with Xcode only (free Apple account: the app expires every 7 days). See [Install with Xcode](#install-with-xcode-iphone-and-apple-watch) |
+| **iPhone** | on a Mac with Xcode (free) and the iPhone plugged in: `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh`. Run it again to update and renew the free Apple account's 7 days |
 
 **Updates:** from 0.3.0 on, Mac, Windows and Android show an **Atualizar** (update) button when a new version is out. One click. iPhone, Apple Watch and Wear OS update by installing again.
 

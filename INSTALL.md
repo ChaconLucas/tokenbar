@@ -175,6 +175,17 @@ Works with or without the phone.
 
 ## iPhone / Apple Watch (needs Xcode)
 
+**Fast path (recommended):** with Xcode installed and opened once, the person signed into their Apple ID in
+Xcode → Settings → Accounts, and the iPhone plugged in (unlocked, "Trust", Developer Mode on), run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh
+```
+
+It clones the repo to `~/.tokenbar/src`, finds their Team ID from the Apple Development certificate, picks a unique
+bundle prefix (saved in `~/.tokenbar/ios-prefix`), builds and installs on the connected iPhone. Running it again
+updates the app and renews the 7-day free-account limit. The manual steps below are the fallback.
+
 Only possible on a **Mac with Xcode 26+** (free from the App Store, ~15 GB). Tell the person this
 takes ~20 minutes the first time and that **the app stops opening after 7 days** (free Apple
 account); to renew, run it again from Xcode.

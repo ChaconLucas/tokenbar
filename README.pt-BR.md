@@ -49,7 +49,7 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 | **VS Code** | a % na barra de baixo do VS Code: baixe `TokenBar-VSCode.vsix` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) → no VS Code, **Extensões → ⋯ → Instalar do VSIX** |
 | **Android** | `TokenBar-Android.apk` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
-| **iPhone / Apple Watch** | só compilando no Xcode (conta Apple gratuita: o app expira a cada 7 dias). Veja [Instalar pelo Xcode](#instalar-pelo-xcode-iphone-e-apple-watch) |
+| **iPhone** | no Mac com o Xcode (grátis) e o iPhone no cabo: `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh`. Rodar de novo atualiza e renova os 7 dias da conta gratuita da Apple |
 
 **Atualizações:** a partir da 0.3.0, Mac, Windows e Android avisam quando sai versão nova (botão **Atualizar**). Um clique e pronto. iPhone, Apple Watch e Wear OS se atualizam instalando de novo.
 
