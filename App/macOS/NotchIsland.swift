@@ -203,7 +203,7 @@ struct NotchGeometry: Equatable {
     var collapsedSize: CGSize {
         CGSize(width: hasNotch ? notchWidth + 2 * Self.wing : 2 * Self.wing + 16, height: band)
     }
-    var expandedWidth: CGFloat { max(440, notchWidth + 2 * 140) }
+    var expandedWidth: CGFloat { max(460, notchWidth + 2 * 178) }
 }
 
 @MainActor
@@ -435,12 +435,21 @@ struct NotchIslandView: View {
         let agentText = single ? (rows.first.map { UsageStyle.abbr($0.id) } ?? "-") : Lang.t("TODAS")
         let agentColor = single ? (rows.first.map { theme.base($0.id) } ?? .white) : Color.white
         return VStack(spacing: 14) {
-            // Faixa de cima: ao lado do notch (o meio fica livre para a câmera).
+            // Faixa de cima: metade de cada lado do notch, com largura fixa — nada fica embaixo da câmera.
+            let side = g.hasNotch ? (g.expandedWidth - g.notchWidth) / 2 - 18 : nil
             HStack(spacing: 0) {
-                Button(action: open) { LEDText(text: "TOKENBAR", color: .white, dot: 1.5).contentShape(Rectangle()) }
+                HStack(spacing: 6) {
+                    Button(action: open) { LEDText(text: "TOKENBAR", color: .white, dot: 1.5).contentShape(Rectangle()) }
+                        .buttonStyle(PressDown())
+                        .help(Lang.t("Abrir o aparelho"))
+                    Button { NotchIsland.shared.openSettings?() } label: {
+                        NotchPill(text: Lang.t("AJUSTES"), color: .white.opacity(0.8), dot: 1.15)
+                    }
                     .buttonStyle(PressDown())
-                    .help(Lang.t("Abrir o aparelho"))
-                Spacer(minLength: g.hasNotch ? g.notchWidth + 8 : 12)
+                    .help(Lang.t("Ajustes"))
+                }
+                .frame(width: side, alignment: .leading)
+                if g.hasNotch { Spacer().frame(width: g.notchWidth) } else { Spacer(minLength: 12) }
                 HStack(spacing: 5) {
                     Button(action: cycleAgent) { NotchPill(text: "\(Lang.t("IA")) \(agentText) >", color: agentColor, dot: 1.15) }
                         .buttonStyle(PressDown())
@@ -451,12 +460,8 @@ struct NotchIslandView: View {
                     }
                     .buttonStyle(PressDown())
                     .help(Lang.t("Trocar a janela"))
-                    Button { NotchIsland.shared.openSettings?() } label: {
-                        NotchPill(text: Lang.t("AJUSTES"), color: .white.opacity(0.8), dot: 1.15)
-                    }
-                    .buttonStyle(PressDown())
-                    .help(Lang.t("Ajustes"))
                 }
+                .frame(width: side, alignment: .trailing)
             }
             .padding(.horizontal, 18)
             .frame(height: g.band)
