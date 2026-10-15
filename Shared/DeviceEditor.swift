@@ -18,37 +18,37 @@ struct DeviceEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("APARÊNCIA").font(Arcade.label(11)).tracking(3).foregroundStyle(Arcade.dim)
+            Text(Lang.t("APARÊNCIA")).font(Arcade.label(11)).tracking(3).foregroundStyle(Arcade.dim)
             VStack(alignment: .leading, spacing: 10) {
                 swatchRow("CLAUDE", $theme.claude)
                 swatchRow("CODEX", $theme.codex)
-                swatchRow("TEXTO", $theme.text)
-                swatchRow("TEMPO", $theme.timer)
+                swatchRow(Lang.t("TEXTO"), $theme.text)
+                swatchRow(Lang.t("TEMPO"), $theme.timer)
             }
             Divider().opacity(0.4)
             HStack(spacing: 12) {
-                Text("PONTOS").font(Arcade.label(10)).foregroundStyle(Arcade.dim).frame(width: 54, alignment: .leading)
+                Text(Lang.t("PONTOS")).font(Arcade.label(10)).foregroundStyle(Arcade.dim).frame(width: 54, alignment: .leading)
                 segmented
                 Spacer()
             }
             HStack(spacing: 12) {
-                Text("BRILHO").font(Arcade.label(10)).foregroundStyle(Arcade.dim).frame(width: 54, alignment: .leading)
+                Text(Lang.t("BRILHO")).font(Arcade.label(10)).foregroundStyle(Arcade.dim).frame(width: 54, alignment: .leading)
                 Slider(value: $theme.glow, in: 0...2)
             }
             HStack {
-                Text("Vermelho a partir de 85%")
+                Text(Lang.t("Vermelho a partir de 85%"))
                 Spacer()
                 Toggle("", isOn: $theme.warnRed).labelsHidden().disabled(theme.levelColors)
             }
             HStack {
-                Text("Cor pelo uso (verde → vermelho)")
+                Text(Lang.t("Cor pelo uso (verde → vermelho)"))
                 Spacer()
                 Toggle("", isOn: $theme.levelColors).labelsHidden()
             }
             HStack {
-                Button("Restaurar padrão") { withAnimation { theme = .standard } }
+                Button(Lang.t("Restaurar padrão")) { withAnimation { theme = .standard } }
                 Spacer()
-                if let onMore { Button("Mais ajustes…", action: onMore) }
+                if let onMore { Button(Lang.t("Mais ajustes…"), action: onMore) }
             }
             .padding(.top, 2)
         }
@@ -77,7 +77,7 @@ struct DeviceEditor: View {
         }
         .padding(2)
         .background(Capsule().fill(.white.opacity(0.08)))
-        .accessibilityLabel("Formato dos pontos")
+        .accessibilityLabel(Lang.t("Formato dos pontos"))
     }
 
     private func swatchRow(_ label: String, _ value: Binding<RGBA>) -> some View {
@@ -112,7 +112,7 @@ struct DeviceEditor: View {
                     .clipShape(Circle())
             }
             .frame(width: 18, height: 18)
-            .help("Outra cor")
+            .help(Lang.t("Outra cor"))
         }
     }
 

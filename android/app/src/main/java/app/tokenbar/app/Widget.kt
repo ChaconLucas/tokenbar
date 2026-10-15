@@ -23,6 +23,7 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.ContentScale
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
+import app.tokenbar.core.Lang
 import app.tokenbar.core.Led
 import app.tokenbar.core.Store
 
@@ -39,6 +40,7 @@ class UsageWidget : GlanceAppWidget() {
         val ctx = LocalContext.current
         val size: DpSize = LocalSize.current
         val store = Store(ctx)
+        Lang.load(ctx)
         val density = ctx.resources.displayMetrics.density
         val wide = size.width > size.height * 1.5f
         val window = if (wide) "both" else store.window
@@ -50,7 +52,7 @@ class UsageWidget : GlanceAppWidget() {
             GlanceModifier.fillMaxSize().background(ColorProvider(Color.Black)).cornerRadius(20.dp).padding(8.dp)
                 .clickable(actionStartActivity(android.content.Intent(ctx, MainActivity::class.java)))
         ) {
-            Image(ImageProvider(bmp), contentDescription = "Uso das IAs", modifier = GlanceModifier.fillMaxSize(),
+            Image(ImageProvider(bmp), contentDescription = Lang.t("Uso das IAs"), modifier = GlanceModifier.fillMaxSize(),
                   contentScale = ContentScale.Fit)
         }
     }

@@ -55,6 +55,8 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
             SharedStore.saveSnapshot(s)
             error = nil
         }
+        // Idioma escolhido no iPhone (sem a chave, fica o que já estava).
+        if let lang = ctx["lang"] as? String, ["auto", "pt", "en"].contains(lang) { LangStore.shared.lang = lang }
         // Cores escolhidas no iPhone.
         if let data = ctx["theme"] as? Data, let t = try? JSONDecoder().decode(Theme.self, from: data) {
             theme = t
@@ -111,7 +113,7 @@ struct WatchRootView: View {
                     }
                     .overlay(alignment: .bottom) {
                         if model.pairing == nil {
-                            Text("1. Instale o TokenBar no computador.\n2. Pareie o iPhone: Câmera → QR do computador.\n3. O relógio recebe sozinho.").font(.footnote).foregroundStyle(.secondary)
+                            Text(Lang.t("1. Instale o TokenBar no computador.\n2. Pareie o iPhone: Câmera → QR do computador.\n3. O relógio recebe sozinho.")).font(.footnote).foregroundStyle(.secondary)
                         } else if let e = model.error {
                             Text(e).font(.footnote).foregroundStyle(.red)
                         }
@@ -155,7 +157,7 @@ struct WatchRootView: View {
 
     private func keys(_ theme: Theme) -> some View {
         HStack(spacing: 4) {
-            let label = agent == "all" ? "TODOS" : UsageStyle.shortName(agent)
+            let label = agent == "all" ? Lang.t("TODOS") : UsageStyle.shortName(agent)
             let color = agent == "all" ? Color.white : theme.base(agent)
             DotKey(text: label, on: true, color: color, dot: 1.6, round: theme.roundDots) {
                 let order = ["all"] + Prefs.allProviders
@@ -224,7 +226,7 @@ struct WatchPanel: View {
             b.draw(big, x: cols - 2 - DotFont.width(big, scale: bigScale),
                    y: 9 + max(0, (rows - 11 - 7 * bigScale) / 2), scale: bigScale)
         } else {
-            b.drawCentered("SEM DADOS", y: rows / 2 - 3)
+            b.drawCentered(Lang.t("SEM DADOS"), y: rows / 2 - 3)
         }
         return b
     }

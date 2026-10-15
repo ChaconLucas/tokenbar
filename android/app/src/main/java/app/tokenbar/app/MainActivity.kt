@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.glance.appwidget.updateAll
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import app.tokenbar.core.*
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= 33)
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
 
+        Lang.load(this)
         pairing = store.pairing
         snapshot = store.snapshot
         // O guia abre sozinho só para quem nunca pareou nem pulou.
@@ -67,6 +69,15 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             LaunchedEffect(Unit) { updater.watch() }
             val onUpdate = { scope.launch { updater.install() }; Unit }
+            // Troca o idioma na hora (a tela inteira recompõe) e avisa widget e relógio.
+            val onLang = { v: String ->
+                Lang.set(this@MainActivity, v)
+                scope.launch {
+                    runCatching { UsageWidget().updateAll(this@MainActivity) }
+                    runCatching { Sync.sendToWatch(this@MainActivity, store.snapshot, store) }
+                }
+                Unit
+            }
             LaunchedEffect(pairing) {
                 while (pairing != null) {
                     Sync.refresh(this@MainActivity)
@@ -77,10 +88,10 @@ class MainActivity : ComponentActivity() {
             }
             Box(Modifier.fillMaxSize().background(Color.Black)) {
                 val paired = pairing != null
-                Device(snapshot, store, if (paired) error else null, paired, updater.label, onUpdate, onGuide = { guide = true }, onUnpair = {
+                Device(snapshot, store, if (paired) error else null, paired, updater.label, onUpdate, onLang, onGuide = { guide = true }, onUnpair = {
                     store.pairing = null; pairing = null; guide = true
                 })
-                if (guide) Guide(paired, error, ::pairWith, ::scan, ::openSite, if (paired) null else updater.label, onUpdate) {
+                if (guide) Guide(paired, error, ::pairWith, ::scan, ::openSite, if (paired) null else updater.label, onUpdate, onLang) {
                     guide = false
                     if (!paired) { prefs.edit().putBoolean("pulou", true).apply(); error = null }
                 }
@@ -98,6 +109,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun pairWith(text: String) {
+        // Erros guardados em português (a chave): a tela traduz ao mostrar, então trocar o idioma vale na hora.
         val p = Pairing.parse(text) ?: run { error = "Link de pareamento inválido"; return }
         store.pairing = p
         pairing = p
@@ -124,16 +136,16 @@ internal val mono = TextStyle(fontFamily = FontFamily.Monospace, color = Color.W
 private fun Help(onClose: () -> Unit) {
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f)).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
         Column(Modifier.border(1.dp, Color.DarkGray, RoundedCornerShape(12.dp)).background(Color.Black, RoundedCornerShape(12.dp)).padding(24.dp)) {
-            Text("NÃO CHEGA NÚMERO?", mono.copy(fontSize = 18.sp))
+            Text(Lang.t("NÃO CHEGA NÚMERO?"), mono.copy(fontSize = 18.sp))
             Spacer(Modifier.height(12.dp))
             listOf(
                 "O computador está ligado e com o TokenBar aberto?",
                 "Celular e computador no mesmo Wi-Fi?",
                 "No Mac, permita conexões de entrada para o TokenBar (firewall).",
                 "Escaneie o QR de novo (SAIR e parear outra vez).",
-            ).forEach { Text("• $it", mono.copy(color = Color.LightGray, fontSize = 14.sp)); Spacer(Modifier.height(6.dp)) }
+            ).forEach { Text("• ${Lang.t(it)}", mono.copy(color = Color.LightGray, fontSize = 14.sp)); Spacer(Modifier.height(6.dp)) }
             Spacer(Modifier.height(8.dp))
-            Key("FECHAR", 0xFFFFFFFF.toInt()) { onClose() }
+            Key(Lang.t("FECHAR"), 0xFFFFFFFF.toInt()) { onClose() }
         }
     }
 }
@@ -152,7 +164,7 @@ internal fun Key(label: String, color: Int, on: Boolean = true, big: Boolean = f
 
 /** O aparelho: teclas em cima, display de LED ocupando o resto; deslizar troca de IA. */
 @Composable
-private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired: Boolean, update: String?, onUpdate: () -> Unit, onGuide: () -> Unit, onUnpair: () -> Unit) {
+private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired: Boolean, update: String?, onUpdate: () -> Unit, onLang: (String) -> Unit, onGuide: () -> Unit, onUnpair: () -> Unit) {
     var visible by remember { mutableStateOf(store.visible) }
     var window by remember { mutableStateOf(store.window) }
     val pager = rememberPagerState { visible.size }
@@ -178,12 +190,15 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired
                 store.window = window
             }
             Spacer(Modifier.width(8.dp))
+            // Idioma: AUTO → PT → EN (a tecla mostra o que está escolhido).
+            Key(Lang.pref.uppercase(), 0xFFFFFFFF.toInt()) { onLang(Lang.next()) }
+            Spacer(Modifier.width(8.dp))
             // Sem pareamento não há número: a tecla leva de volta ao guia.
             if (paired) {
                 Key("?", 0xFFFFFFFF.toInt()) { onGuide() }
                 Spacer(Modifier.width(8.dp))
-                Key("SAIR", 0xFFFF6B6B.toInt(), true) { onUnpair() }
-            } else Key("PAREAR", Palette.CLAUDE) { onGuide() }
+                Key(Lang.t("SAIR"), 0xFFFF6B6B.toInt(), true) { onUnpair() }
+            } else Key(Lang.t("PAREAR"), Palette.CLAUDE) { onGuide() }
         }
         Spacer(Modifier.height(8.dp))
         HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { page ->
@@ -200,9 +215,9 @@ private fun Device(snapshot: UsageSnapshot, store: Store, error: String?, paired
             }
         }
         if (error != null) Row(Modifier.clickable { help = true }, verticalAlignment = Alignment.CenterVertically) {
-            Text(error.uppercase(), mono.copy(color = Color(0xFFFF8A8A), fontSize = 12.sp))
+            Text(Lang.t(error).uppercase(), mono.copy(color = Color(0xFFFF8A8A), fontSize = 12.sp))
             Spacer(Modifier.width(10.dp))
-            Key("AJUDA", 0xFFFF8A8A.toInt()) { help = true }
+            Key(Lang.t("AJUDA"), 0xFFFF8A8A.toInt()) { help = true }
         }
     }
     if (help) Help { help = false }

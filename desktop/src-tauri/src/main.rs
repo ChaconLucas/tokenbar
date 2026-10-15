@@ -3,6 +3,7 @@
 
 mod collector;
 mod hook;
+mod i18n;
 mod net;
 mod update;
 
@@ -14,7 +15,7 @@ use std::time::{Duration, Instant};
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder, Wry};
 
 struct App {
     snapshot: Mutex<UsageSnapshot>,
@@ -24,6 +25,8 @@ struct App {
     /// Versão nova encontrada (aparece na bandeja e na tecla ATUALIZAR).
     update: Mutex<Option<String>>,
     update_error: Mutex<Option<String>>,
+    /// Menu da bandeja (os textos mudam ao trocar de idioma).
+    menu: Mutex<Option<Menu<Wry>>>,
 }
 
 #[derive(Serialize)]
@@ -42,6 +45,9 @@ struct Status {
     version: String,
     update: Option<String>,
     update_error: Option<String>,
+    /// Escolha guardada ("auto" | "pt" | "en") e o idioma em uso ("pt" | "en").
+    lang: String,
+    lang_resolved: String,
 }
 
 fn qr_svg(text: &str) -> String {
@@ -67,12 +73,14 @@ fn status(app: State<Arc<App>>, handle: AppHandle) -> Status {
         server: p.server,
         claude_connected: hook::is_installed(),
         claude_login,
-        claude_login_error: if claude_login { collector::claude_login_error() } else { None },
+        claude_login_error: if claude_login { collector::claude_login_error().map(|e| i18n::tr(&e)) } else { None },
         push_error: app.push_error.lock().unwrap().clone(),
         last_client_ago,
         version: handle.package_info().version.to_string(),
         update: app.update.lock().unwrap().clone(),
-        update_error: app.update_error.lock().unwrap().clone(),
+        update_error: app.update_error.lock().unwrap().as_deref().map(i18n::tr),
+        lang: i18n::setting(),
+        lang_resolved: i18n::lang().into(),
     }
 }
 
@@ -86,7 +94,7 @@ fn connect_claude() -> Result<(), String> { hook::install() }
 /// Ler o Claude pelo login salvo (para quem usa o painel do VS Code). Ao ligar, já tenta uma leitura.
 #[tauri::command]
 fn set_claude_login(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result<(), String> {
-    let r = collector::set_claude_login(on);
+    let r = collector::set_claude_login(on).map_err(|e| i18n::tr(&e));
     let snap = collector::collect();
     *app.snapshot.lock().unwrap() = snap.clone();
     let _ = handle.emit("snapshot", &snap);
@@ -97,12 +105,34 @@ fn set_claude_login(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result
 #[tauri::command]
 fn set_server(app: State<Arc<App>>, url: String) -> Result<(), String> {
     let url = url.trim().to_string();
-    if !url.is_empty() && !url.starts_with("http") { return Err("Endereço inválido".into()) }
+    if !url.is_empty() && !url.starts_with("http") { return Err(i18n::t("Endereço inválido").into()) }
     let mut p = app.pairing.lock().unwrap();
     p.server = if url.is_empty() { None } else { Some(url) };
     p.save();
     app.lan.lock().unwrap().link = p.link();
     Ok(())
+}
+
+/// Troca o idioma: guarda, refaz os textos da bandeja e avisa todas as janelas.
+#[tauri::command]
+fn set_lang(app: State<Arc<App>>, handle: AppHandle, lang: String) -> Result<String, String> {
+    i18n::save(&lang)?;
+    tray_texts(&handle, &app);
+    let resolved = i18n::lang();
+    let _ = handle.emit("lang-changed", serde_json::json!({ "lang": i18n::setting(), "langResolved": resolved }));
+    Ok(resolved.into())
+}
+
+fn tray_texts(h: &AppHandle, app: &App) {
+    if let Some(menu) = app.menu.lock().unwrap().as_ref() {
+        let update = app.update.lock().unwrap().clone();
+        for (id, text) in [("main", i18n::t("Abrir aparelho").to_string()), ("mini", i18n::t("Flutuante").into()),
+                           ("guide", i18n::t("Primeiros passos").into()), ("quit", i18n::t("Sair").into()),
+                           ("update", update.as_deref().map(i18n::update_to).unwrap_or_default())] {
+            if let Some(item) = menu.get(id).and_then(|i| i.as_menuitem().cloned()) { let _ = item.set_text(text); }
+        }
+    }
+    if let Some(tray) = h.tray_by_id("tokenbar") { let _ = tray.set_tooltip(Some(tooltip(&app.snapshot.lock().unwrap()))); }
 }
 
 #[tauri::command]
@@ -162,7 +192,7 @@ fn tooltip(s: &UsageSnapshot) -> String {
         let used = if w.resets_at.map(|r| r <= t).unwrap_or(false) { 0.0 } else { w.used_percent };
         Some(format!("{} {}%", p.name, used.round()))
     }).collect();
-    if parts.is_empty() { "TokenBar — sem dados".into() } else { format!("TokenBar · {}", parts.join(" · ")) }
+    if parts.is_empty() { i18n::t("TokenBar — sem dados").into() } else { format!("TokenBar · {}", parts.join(" · ")) }
 }
 
 fn main() {
@@ -176,20 +206,21 @@ fn main() {
         push_error: Mutex::new(None),
         update: Mutex::new(None),
         update_error: Mutex::new(None),
+        menu: Mutex::new(None),
     });
 
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, set_claude_login, set_server, open_mini, open_main, qr,
+        .invoke_handler(tauri::generate_handler![status, connect_claude, set_claude_login, set_server, set_lang, open_mini, open_main, qr,
             update::check_update, update::install_update])
         .setup(move |app| {
             let h = app.handle().clone();
-            let open = MenuItem::with_id(app, "main", "Abrir aparelho", true, None::<&str>)?;
-            let mini = MenuItem::with_id(app, "mini", "Flutuante", true, None::<&str>)?;
-            let guide = MenuItem::with_id(app, "guide", "Primeiros passos", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
+            let open = MenuItem::with_id(app, "main", i18n::t("Abrir aparelho"), true, None::<&str>)?;
+            let mini = MenuItem::with_id(app, "mini", i18n::t("Flutuante"), true, None::<&str>)?;
+            let guide = MenuItem::with_id(app, "guide", i18n::t("Primeiros passos"), true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", i18n::t("Sair"), true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &mini, &guide, &quit])?;
             TrayIconBuilder::with_id("tokenbar")
                 .icon(tray_icon(0.0))
@@ -210,6 +241,7 @@ fn main() {
                     }
                 })
                 .build(app)?;
+            *state.menu.lock().unwrap() = Some(menu.clone());
             update::start(h.clone(), menu);
 
             // Coleta a cada 30 s: atualiza janelas, bandeja, Wi-Fi e servidor.

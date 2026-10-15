@@ -41,9 +41,9 @@ targets:
       path: App/iOS/Info.plist
       properties:
         TBAppGroup: $(TB_APP_GROUP)
-        NSLocalNetworkUsageDescription: O TokenBar procura o seu Mac no Wi-Fi para ler os limites direto dele, sem servidor.
+        NSLocalNetworkUsageDescription: "O TokenBar procura o seu Mac no Wi-Fi para ler os limites direto dele, sem servidor. / TokenBar looks for your Mac on Wi-Fi to read the limits straight from it, no server needed."
         NSBonjourServices: [_tokenbar._tcp]
-        NSCameraUsageDescription: A câmera lê o QR code que o computador mostra, para parear.
+        NSCameraUsageDescription: "A câmera lê o QR code que o computador mostra, para parear. / The camera reads the QR code shown on the computer, to pair."
         UIBackgroundModes: [fetch]
         BGTaskSchedulerPermittedIdentifiers: [tokenbar.refresh]
         CFBundleURLTypes:

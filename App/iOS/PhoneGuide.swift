@@ -18,9 +18,10 @@ struct PhoneGuide: View {
             let wide = geo.size.width > geo.size.height
             VStack(spacing: 0) {
                 HStack {
-                    Text("PRIMEIROS PASSOS  \(page + 1)/\(pages)").font(Arcade.label(10)).tracking(2).foregroundStyle(Arcade.dim)
+                    Text(Lang.f("PRIMEIROS PASSOS  %d/%d", page + 1, pages)).font(Arcade.label(10)).tracking(2).foregroundStyle(Arcade.dim)
                     Spacer()
-                    Button(model.pairing == nil ? "PULAR" : "FECHAR") { skipped = true; dismiss() }
+                    LangToggle()
+                    Button(model.pairing == nil ? Lang.t("PULAR") : Lang.t("FECHAR")) { skipped = true; dismiss() }
                         .buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
                 }
                 TabView(selection: $page) {
@@ -89,8 +90,8 @@ struct PhoneGuide: View {
                     ZStack {
                         Color.black
                         VStack(spacing: 5) {
-                            Text("PRIMEIROS PASSOS").font(.system(size: 8, weight: .bold, design: .monospaced)).foregroundStyle(.white)
-                            Text("CELULAR E RELÓGIO").font(.system(size: 7, design: .monospaced))
+                            Text(Lang.t("PRIMEIROS PASSOS")).font(.system(size: 8, weight: .bold, design: .monospaced)).foregroundStyle(.white)
+                            Text(Lang.t("CELULAR E RELÓGIO")).font(.system(size: 7, design: .monospaced))
                                 .padding(.horizontal, 5).padding(.vertical, 2)
                                 .background(Capsule().fill(Arcade.cyan.opacity(t > 0.3 ? 0.35 : 0.08)))
                                 .foregroundStyle(.white)
@@ -107,15 +108,15 @@ struct PhoneGuide: View {
     }
 
     private func title(_ i: Int) -> String {
-        ["INSTALE NO COMPUTADOR", "ABRA O GUIA NELE", "ESCANEIE O QR", "MESMO WI-FI"][i]
+        [Lang.t("INSTALE NO COMPUTADOR"), Lang.t("ABRA O GUIA NELE"), Lang.t("ESCANEIE O QR"), Lang.t("MESMO WI-FI")][i]
     }
 
     private func text(_ i: Int) -> String {
         [
-            "Mac, Windows ou Linux: é o computador que lê os limites das IAs.",
-            "No TokenBar do computador: Primeiros passos → Celular e relógio → IPHONE.",
-            "Aponte o iPhone para o QR que aparece no computador.",
-            "iPhone e computador na mesma rede. Quando pedir, permita a Rede Local.",
+            Lang.t("Mac, Windows ou Linux: é o computador que lê os limites das IAs."),
+            Lang.t("No TokenBar do computador: Primeiros passos → Celular e relógio → IPHONE."),
+            Lang.t("Aponte o iPhone para o QR que aparece no computador."),
+            Lang.t("iPhone e computador na mesma rede. Quando pedir, permita a Rede Local."),
         ][i]
     }
 
@@ -123,21 +124,21 @@ struct PhoneGuide: View {
     private func action(_ i: Int) -> some View {
         switch i {
         case 0:
-            Link("ABRIR O SITE", destination: URL(string: "https://github.com/ChaconLucas/tokenbar")!)
+            Link(Lang.t("ABRIR O SITE"), destination: URL(string: "https://github.com/ChaconLucas/tokenbar")!)
                 .font(Arcade.label(11)).tracking(1.5).foregroundStyle(Arcade.cyan)
         case 2:
             if DataScannerViewController.isSupported {
-                Button("ESCANEAR QR") { scanning = true }
+                Button(Lang.t("ESCANEAR QR")) { scanning = true }
                     .buttonStyle(ArcadeButtonStyle(tint: Arcade.amber)).controlSize(.large)
             } else {
-                Text("Use a Câmera do iPhone e toque em Abrir no TokenBar.").font(.caption).foregroundStyle(Arcade.dim)
+                Text(Lang.t("Use a Câmera do iPhone e toque em Abrir no TokenBar.")).font(.caption).foregroundStyle(Arcade.dim)
             }
             HStack(spacing: 6) {
-                TextField("", text: $pasted, prompt: Text("ou cole o link").foregroundStyle(Arcade.dim))
+                TextField("", text: $pasted, prompt: Text(Lang.t("ou cole o link")).foregroundStyle(Arcade.dim))
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .font(Arcade.label(11))
                     .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(.black))
-                Button("PAREAR") { if let u = URL(string: pasted) { model.pair(with: u) } }
+                Button(Lang.t("PAREAR")) { if let u = URL(string: pasted) { model.pair(with: u) } }
                     .buttonStyle(ArcadeButtonStyle()).disabled(pasted.isEmpty)
             }
             if let e = model.error { Text(e).font(.caption).foregroundStyle(Arcade.red) }
@@ -148,7 +149,7 @@ struct PhoneGuide: View {
 
     private var footer: some View {
         HStack {
-            Button("VOLTAR") { withAnimation { page -= 1 } }
+            Button(Lang.t("VOLTAR")) { withAnimation { page -= 1 } }
                 .buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
                 .opacity(page == 0 ? 0 : 1).disabled(page == 0)
             Spacer()
@@ -159,7 +160,7 @@ struct PhoneGuide: View {
             }
             Spacer()
             let last = page == pages - 1
-            Button(last ? "ENTENDI" : "AVANÇAR") {
+            Button(last ? Lang.t("ENTENDI") : Lang.t("AVANÇAR")) {
                 if last { skipped = true; dismiss() } else { withAnimation { page += 1 } }
             }
             .buttonStyle(ArcadeButtonStyle(tint: last ? Arcade.green : Arcade.cyan))

@@ -1,5 +1,6 @@
 // Display de LED em matriz de pontos — a mesma lógica do app da Apple, desenhada num <canvas>.
 import { GLYPHS } from "./glyphs.js";
+import { t as tr } from "./i18n.js";
 
 const glyph = (c) => GLYPHS[c.toUpperCase()] || GLYPHS[" "];
 export const textWidth = (t, k = 1) =>
@@ -86,7 +87,7 @@ export function drawPage(ctx, w, h, windows, base) {
       L.draw(label, 3, Math.floor((bandRows - 7) / 2));
       L.draw(big, leftCols - 3 - textWidth(big, k), Math.floor((bandRows - 7 * k) / 2), k);
     } else {
-      L.center("SEM DADOS", Math.floor((bandRows - 7) / 2));
+      L.center(tr("SEM DADOS"), Math.floor((bandRows - 7) / 2));
     }
     paint(ctx, L, offX, y, dot, color);
     const R = new Grid(rightCols, bandRows);

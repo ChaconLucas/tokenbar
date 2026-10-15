@@ -32,7 +32,7 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
     func pair(with url: URL) {
         guard url.host == "pair" else { return }   // tokenbar://open vem do widget: só abre o app
         guard let p = Pairing(link: url) else {
-            error = "Link de pareamento inválido"
+            error = Lang.t("Link de pareamento inválido")
             return
         }
         pairing = p
@@ -98,6 +98,8 @@ final class PhoneModel: NSObject, ObservableObject, WCSessionDelegate {
         if let p = pairing { ctx["pairing"] = p.link.absoluteString }
         if let data = try? JSONCoding.encoder.encode(snapshot) { ctx["snapshot"] = data }
         if let data = try? JSONEncoder().encode(Prefs.theme) { ctx["theme"] = data }
+        // O relógio segue o idioma escolhido aqui.
+        ctx["lang"] = LangStore.shared.lang
         try? WCSession.default.updateApplicationContext(ctx)
     }
 
@@ -180,6 +182,7 @@ struct PhoneRootView: View {
         .onChange(of: theme) { _, t in Prefs.theme = t; WidgetCenter.shared.reloadAllTimelines(); model.sendToWatch() }
         .onChange(of: visible) { _, v in Prefs.visible = v; WidgetCenter.shared.reloadAllTimelines() }
         .onChange(of: windowChoice) { _, v in Prefs.window = v; WidgetCenter.shared.reloadAllTimelines() }
+        .onChange(of: LangStore.shared.lang) { _, _ in model.sendToWatch() }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
             // Sem pareamento, o tutorial abre sozinho (a menos que a pessoa já tenha pulado).
@@ -197,7 +200,7 @@ struct PhoneRootView: View {
     /// Aviso curto por cima do display quando falta algo; toca para resolver.
     /// Só erros: a falta de pareamento ou de dados o próprio letreiro de pontos já diz.
     private var hint: String? {
-        guard model.pairing != nil else { return "TOQUE PARA CONECTAR AO COMPUTADOR" }
+        guard model.pairing != nil else { return Lang.t("TOQUE PARA CONECTAR AO COMPUTADOR") }
         guard let e = model.error else { return nil }
         return e.uppercased()
     }
@@ -214,22 +217,23 @@ struct PhoneDetails: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                LangPicker()
                 if model.pairing == nil {
-                    SectionTitle(text: "PRIMEIROS PASSOS")
+                    SectionTitle(text: Lang.t("PRIMEIROS PASSOS"))
                     ArcadePanel {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Ainda não está conectado ao computador.").font(.callout).foregroundStyle(Arcade.dim)
-                            Button("VER COMO CONECTAR") { showGuide() }
+                            Text(Lang.t("Ainda não está conectado ao computador.")).font(.callout).foregroundStyle(Arcade.dim)
+                            Button(Lang.t("VER COMO CONECTAR")) { showGuide() }
                                 .buttonStyle(ArcadeButtonStyle(tint: Arcade.amber))
                             Divider().overlay(.white.opacity(0.1))
-                            Text("OU COLE O LINK").font(Arcade.label(9)).tracking(2).foregroundStyle(Arcade.dim)
+                            Text(Lang.t("OU COLE O LINK")).font(Arcade.label(9)).tracking(2).foregroundStyle(Arcade.dim)
                             TextField("", text: $pasted, prompt: Text("tokenbar://pair?…").foregroundStyle(Arcade.dim))
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .font(Arcade.label(12))
                                 .padding(10)
                                 .background(RoundedRectangle(cornerRadius: 8).fill(.black))
-                            Button("PAREAR") {
+                            Button(Lang.t("PAREAR")) {
                                 if let u = URL(string: pasted) { model.pair(with: u); dismiss() }
                             }
                             .buttonStyle(ArcadeButtonStyle())
@@ -238,23 +242,23 @@ struct PhoneDetails: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 } else if let e = model.error {
-                    SectionTitle(text: "NÃO CONSEGUI LER O COMPUTADOR")
+                    SectionTitle(text: Lang.t("NÃO CONSEGUI LER O COMPUTADOR"))
                     ArcadePanel {
                         VStack(alignment: .leading, spacing: 10) {
                             Text(e).font(.callout).foregroundStyle(Arcade.red)
-                            GuideStep(n: 1, title: "O TOKENBAR ESTÁ ABERTO?", text: "O computador precisa estar ligado, com o TokenBar aberto.")
-                            GuideStep(n: 2, title: "MESMO WI-FI?", text: "Sem o servidor opcional, o iPhone só lê o computador na mesma rede.")
-                            GuideStep(n: 3, title: "REDE LOCAL LIGADA?", text: "Ajustes → Privacidade e Segurança → Rede Local → TokenBar.")
-                            GuideStep(n: 4, title: "FIREWALL", text: "No Mac, permita conexões de entrada para o TokenBar.")
-                            GuideStep(n: 5, title: "AINDA NÃO?", text: "Toque em DESPAREAR lá embaixo e escaneie o QR de novo.")
-                            Button("TENTAR DE NOVO") { Task { await model.refresh() } }
+                            GuideStep(n: 1, title: Lang.t("O TOKENBAR ESTÁ ABERTO?"), text: Lang.t("O computador precisa estar ligado, com o TokenBar aberto."))
+                            GuideStep(n: 2, title: Lang.t("MESMO WI-FI?"), text: Lang.t("Sem o servidor opcional, o iPhone só lê o computador na mesma rede."))
+                            GuideStep(n: 3, title: Lang.t("REDE LOCAL LIGADA?"), text: Lang.t("Ajustes → Privacidade e Segurança → Rede Local → TokenBar."))
+                            GuideStep(n: 4, title: Lang.t("FIREWALL"), text: Lang.t("No Mac, permita conexões de entrada para o TokenBar."))
+                            GuideStep(n: 5, title: Lang.t("AINDA NÃO?"), text: Lang.t("Toque em DESPAREAR lá embaixo e escaneie o QR de novo."))
+                            Button(Lang.t("TENTAR DE NOVO")) { Task { await model.refresh() } }
                                 .buttonStyle(ArcadeButtonStyle())
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
 
-                SectionTitle(text: "DETALHES")
+                SectionTitle(text: Lang.t("DETALHES"))
                 TimelineView(.periodic(from: .now, by: 30)) { ctx in
                     VStack(spacing: 12) {
                         ForEach(model.snapshot.providers) { p in
@@ -263,13 +267,14 @@ struct PhoneDetails: View {
                     }
                 }
                 if model.snapshot.updatedAt > .distantPast {
-                    Text("MAC ENVIOU \(model.snapshot.updatedAt, style: .relative) ATRÁS")
+                    (Lang.isEN ? Text("MAC SENT \(model.snapshot.updatedAt, style: .relative) AGO")
+                          : Text("MAC ENVIOU \(model.snapshot.updatedAt, style: .relative) ATRÁS"))
                         .font(Arcade.label(9)).foregroundStyle(Arcade.dim)
                 }
-                Button("VER TUTORIAL") { showGuide() }
+                Button(Lang.t("VER TUTORIAL")) { showGuide() }
                     .buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
                 if model.pairing != nil {
-                    Button("DESPAREAR") { model.unpair(); dismiss() }
+                    Button(Lang.t("DESPAREAR")) { model.unpair(); dismiss() }
                         .buttonStyle(ArcadeButtonStyle(tint: Arcade.red))
                         .padding(.top, 8)
                 }
@@ -278,6 +283,7 @@ struct PhoneDetails: View {
         }
         .background(ArcadeBackground())
         .preferredColorScheme(.dark)
+        .environment(\.locale, Lang.locale)
         .presentationDetents([.large])
     }
 }

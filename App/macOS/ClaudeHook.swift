@@ -71,7 +71,7 @@ enum ClaudeHook {
 
         // Só grava se continuar sendo JSON válido.
         guard (try? JSONSerialization.jsonObject(with: Data(text.utf8))) != nil else {
-            throw CocoaError(.fileWriteUnknown, userInfo: [NSLocalizedDescriptionKey: "Não consegui editar o settings.json com segurança"])
+            throw CocoaError(.fileWriteUnknown, userInfo: [NSLocalizedDescriptionKey: Lang.t("Não consegui editar o settings.json com segurança")])
         }
         try Data(text.utf8).write(to: settingsURL, options: .atomic)
     }

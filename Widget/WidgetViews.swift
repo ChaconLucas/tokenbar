@@ -230,7 +230,7 @@ struct EmptyUsage: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: "gauge.with.dots.needle.33percent")
-            Text(paired ? "Sem dados ainda" : "Abra o TokenBar para parear")
+            Text(paired ? Lang.t("Sem dados ainda") : Lang.t("Abra o TokenBar para parear"))
                 .font(.caption2).multilineTextAlignment(.center)
         }
         .foregroundStyle(.secondary)

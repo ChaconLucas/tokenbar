@@ -9,9 +9,9 @@ enum LANClient {
 
         var errorDescription: String? {
             switch self {
-            case .notFound: "Mac não encontrado no Wi-Fi"
-            case .unauthorized: "O Mac recusou a chave (pareie de novo)"
-            case .bad: "Resposta inválida do Mac"
+            case .notFound: Lang.t("Mac não encontrado no Wi-Fi")
+            case .unauthorized: Lang.t("O Mac recusou a chave (pareie de novo)")
+            case .bad: Lang.t("Resposta inválida do Mac")
             }
         }
     }

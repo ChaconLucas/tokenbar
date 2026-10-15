@@ -73,7 +73,7 @@ final class Updater: ObservableObject {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         try run("/usr/bin/ditto", ["-x", "-k", zip.path, dir.path])
         let fresh = dir.appending(path: "TokenBar.app")
-        guard FileManager.default.fileExists(atPath: fresh.path) else { throw Failure("O pacote baixado não tem o TokenBar.app.") }
+        guard FileManager.default.fileExists(atPath: fresh.path) else { throw Failure(Lang.t("O pacote baixado não tem o TokenBar.app.")) }
 
         // Só troca se o app novo foi assinado pelo mesmo time deste: um zip trocado no caminho não passa.
         let team = try teamID(of: Bundle.main.bundleURL)
@@ -81,7 +81,7 @@ final class Updater: ObservableObject {
             try run("/usr/bin/codesign", ["--verify", "--deep", "--strict",
                                           "-R=anchor apple generic and certificate leaf[subject.OU] = \"\(team)\"", fresh.path])
         } catch {
-            throw Failure("A assinatura da atualização não confere. Nada foi trocado.")
+            throw Failure(Lang.t("A assinatura da atualização não confere. Nada foi trocado."))
         }
 
         // Um script pequeno espera este app fechar, troca a pasta e abre a versão nova.
@@ -103,11 +103,11 @@ final class Updater: ObservableObject {
     private static func teamID(of app: URL) throws -> String {
         let out = try run("/usr/bin/codesign", ["-dv", app.path])
         guard let line = out.split(separator: "\n").first(where: { $0.hasPrefix("TeamIdentifier=") }) else {
-            throw Failure("Não consegui ler a assinatura deste app.")
+            throw Failure(Lang.t("Não consegui ler a assinatura deste app."))
         }
         let team = String(line.dropFirst("TeamIdentifier=".count))
         guard team.range(of: "^[A-Z0-9]{10}$", options: .regularExpression) != nil else {
-            throw Failure("Este app não tem assinatura de time; atualize pelo comando do README.")
+            throw Failure(Lang.t("Este app não tem assinatura de time; atualize pelo comando do README."))
         }
         return team
     }
@@ -124,7 +124,7 @@ final class Updater: ObservableObject {
         try p.run()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         p.waitUntilExit()
-        guard p.terminationStatus == 0 else { throw Failure("Falhou: \(URL(fileURLWithPath: tool).lastPathComponent)") }
+        guard p.terminationStatus == 0 else { throw Failure(Lang.f("Falhou: %@", URL(fileURLWithPath: tool).lastPathComponent)) }
         return String(decoding: data, as: UTF8.self)
     }
 }

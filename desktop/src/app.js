@@ -1,5 +1,6 @@
 // O aparelho: teclas de LED, display que troca de IA arrastando (ou rolando para o lado), ajustes.
 import { drawPage, keyCanvas, Grid, paint } from "./led.js";
+import { t, f, setLang, getLang, applyLang } from "./i18n.js";
 
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -70,13 +71,13 @@ function renderKeys() {
     localStorage.setItem("window", windowChoice); render();
   }));
   if (isMini) {
-    right.appendChild(iconKey("⤢", "Voltar ao aparelho grande", () => invoke("open_main")));
-    right.appendChild(iconKey("✕", "Fechar", () => window.__TAURI__.window.getCurrentWindow().close()));
+    right.appendChild(iconKey("⤢", t("Voltar ao aparelho grande"), () => invoke("open_main")));
+    right.appendChild(iconKey("✕", t("Fechar"), () => window.__TAURI__.window.getCurrentWindow().close()));
   } else {
-    right.appendChild(iconKey("⧉", "Flutuante: pequeno, sempre na frente", () => invoke("open_mini")));
-    if (update) right.appendChild(key(updating ? "BAIXANDO" : updErr ? "ERRO" : "ATUALIZAR", "#59d973", true, installUpdate, `Atualizar para ${update}`));
-    right.appendChild(iconKey("?", "Primeiros passos", openGuide));
-    right.appendChild(iconKey("⚙", "Ajustes", openSettings));
+    right.appendChild(iconKey("⧉", t("Flutuante: pequeno, sempre na frente"), () => invoke("open_mini")));
+    if (update) right.appendChild(key(t(updating ? "BAIXANDO" : updErr ? "ERRO" : "ATUALIZAR"), "#59d973", true, installUpdate, f("Atualizar para {0}", update)));
+    right.appendChild(iconKey("?", t("Primeiros passos"), openGuide));
+    right.appendChild(iconKey("⚙", t("Ajustes"), openSettings));
   }
 }
 
@@ -137,19 +138,19 @@ const $ = (id) => document.getElementById(id);
 async function openSettings() {
   const s = await invoke("status");
   $("claude-state").textContent = s.claudeConnected
-    ? "Conectado pela statusline. Os números chegam enquanto alguma sessão do Claude Code estiver aberta."
-    : "O Claude Code só entrega os limites para a statusline. O TokenBar lê essa cópia e mantém a sua statusline atual.";
+    ? t("Conectado pela statusline. Os números chegam enquanto alguma sessão do Claude Code estiver aberta.")
+    : t("O Claude Code só entrega os limites para a statusline. O TokenBar lê essa cópia e mantém a sua statusline atual.");
   $("connect-claude").hidden = s.claudeConnected;
   $("claude-login").checked = s.claudeLogin;
   loginMsg($("claude-login-msg"), s.claudeLoginError);
   $("qr").innerHTML = s.qrSvg;
   $("code").textContent = s.code;
   $("server").value = s.server || "";
-  $("server-msg").textContent = s.pushError ? `Erro ao enviar: ${s.pushError}` : "";
+  $("server-msg").textContent = s.pushError ? f("Erro ao enviar: {0}", s.pushError) : "";
   $("copy-link").onclick = () => navigator.clipboard.writeText(s.link);
   $("version").textContent = s.version;
   if (s.update) setUpdate(s.update);
-  $("update-msg").textContent = s.updateError ? `Erro: ${s.updateError}` : "";
+  $("update-msg").textContent = s.updateError ? f("Erro: {0}", s.updateError) : "";
   $("settings").hidden = false;
 }
 $("close-settings").onclick = () => { $("settings").hidden = true; };
@@ -165,36 +166,36 @@ $("claude-login").onchange = async (e) => {
   loginMsg($("claude-login-msg"), await setLogin(e.target.checked));
 };
 $("save-server").onclick = async () => {
-  try { await invoke("set_server", { url: $("server").value }); $("server-msg").textContent = "Salvo. Escaneie o QR de novo no celular."; }
+  try { await invoke("set_server", { url: $("server").value }); $("server-msg").textContent = t("Salvo. Escaneie o QR de novo no celular."); }
   catch (e) { $("server-msg").textContent = String(e); }
 };
 
 // ---------- atualização (o Rust procura sozinho; aqui só mostra e instala) ----------
 function setUpdate(v) {
   update = v;
-  $("install-update").textContent = `ATUALIZAR PARA ${v}`; $("install-update").hidden = false;
+  $("install-update").textContent = f("ATUALIZAR PARA {0}", v); $("install-update").hidden = false;
   render();
 }
 async function installUpdate() {
   if (updating) return;
-  updating = true; render(); $("update-msg").textContent = "Baixando…";
+  updating = true; render(); $("update-msg").textContent = t("Baixando…");
   try { await invoke("install_update"); } catch (e) { updateError(e); }
   updating = false; render();
 }
 let errTimer = 0;
 /** Erro breve: a tecla mostra ERRO por 4 s e o texto fica nos ajustes. */
 function updateError(e) {
-  $("update-msg").textContent = `Erro: ${e}`;
+  $("update-msg").textContent = f("Erro: {0}", e);
   updErr = true; render();
   clearTimeout(errTimer); errTimer = setTimeout(() => { updErr = false; render(); }, 4000);
 }
 $("check-update").onclick = async () => {
-  $("update-msg").textContent = "Buscando…";
+  $("update-msg").textContent = t("Buscando…");
   try {
     const v = await invoke("check_update");
     if (v) setUpdate(v);
-    $("update-msg").textContent = v ? `Versão ${v} disponível.` : "Já está na versão mais nova.";
-  } catch (e) { $("update-msg").textContent = `Erro: ${e}`; }
+    $("update-msg").textContent = v ? f("Versão {0} disponível.", v) : t("Já está na versão mais nova.");
+  } catch (e) { $("update-msg").textContent = f("Erro: {0}", e); }
 };
 $("install-update").onclick = installUpdate;
 
@@ -206,7 +207,7 @@ const LOOP = 4000;   // cada desenho repete a cada 4 s (o mesmo tempo das anima�
 const slides = [...document.querySelectorAll("#guide .slide")];
 const dots = slides.map((s, i) => {
   const d = document.createElement("button");
-  d.className = "g-dot"; d.title = s.querySelector("h2").textContent; d.onclick = () => goTo(i);
+  d.className = "g-dot"; d.onclick = () => goTo(i);
   $("g-dots").appendChild(d); return d;
 });
 let guideTimer = null, device = store("guideDevice"), cur = 0, t0 = 0, raf = 0, seen = {};
@@ -218,8 +219,11 @@ function goTo(i) {
   slides.forEach((s, j) => { s.classList.toggle("on", j === cur); s.classList.toggle("prev", j < cur); s.inert = j !== cur; });
   dots.forEach((d, j) => d.classList.toggle("on", j === cur));
   $("g-back").style.visibility = cur ? "visible" : "hidden";
-  $("g-next").textContent = cur === slides.length - 1 ? "COMEÇAR" : "AVANÇAR →";
-  t0 = performance.now(); glow();
+  navTexts(); t0 = performance.now(); glow();
+}
+function navTexts() {
+  $("g-next").textContent = t(cur === slides.length - 1 ? "COMEÇAR" : "AVANÇAR →");
+  dots.forEach((d, j) => { d.title = slides[j].querySelector("h2").textContent; });
 }
 const glow = () => $("g-next").classList.toggle("glow", slides[cur].classList.contains("done"));
 function setDone(key, ok) {
@@ -240,27 +244,27 @@ async function refreshGuide() {
   const has = (id) => s.snapshot.providers.some((p) => p.id === id);
 
   const skip = store("claudeSkip") === "1", claudeOk = has("claude");
-  chip("g-claude", claudeOk ? "✓ Recebendo números" : skip ? "Pulado" : s.claudeConnected ? "Esperando o “oi”…" : "Esperando…", claudeOk);
+  chip("g-claude", t(claudeOk ? "✓ Recebendo números" : skip ? "Pulado" : s.claudeConnected ? "Esperando o “oi”…" : "Esperando…"), claudeOk);
   $("g-connect").hidden = claudeOk || skip || s.claudeConnected;
   $("g-connected").hidden = !(claudeOk || s.claudeConnected);
   $("g-skip").hidden = claudeOk || skip;
   setDone("claude", claudeOk || skip);
   claudeLogin = s.claudeLogin;
-  $("g-login-state").textContent = !s.claudeLogin ? "" : s.claudeLoginError || "Lendo pelo login ✓";
+  $("g-login-state").textContent = !s.claudeLogin ? "" : s.claudeLoginError || t("Lendo pelo login ✓");
   $("g-login-state").className = s.claudeLoginError ? "err" : "tag-ok";
 
   const codexOk = has("codex");
-  chip("g-codex", codexOk ? "✓ Recebendo números" : "Esperando…", codexOk);
+  chip("g-codex", t(codexOk ? "✓ Recebendo números" : "Esperando…"), codexOk);
   setDone("codex", codexOk);
 
   const live = s.lastClientAgo != null && s.lastClientAgo < 120;
   document.querySelectorAll(".g-pair").forEach((e) => { if (e.dataset.svg !== s.qrSvg) { e.innerHTML = s.qrSvg; e.dataset.svg = s.qrSvg; } });
   $("g-code").textContent = s.code;
   document.querySelector(".w-digits").textContent = s.code;
-  if (device === "here") chip("g-phone", "✓ Só neste computador", true);
-  else if (!device) chip("g-phone", "Escolha um aparelho", false);
-  else if (device === "wear") chip("g-phone", live ? "✓ Relógio conectado" : "Esperando o relógio… (mesmo Wi-Fi)", live);
-  else chip("g-phone", live ? "✓ Celular conectado" : "Esperando o celular… (mesmo Wi-Fi)", live);
+  if (device === "here") chip("g-phone", t("✓ Só neste computador"), true);
+  else if (!device) chip("g-phone", t("Escolha um aparelho"), false);
+  else if (device === "wear") chip("g-phone", t(live ? "✓ Relógio conectado" : "Esperando o relógio… (mesmo Wi-Fi)"), live);
+  else chip("g-phone", t(live ? "✓ Celular conectado" : "Esperando o celular… (mesmo Wi-Fi)"), live);
   setDone("phone", live || device === "here");
 }
 
@@ -390,11 +394,32 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "Escape") closeGuide();
 });
 
+// ---------- idioma ----------
+let langSetting = "auto";
+/** Aplica o idioma em tudo que está na tela (HTML marcado, teclas, display, ajustes e guia abertos). */
+function useLang(resolved, setting) {
+  if (setting) langSetting = setting;
+  setLang(resolved); applyLang();
+  document.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("on",
+    b.dataset.lang === (b.closest("#lang-set") ? langSetting : getLang())));
+  if (update) $("install-update").textContent = f("ATUALIZAR PARA {0}", update);
+  navTexts(); render();
+  if (!$("settings").hidden) openSettings();
+  if (!$("guide").hidden) refreshGuide();
+}
+document.querySelectorAll("[data-lang]").forEach((b) => b.onclick = async (e) => {
+  e.stopPropagation();
+  const lang = b.dataset.lang;
+  try { useLang(await invoke("set_lang", { lang }), lang); } catch (err) { console.error(err); }
+});
+listen("lang-changed", (e) => useLang(e.payload.langResolved, e.payload.lang));
+useLang(getLang());   // antes do status: palpite pelo idioma do navegador
+
 // ---------- dados ----------
 listen("snapshot", (e) => { snapshot = e.payload; render(); });
 listen("update-available", (e) => setUpdate(e.payload));
 listen("update-error", (e) => updateError(e.payload));
-invoke("status").then((s) => { snapshot = s.snapshot; if (s.update) setUpdate(s.update); else render(); });
+invoke("status").then((s) => { snapshot = s.snapshot; useLang(s.langResolved, s.lang); if (s.update) setUpdate(s.update); else render(); });
 if (!isMini) {
   listen("show-guide", openGuide);
   if (store("guideDone") !== "1") openGuide();   // primeira abertura

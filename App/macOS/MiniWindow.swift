@@ -153,14 +153,14 @@ struct MiniContent: View {
                 .offset(x: -3, y: -3)
                 .opacity(hover ? 1 : 0)
                 .animation(.easeOut(duration: 0.15), value: hover)
-                .help("Fechar")
+                .help(Lang.t("Fechar"))
             }
             .onHover { hover = $0 }
             .environment(\.colorScheme, .dark)
             .contextMenu {
-                Button("Voltar ao aparelho grande", action: grande)
+                Button(Lang.t("Voltar ao aparelho grande"), action: grande)
                 Divider()
-                Button("Fechar Mini", action: close)
+                Button(Lang.t("Fechar Mini"), action: close)
             }
     }
 }

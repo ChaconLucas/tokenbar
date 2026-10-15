@@ -45,7 +45,15 @@ button.wide { align-self: stretch; padding: 8px; }
 .sheet.guide { overflow: hidden; padding: 10px 12px; gap: 6px; user-select: none;
   font-size: clamp(11px, 1.5vmin + 7.5px, 16px); --pur: #9e5cff; --pink: #ee29c2; }
 .guide button { font-size: 0.86em; }
-.g-pular { position: absolute; top: 8px; right: 10px; z-index: 3; color: var(--dim); background: transparent; border-color: rgba(255,255,255,0.14); padding: 3px 9px; }
+.g-top { position: absolute; top: 8px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 6px; }
+.seg { display: inline-flex; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; color: var(--dim); padding: 3px 8px; }
+.seg button + button { border-left: 1px solid rgba(255,255,255,0.14); }
+.seg button.on { color: #000; background: var(--cyan); }
+.guide .seg button { font-size: .78em; letter-spacing: 1px; padding: 3px 7px; }
+.lang-panel { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.lang-panel h2 { margin: 0; }
+.g-pular { color: var(--dim); background: transparent; border-color: rgba(255,255,255,0.14); padding: 3px 9px; }
 .g-pular:hover { color: #fff; }
 
 .g-view { position: relative; flex: 1; min-height: 0; }
@@ -61,7 +69,7 @@ button.wide { align-self: stretch; padding: 8px; }
 .stage * { position: absolute; }
 
 .g-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 7px; }
-.g-head { position: static; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-right: 62px; }
+.g-head { position: static; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-right: 128px; }
 .guide h2 { margin: 0; color: #fff; font-size: 1.2em; letter-spacing: 3px; }
 .g-say { font-size: 1em; line-height: 1.35; }
 .g-line { font-size: .92em; line-height: 1.35; color: #d8dae0; }
@@ -109,6 +117,7 @@ button.wide { align-self: stretch; padding: 8px; }
   .sheet.guide { padding: 38px 16px 14px; gap: 10px; }
   .slide { flex-direction: column; gap: 14px; }
   .g-art, .slide[data-key="phone"] .g-art { flex: 0 0 50%; }
+  .slide[data-key="phone"] .g-art { flex-basis: 42%; }   /* o passo do celular tem mais texto (o inglês quebra o título em 2 linhas) */
   .g-body { justify-content: center; align-items: center; text-align: center; gap: 10px; }
   .g-head { justify-content: center; padding-right: 0; }
   .g-act, .choices, .qrs, .tips { justify-content: center; }

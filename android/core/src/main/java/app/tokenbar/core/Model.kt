@@ -120,6 +120,11 @@ class Store(context: Context) {
         }
         set(v) { p.edit().putString("hidden", Providers.all.filter { it !in v }.joinToString(",")).apply() }
 
+    /** Idioma: "auto" (pt se o aparelho estiver em português, senão en), "pt" ou "en". */
+    var lang: String
+        get() = p.getString("lang", "auto") ?: "auto"
+        set(v) { p.edit().putString("lang", v).apply() }
+
     /** Limites já avisados neste ciclo ("claude.five_hour.80" → resetsAt). */
     fun alerted(key: String): Double = p.getFloat("alert.$key", 0f).toDouble()
     fun markAlerted(key: String, cycle: Double) { p.edit().putFloat("alert.$key", cycle.toFloat()).apply() }

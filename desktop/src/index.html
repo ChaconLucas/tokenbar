@@ -17,58 +17,65 @@
   </main>
 
   <section id="settings" class="sheet" hidden>
-    <header data-tauri-drag-region><h1>AJUSTES</h1><button id="close-settings">FECHAR</button></header>
-    <button id="open-guide" class="wide">PRIMEIROS PASSOS</button>
+    <header data-tauri-drag-region><h1 data-t>AJUSTES</h1><button id="close-settings" data-t>FECHAR</button></header>
+    <div class="panel lang-panel">
+      <h2>IDIOMA · LANGUAGE</h2>
+      <div class="seg" id="lang-set"><button data-lang="auto">AUTO</button><button data-lang="pt">PT</button><button data-lang="en">EN</button></div>
+    </div>
+    <button id="open-guide" class="wide" data-t>PRIMEIROS PASSOS</button>
     <div class="panel">
       <h2>CLAUDE CODE</h2>
       <p id="claude-state"></p>
-      <button id="connect-claude">CONECTAR CLAUDE CODE</button>
-      <label class="check"><input type="checkbox" id="claude-login"> Ler pelo login do Claude Code (para quem usa o painel do VS Code)</label>
-      <p class="dim">Usa a chave que o Claude Code já guardou; ela não sai deste computador.</p>
+      <button id="connect-claude" data-t>CONECTAR CLAUDE CODE</button>
+      <label class="check"><input type="checkbox" id="claude-login"> <span data-t>Ler pelo login do Claude Code (para quem usa o painel do VS Code)</span></label>
+      <p class="dim" data-t>Usa a chave que o Claude Code já guardou; ela não sai deste computador.</p>
       <p id="claude-login-msg" class="err" hidden></p>
     </div>
     <div class="panel row">
       <div id="qr"></div>
       <div>
-        <h2>CELULAR E RELÓGIO</h2>
-        <p>Aponte a câmera do celular para o código (app TokenBar → Escanear QR).</p>
-        <button id="copy-link">COPIAR LINK</button>
-        <p class="dim">Quem tem o código vê os seus números. Não publique.</p>
+        <h2 data-t>CELULAR E RELÓGIO</h2>
+        <p data-t>Aponte a câmera do celular para o código (app TokenBar → Escanear QR).</p>
+        <button id="copy-link" data-t>COPIAR LINK</button>
+        <p class="dim" data-t>Quem tem o código vê os seus números. Não publique.</p>
       </div>
     </div>
     <div class="panel">
-      <h2>RELÓGIO SEM CELULAR (WEAR OS)</h2>
-      <p><span id="code" class="code"></span> digite no relógio (mesmo Wi-Fi). Vale uma vez e troca a cada 10 min.</p>
+      <h2 data-t>RELÓGIO SEM CELULAR (WEAR OS)</h2>
+      <p><span id="code" class="code"></span> <span data-t>digite no relógio (mesmo Wi-Fi). Vale uma vez e troca a cada 10 min.</span></p>
     </div>
     <div class="panel">
-      <h2>SERVIDOR (OPCIONAL)</h2>
-      <p class="dim">Para ver fora de casa. Deixe vazio para usar só o Wi-Fi.</p>
-      <input id="server" placeholder="https://tokenbar.sua-conta.workers.dev">
-      <button id="save-server">SALVAR</button>
+      <h2 data-t>SERVIDOR (OPCIONAL)</h2>
+      <p class="dim" data-t>Para ver fora de casa. Deixe vazio para usar só o Wi-Fi.</p>
+      <input id="server" data-t-attr="placeholder" placeholder="https://tokenbar.sua-conta.workers.dev">
+      <button id="save-server" data-t>SALVAR</button>
       <p id="server-msg" class="dim"></p>
     </div>
     <div class="panel">
-      <h2>OUTRAS IAS</h2>
-      <p class="dim">Qualquer IA aparece aqui ao gravar um arquivo em <code>~/.tokenbar/providers/</code> (veja docs/providers.md no GitHub).</p>
+      <h2 data-t>OUTRAS IAS</h2>
+      <p class="dim" data-t>Qualquer IA aparece aqui ao gravar um arquivo em <code>~/.tokenbar/providers/</code> (veja docs/providers.md no GitHub).</p>
     </div>
     <div class="panel">
-      <h2>VERSÃO <span id="version"></span></h2>
-      <button id="check-update">BUSCAR ATUALIZAÇÃO</button>
+      <h2><span data-t>VERSÃO</span> <span id="version"></span></h2>
+      <button id="check-update" data-t>BUSCAR ATUALIZAÇÃO</button>
       <button id="install-update" hidden></button>
       <p id="update-msg" class="dim"></p>
     </div>
   </section>
 
-  <section id="guide" class="sheet guide" hidden aria-label="Primeiros passos">
-    <button id="g-pular" class="g-pular" title="Pular (Esc)">PULAR</button>
+  <section id="guide" class="sheet guide" hidden aria-label="Primeiros passos" data-t-attr="aria-label">
+    <div class="g-top">
+      <div class="seg g-lang" title="Idioma · Language"><button data-lang="pt">PT</button><button data-lang="en">EN</button></div>
+      <button id="g-pular" class="g-pular" title="Pular (Esc)" data-t-attr="title" data-t>PULAR</button>
+    </div>
     <div class="g-view">
 
       <article class="slide" data-key="claude">
         <div class="g-art" data-tauri-drag-region><div class="stage s-term">
           <div class="term">
             <div class="term-bar"><i></i><i></i><i></i><span>claude</span></div>
-            <div class="term-in"><span class="type" style="--n:4">› oi</span><i class="caret"></i></div>
-            <div class="term-out">● Oi! Em que posso ajudar?</div>
+            <div class="term-in"><span class="type" style="--n:4" data-t>› oi</span><i class="caret"></i></div>
+            <div class="term-out" data-t>● Oi! Em que posso ajudar?</div>
             <div class="term-status"><b>◆ Opus</b> · 5h 42% · 7d 18%</div>
           </div>
           <div class="flow"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i></div>
@@ -76,13 +83,13 @@
         </div></div>
         <div class="g-body">
           <div class="g-head"><h2>CLAUDE CODE</h2><span class="chip" id="g-claude"></span></div>
-          <p class="g-say">Conecte e mande um “oi” no Claude Code.</p>
+          <p class="g-say" data-t>Conecte e mande um “oi” no Claude Code.</p>
           <div class="g-act">
-            <button id="g-connect" class="primary">CONECTAR CLAUDE CODE</button>
-            <span id="g-connected" class="tag-ok" hidden>✓ CONECTADO</span>
-            <a href="#" id="g-skip" class="link">Não uso</a>
+            <button id="g-connect" class="primary" data-t>CONECTAR CLAUDE CODE</button>
+            <span id="g-connected" class="tag-ok" hidden data-t>✓ CONECTADO</span>
+            <a href="#" id="g-skip" class="link" data-t>Não uso</a>
           </div>
-          <p class="g-hint"><a href="#" id="g-login" class="link">USO NO PAINEL DO VS CODE</a> <span id="g-login-state"></span></p>
+          <p class="g-hint"><a href="#" id="g-login" class="link" data-t>USO NO PAINEL DO VS CODE</a> <span id="g-login-state"></span></p>
         </div>
       </article>
 
@@ -91,16 +98,16 @@
           <div class="term">
             <div class="term-bar"><i></i><i></i><i></i><span>terminal</span></div>
             <div class="term-in"><span class="type" style="--n:7">$ codex</span><i class="caret"></i></div>
-            <div class="term-out">› Olá! O que vamos fazer?</div>
-            <div class="term-status"><b>◇ limites</b> · 5h 64% · 7d 30%</div>
+            <div class="term-out" data-t>› Olá! O que vamos fazer?</div>
+            <div class="term-status"><b data-t>◇ limites</b> · 5h 64% · 7d 30%</div>
           </div>
           <div class="flow"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i></div>
           <div class="led" style="--c:#ee29c2"><span>CODEX</span><canvas data-draw="bar" data-color="#ee29c2" data-pct="64" style="width:84px;height:34px"></canvas></div>
         </div></div>
         <div class="g-body">
           <div class="g-head"><h2>CODEX</h2><span class="chip" id="g-codex"></span></div>
-          <p class="g-say">Use o Codex uma vez. Os números chegam sozinhos.</p>
-          <p class="g-hint">Outras IAs: docs/providers.md</p>
+          <p class="g-say" data-t>Use o Codex uma vez. Os números chegam sozinhos.</p>
+          <p class="g-hint" data-t>Outras IAs: docs/providers.md</p>
         </div>
       </article>
 
@@ -126,24 +133,24 @@
           </div>
         </div></div>
         <div class="g-body">
-          <div class="g-head"><h2>CELULAR</h2><span class="chip" id="g-phone"></span></div>
-          <p class="g-say">Escolha o aparelho e aponte a câmera.</p>
+          <div class="g-head"><h2 data-t>CELULAR</h2><span class="chip" id="g-phone"></span></div>
+          <p class="g-say" data-t>Escolha o aparelho e aponte a câmera.</p>
           <div class="choices">
-            <button data-dev="android">ANDROID<small>baixa o app</small></button><button data-dev="wear">WEAR OS<small>código no relógio</small></button><button data-dev="iphone">IPHONE<small>precisa de Xcode</small></button><button data-dev="watch">APPLE WATCH<small>precisa de Xcode</small></button><button data-dev="here">NENHUM<small>só neste PC</small></button>
+            <button data-dev="android">ANDROID<small data-t>baixa o app</small></button><button data-dev="wear">WEAR OS<small data-t>código no relógio</small></button><button data-dev="iphone">IPHONE<small data-t>precisa de Xcode</small></button><button data-dev="watch">APPLE WATCH<small data-t>precisa de Xcode</small></button><button data-dev="here"><span data-t>NENHUM</span><small data-t>só neste PC</small></button>
           </div>
           <div data-for="android" class="qrs" hidden>
-            <figure data-and="0"><div class="qr" id="g-apk"></div><figcaption><b>1</b> BAIXAR O APP</figcaption></figure>
-            <figure data-and="1"><div class="qr g-pair"></div><figcaption><b>2</b> PAREAR · ESCANEAR QR no app</figcaption></figure>
-            <p class="g-line" data-and="0">Instalou? Toque em AVANÇAR para parear.</p>
+            <figure data-and="0"><div class="qr" id="g-apk"></div><figcaption data-t><b>1</b> BAIXAR O APP</figcaption></figure>
+            <figure data-and="1"><div class="qr g-pair"></div><figcaption data-t><b>2</b> PAREAR · ESCANEAR QR no app</figcaption></figure>
+            <p class="g-line" data-and="0" data-t>Instalou? Toque em AVANÇAR para parear.</p>
           </div>
           <div data-for="iphone" class="qrs" hidden>
-            <figure><div class="qr g-pair"></div><figcaption>PAREAR</figcaption></figure>
-            <p class="g-line">Precisa do app instalado pelo Xcode (veja INSTALL.md).</p>
+            <figure><div class="qr g-pair"></div><figcaption data-t>PAREAR</figcaption></figure>
+            <p class="g-line" data-t>Precisa do app instalado pelo Xcode (veja INSTALL.md).</p>
           </div>
-          <div data-for="wear" hidden><span class="code big" id="g-code"></span><p class="g-line">Digite no relógio.</p></div>
-          <div data-for="watch" hidden><p class="g-line">Vem com o app do iPhone.</p></div>
-          <div data-for="here" hidden><p class="g-line">Sem celular: os números ficam neste computador.</p></div>
-          <p class="g-hint">Se pedir permissão de rede/firewall, permita.</p>
+          <div data-for="wear" hidden><span class="code big" id="g-code"></span><p class="g-line" data-t>Digite no relógio.</p></div>
+          <div data-for="watch" hidden><p class="g-line" data-t>Vem com o app do iPhone.</p></div>
+          <div data-for="here" hidden><p class="g-line" data-t>Sem celular: os números ficam neste computador.</p></div>
+          <p class="g-hint" data-t>Se pedir permissão de rede/firewall, permita.</p>
         </div>
       </article>
 
@@ -164,15 +171,15 @@
           <svg class="cursor" viewBox="0 0 12 18" aria-hidden="true"><path d="M1 1 L1 15 L4.6 11.6 L7.2 17 L9.4 16 L6.8 10.8 L11.4 10.8 Z" fill="#fff" stroke="#000" stroke-width="1"/></svg>
         </div></div>
         <div class="g-body">
-          <div class="g-head"><h2>PRONTO</h2><span class="chip ok">✓ Tudo certo</span></div>
-          <p class="g-say">O TokenBar fica na bandeja, sempre à mão.</p>
-          <div class="tips"><span><b>◎</b> Clique no anel = aparelho</span><span><b>⇆</b> Arraste = troca de IA</span><span><b>?</b> = ver de novo</span></div>
+          <div class="g-head"><h2 data-t>PRONTO</h2><span class="chip ok" data-t>✓ Tudo certo</span></div>
+          <p class="g-say" data-t>O TokenBar fica na bandeja, sempre à mão.</p>
+          <div class="tips"><span data-t><b>◎</b> Clique no anel = aparelho</span><span data-t><b>⇆</b> Arraste = troca de IA</span><span data-t><b>?</b> = ver de novo</span></div>
         </div>
       </article>
 
     </div>
     <nav class="g-nav" data-tauri-drag-region>
-      <button id="g-back">← VOLTAR</button>
+      <button id="g-back" data-t>← VOLTAR</button>
       <div id="g-dots" data-tauri-drag-region></div>
       <button id="g-next">AVANÇAR →</button>
     </nav>

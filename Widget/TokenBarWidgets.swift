@@ -7,15 +7,16 @@ import AppIntents
 enum AgentChoice: String, AppEnum {
     case all, claude, codex, cycle
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "IA"
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "IA / AI"
     static var caseDisplayRepresentations: [AgentChoice: DisplayRepresentation] = [
-        .all: "Todas", .claude: "Claude Code", .codex: "Codex", .cycle: "Uma por vez (toque troca)",
+        // Metadados de App Intents são lidos na compilação (texto fixo): ficam nos dois idiomas.
+        .all: "Todas / All", .claude: "Claude Code", .codex: "Codex", .cycle: "Uma por vez / One at a time",
     ]
 }
 
 /// Toque na tecla do widget: passa para a próxima IA (modo "Uma por vez").
 struct NextAgentIntent: AppIntent {
-    static var title: LocalizedStringResource = "Próxima IA"
+    static var title: LocalizedStringResource = "Próxima IA / Next AI"
     static var isDiscoverable = false
 
     func perform() async throws -> some IntentResult {
@@ -29,18 +30,18 @@ struct NextAgentIntent: AppIntent {
 enum WindowChoice: String, AppEnum {
     case short, long, both
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Janela"
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Janela / Window"
     static var caseDisplayRepresentations: [WindowChoice: DisplayRepresentation] = [
-        .short: "5 horas", .long: "7 dias", .both: "As duas",
+        .short: "5 horas / 5 hours", .long: "7 dias / 7 days", .both: "As duas / Both",
     ]
 }
 
 struct TokenBarConfig: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "TokenBar"
-    static var description = IntentDescription("Escolha a IA e a janela de limite.")
+    static var description = IntentDescription("Escolha a IA e a janela de limite. / Choose the AI and the limit window.")
 
-    @Parameter(title: "IA", default: .all) var agent: AgentChoice
-    @Parameter(title: "Janela", default: .short) var window: WindowChoice
+    @Parameter(title: "IA / AI", default: .all) var agent: AgentChoice
+    @Parameter(title: "Janela / Window", default: .short) var window: WindowChoice
 }
 
 // MARK: - Dados
@@ -96,7 +97,7 @@ struct ConfigProvider: AppIntentTimelineProvider {
             let c = TokenBarConfig()
             c.agent = a
             c.window = w
-            return AppIntentRecommendation(intent: c, description: Text(name))
+            return AppIntentRecommendation(intent: c, description: Text(Lang.t(name)))
         }
     }
     #endif
@@ -127,6 +128,7 @@ struct EntryView: View {
                           now: entry.date, theme: Prefs.theme, paired: entry.paired, cycling: entry.cycling)
                 .padding(isSystem ? 8 : 0)
         )
+            .environment(\.locale, Lang.locale)
             .containerBackground(for: .widget) { Color.black }
             .widgetURL(URL(string: "\(TB.urlScheme)://open"))
     }
@@ -158,8 +160,9 @@ struct TokenBarWidget: Widget {
         AppIntentConfiguration(kind: "TokenBar", intent: TokenBarConfig.self, provider: ConfigProvider()) {
             EntryView(entry: $0)
         }
-        .configurationDisplayName("Personalizado")
-        .description("Escolha a IA e a janela (segure o widget → Editar).")
+        // Nome e descrição da galeria: lidos quando o sistema carrega a extensão (no idioma escolhido naquela hora).
+        .configurationDisplayName(Lang.t("Personalizado"))
+        .description(Lang.t("Escolha a IA e a janela (segure o widget → Editar)."))
         .supportedFamilies(Self.families)
         .contentMarginsDisabled()
     }
@@ -206,8 +209,8 @@ struct PresetProvider: TimelineProvider {
 
 private func preset(kind: String, name: String, about: String, agent: String, window: String) -> some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: PresetProvider(agent: agent, window: window)) { EntryView(entry: $0) }
-        .configurationDisplayName(name)
-        .description(about)
+        .configurationDisplayName(Lang.t(name))
+        .description(Lang.t(about))
         .supportedFamilies(TokenBarWidget.families)
         .contentMarginsDisabled()
 }

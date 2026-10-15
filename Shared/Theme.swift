@@ -82,24 +82,24 @@ struct ThemeEditor: View {
         VStack(alignment: .leading, spacing: 12) {
             colorRow("CLAUDE", $theme.claude)
             colorRow("CODEX", $theme.codex)
-            colorRow("TEXTO", $theme.text)
-            colorRow("CONTADOR", $theme.timer)
+            colorRow(Lang.t("TEXTO"), $theme.text)
+            colorRow(Lang.t("CONTADOR"), $theme.timer)
 
-            Toggle("Cor muda com o uso (verde → amarelo → vermelho)", isOn: $theme.levelColors)
-            Toggle("Vermelho a partir de 85%", isOn: $theme.warnRed).disabled(theme.levelColors)
+            Toggle(Lang.t("Cor muda com o uso (verde → amarelo → vermelho)"), isOn: $theme.levelColors)
+            Toggle(Lang.t("Vermelho a partir de 85%"), isOn: $theme.warnRed).disabled(theme.levelColors)
 
-            Picker("Pontos", selection: $theme.roundDots) {
-                Text("Redondos").tag(true)
-                Text("Quadrados").tag(false)
+            Picker(Lang.t("Pontos"), selection: $theme.roundDots) {
+                Text(Lang.t("Redondos")).tag(true)
+                Text(Lang.t("Quadrados")).tag(false)
             }
             .pickerStyle(.segmented)
 
             HStack {
-                Text("BRILHO").font(Arcade.label(11)).foregroundStyle(Arcade.dim)
+                Text(Lang.t("BRILHO")).font(Arcade.label(11)).foregroundStyle(Arcade.dim)
                 Slider(value: $theme.glow, in: 0...2)
             }
 
-            Button("RESTAURAR PADRÃO") { theme = .standard }.buttonStyle(ArcadeButtonStyle())
+            Button(Lang.t("RESTAURAR PADRÃO")) { theme = .standard }.buttonStyle(ArcadeButtonStyle())
         }
         .font(.callout)
         .tint(theme.claude.color)

@@ -11,6 +11,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.tokenbar.core.Fetch
+import app.tokenbar.core.Lang
 import app.tokenbar.core.Providers
 import app.tokenbar.core.Store
 import app.tokenbar.core.UsageSnapshot
@@ -39,6 +40,7 @@ object Sync {
         val req = PutDataMapRequest.create("/tokenbar/state").apply {
             dataMap.putString("snapshot", json.encodeToString(UsageSnapshot.serializer(), s))
             dataMap.putString("pairing", store.pairing?.link ?: "")
+            dataMap.putString("lang", store.lang)   // o relógio segue o idioma escolhido no celular
             dataMap.putLong("sent", System.currentTimeMillis())
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(req).await()
@@ -60,8 +62,9 @@ object Alerts {
     private const val CHANNEL = "limits"
 
     fun check(context: Context, s: UsageSnapshot, store: Store) {
+        Lang.load(context)   // a tarefa em segundo plano não passou pela tela
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Limites de IA", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, Lang.t("Limites de IA"), NotificationManager.IMPORTANCE_DEFAULT))
         val t = now()
         for (p in s.providers) for (w in p.windows) for (limit in listOf(80, 95)) {
             val used = w.used(t)
@@ -73,7 +76,7 @@ object Alerts {
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("$name: ${used.toInt()}%")
-                .setContentText(if (limit >= 95) "Quase no limite." else "Passou de $limit% do limite.")
+                .setContentText(if (limit >= 95) Lang.t("Quase no limite.") else Lang.f("Passou de %d%% do limite.", limit))
                 .setAutoCancel(true)
                 .build()
             runCatching { nm.notify(key.hashCode(), n) }

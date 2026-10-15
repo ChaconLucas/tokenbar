@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val store = Store(this)
+        Lang.load(this)   // o que o celular mandou; sem celular, o idioma do relógio
         // tokenbar://pair?... também pareia direto no relógio (útil sem celular por perto).
         intent?.dataString?.let { Pairing.parse(it) }?.let { store.pairing = it }
         setContent {
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
             Column(Modifier.fillMaxSize().background(Color.Black).padding(start = 30.dp, end = 30.dp, top = 22.dp, bottom = 30.dp),
                    horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Key(if (agent == "all") "TODOS" else Providers.short(agent),
+                    Key(if (agent == "all") Lang.t("TODOS") else Providers.short(agent),
                         if (agent == "all") 0xFFFFFFFF.toInt() else Palette.base(agent)) {
                         val order = listOf("all") + Providers.all
                         agent = order[(order.indexOf(agent) + 1) % order.size]
@@ -84,7 +85,7 @@ class MainActivity : ComponentActivity() {
                 Spacer(Modifier.height(6.dp))
                 val items = if (agent == "all") Led.items(snapshot, "all", window) else Led.items(snapshot, agent, "both")
                 if (snapshot.providers.isEmpty()) {
-                    BasicText("Buscando os números…", style = TextStyle(color = Color.Gray, fontSize = 12.sp))
+                    BasicText(Lang.t("Buscando os números…"), style = TextStyle(color = Color.Gray, fontSize = 12.sp))
                 } else Canvas(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(12.dp))) {
                     tick.let { }
                     drawIntoCanvas { Led.grid(it.nativeCanvas, 0f, 0f, size.width, size.height, items, 1, 10f, now()) }
@@ -114,6 +115,7 @@ class PhoneListener : WearableListenerService() {
                 runCatching { json.decodeFromString(UsageSnapshot.serializer(), s) }.getOrNull()?.let { store.snapshot = it }
             }
             store.pairing = map.getString("pairing")?.let { Pairing.parse(it) }
+            map.getString("lang")?.takeIf { it.isNotEmpty() }?.let { Lang.set(this, it) }   // segue o celular, na hora
         }
         ComplicationDataSourceUpdateRequester.create(this, ComponentName(this, UsageComplication::class.java)).requestUpdateAll()
     }
@@ -128,12 +130,13 @@ class UsageComplication : SuspendingComplicationDataSourceService() {
     override suspend fun onComplicationRequest(request: ComplicationRequest) = data(request.complicationType, Store(this).snapshot)
 
     private fun data(type: ComplicationType, s: UsageSnapshot): ComplicationData? {
+        Lang.load(this)
         val claude = s.provider("claude").pick("short")?.used()
         val codex = s.provider("codex").pick("short")?.used()
         val main = claude ?: codex
         val short = main?.let { "${it.toInt()}%" } ?: "--"
-        val long = listOfNotNull(claude?.let { "CL ${it.toInt()}%" }, codex?.let { "CX ${it.toInt()}%" }).joinToString(" · ").ifEmpty { "Sem dados" }
-        val desc = PlainComplicationText.Builder("Uso das IAs").build()
+        val long = listOfNotNull(claude?.let { "CL ${it.toInt()}%" }, codex?.let { "CX ${it.toInt()}%" }).joinToString(" · ").ifEmpty { Lang.t("Sem dados") }
+        val desc = PlainComplicationText.Builder(Lang.t("Uso das IAs")).build()
         return when (type) {
             ComplicationType.RANGED_VALUE -> RangedValueComplicationData.Builder((main ?: 0.0).toFloat(), 0f, 100f, desc)
                 .setText(PlainComplicationText.Builder(short).build())
@@ -159,19 +162,19 @@ private fun CodeEntry(submit: suspend (String, (String?) -> Unit) -> Unit) {
         Column(Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 28.dp, vertical = 24.dp),
                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             val t = TextStyle(color = Color.White, fontSize = 12.sp, textAlign = TextAlign.Center)
-            BasicText("No computador: Primeiros passos → Celular e relógio.", style = t)
+            BasicText(Lang.t("No computador: Primeiros passos → Celular e relógio."), style = t)
             Spacer(Modifier.height(4.dp))
-            BasicText("Digite o código de 6 números.", style = t)
+            BasicText(Lang.t("Digite o código de 6 números."), style = t)
             Spacer(Modifier.height(6.dp))
-            BasicText("Com celular Android pareado, ele recebe sozinho.", style = t.copy(color = Color.Gray, fontSize = 10.sp))
+            BasicText(Lang.t("Com celular Android pareado, ele recebe sozinho."), style = t.copy(color = Color.Gray, fontSize = 10.sp))
             Spacer(Modifier.height(8.dp))
-            Key("DIGITAR", 0xFF33D9F2.toInt()) { intro = false }
+            Key(Lang.t("DIGITAR"), 0xFF33D9F2.toInt()) { intro = false }
         }
         return
     }
     Column(Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 34.dp, vertical = 26.dp),
            horizontalAlignment = Alignment.CenterHorizontally) {
-        BasicText(if (busy) "Procurando o computador…" else (msg ?: "Código do computador"),
+        BasicText(Lang.t(if (busy) "Procurando o computador…" else (msg ?: "Código do computador")),
             style = TextStyle(color = if (msg != null) Color(0xFFFF8A8A) else Color.Gray, fontSize = 11.sp))
         BasicText(code.padEnd(6, '_'), style = TextStyle(fontFamily = FontFamily.Monospace, color = Color.White, fontSize = 20.sp, letterSpacing = 3.sp))
         Spacer(Modifier.height(4.dp))

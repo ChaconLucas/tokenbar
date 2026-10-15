@@ -5,10 +5,10 @@ import AppIntents
 #if !os(watchOS)
 /// Abre o app a partir da Central de Controle. No Mac, "mini" abre o flutuante e "main" o aparelho grande.
 struct OpenTokenBarIntent: AppIntent {
-    static var title: LocalizedStringResource = "Abrir TokenBar"
+    static var title: LocalizedStringResource = "Abrir TokenBar / Open TokenBar"
     static var openAppWhenRun = true
 
-    @Parameter(title: "O que abrir") var target: String
+    @Parameter(title: "O que abrir / What to open") var target: String
 
     init() { target = "mini" }
     init(target: String) { self.target = target }
@@ -27,7 +27,7 @@ struct ControlReading {
 
     static func make(agent: String) -> ControlReading {
         guard let s = SharedStore.loadSnapshot(), !s.providers.isEmpty else {
-            return ControlReading(text: "Sem dados", detail: "abra o TokenBar", symbol: "tb.ring.0")
+            return ControlReading(text: Lang.t("Sem dados"), detail: Lang.t("abra o TokenBar"), symbol: "tb.ring.0")
         }
         let window = Prefs.window == "long" ? "long" : "short"
         let ids = agent == "all" ? Prefs.allProviders : [agent]
@@ -35,7 +35,7 @@ struct ControlReading {
             guard let w = Prefs.pickFrom(s.provider(id), window) else { return nil }
             return (id, w)
         }
-        guard !parts.isEmpty else { return ControlReading(text: "Sem dados", symbol: "tb.ring.0") }
+        guard !parts.isEmpty else { return ControlReading(text: Lang.t("Sem dados"), symbol: "tb.ring.0") }
         let label = window == "long" ? "7d" : "5h"
         func pct(_ w: UsageWindow) -> String { "\(Int(w.used().rounded()))%" }
         func left(_ w: UsageWindow) -> String {
@@ -72,7 +72,7 @@ struct UsageValue: ControlValueProvider {
 }
 
 @available(iOS 18.0, macOS 26.0, *)
-private func usageControl(kind: String, name: LocalizedStringResource, about: LocalizedStringResource, agent: String) -> some ControlWidgetConfiguration {
+private func usageControl(kind: String, name: String, about: String, agent: String) -> some ControlWidgetConfiguration {
     StaticControlConfiguration(kind: kind, provider: UsageValue(agent: agent)) { r in
         ControlWidgetButton(action: OpenTokenBarIntent(target: "mini")) {
             // Duas linhas no tamanho grande: o gasto em cima, quando reseta embaixo.
@@ -84,8 +84,8 @@ private func usageControl(kind: String, name: LocalizedStringResource, about: Lo
             }
         }
     }
-    .displayName(name)
-    .description(about)
+    .displayName(LocalizedStringResource(String.LocalizationValue(Lang.t(name))))
+    .description(LocalizedStringResource(String.LocalizationValue(Lang.t(about))))
 }
 
 /// Todas as IAs: "CL 83% · CX 8%".
@@ -116,11 +116,11 @@ struct OpenMiniControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: "TokenBarOpenMini") {
             ControlWidgetButton(action: OpenTokenBarIntent(target: "mini")) {
-                Label("Flutuante", systemImage: "pip")
+                Label(Lang.t("Flutuante"), systemImage: "pip")
             }
         }
-        .displayName("TokenBar flutuante")
-        .description("Abre o TokenBar pequeno, sempre na frente.")
+        .displayName(LocalizedStringResource(String.LocalizationValue(Lang.t("TokenBar flutuante"))))
+        .description(LocalizedStringResource(String.LocalizationValue(Lang.t("Abre o TokenBar pequeno, sempre na frente."))))
     }
 }
 
@@ -129,11 +129,11 @@ struct OpenMainControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: "TokenBarOpenMain") {
             ControlWidgetButton(action: OpenTokenBarIntent(target: "main")) {
-                Label("Aparelho", systemImage: "rectangle.inset.filled")
+                Label(Lang.t("Aparelho"), systemImage: "rectangle.inset.filled")
             }
         }
-        .displayName("TokenBar aparelho")
-        .description("Abre o aparelho grande.")
+        .displayName(LocalizedStringResource(String.LocalizationValue(Lang.t("TokenBar aparelho"))))
+        .description(LocalizedStringResource(String.LocalizationValue(Lang.t("Abre o aparelho grande."))))
     }
 }
 #endif

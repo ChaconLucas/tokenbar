@@ -235,12 +235,12 @@ struct BusyDevice: View {
                         .background(Capsule().fill(.black.opacity(0.72)).overlay(Capsule().strokeBorder(.white.opacity(0.25))))
                 }
                 .buttonStyle(PressDown())
-                .help(swapKey.label == "GRANDE" ? "Voltar ao aparelho grande" : "Destacar: janelinha flutuante, sempre na frente")
+                .help(swapKey.label == "GRANDE" ? Lang.t("Voltar ao aparelho grande") : Lang.t("Destacar: janelinha flutuante, sempre na frente"))
             }
             #if !os(watchOS)
             if let binding = editableTheme {
                 Button { showEditor.toggle() } label: {
-                    DotKeyFace(text: "EDITAR", on: true, color: theme.timer.color, dot: dot,
+                    DotKeyFace(text: Lang.t("EDITAR"), on: true, color: theme.timer.color, dot: dot,
                                round: theme.roundDots, highlighted: showEditor)
                 }
                 .buttonStyle(PressDown())

@@ -21,16 +21,16 @@ struct SetupGuide: View {
             case .wear: "WEAR OS"
             case .iphone: "IPHONE"
             case .watch: "APPLE WATCH"
-            case .none: "NENHUM"
+            case .none: Lang.t("NENHUM")
             }
         }
         /// Linha miúda embaixo do nome: o que a pessoa precisa saber antes de escolher.
         var note: String {
             switch self {
-            case .android: "baixa o app"
-            case .wear: "código no relógio"
-            case .iphone, .watch: "precisa de Xcode"
-            case .none: "só neste Mac"
+            case .android: Lang.t("baixa o app")
+            case .wear: Lang.t("código no relógio")
+            case .iphone, .watch: Lang.t("precisa de Xcode")
+            case .none: Lang.t("só neste Mac")
             }
         }
     }
@@ -56,9 +56,11 @@ struct SetupGuide: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("PRIMEIROS PASSOS").font(Arcade.label(11)).tracking(3).foregroundStyle(Arcade.dim)
+                Text(Lang.t("PRIMEIROS PASSOS")).font(Arcade.label(11)).tracking(3).foregroundStyle(Arcade.dim)
                 Spacer()
-                Button("PULAR") { finish() }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+                // Antes de ler: quem não fala português troca aqui, já na primeira tela.
+                if page == 0 { LangToggle() }
+                Button(Lang.t("PULAR")) { finish() }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
                     .keyboardShortcut(.escape, modifiers: [])
             }
             .padding(.horizontal, 18).padding(.top, 30)
@@ -81,6 +83,7 @@ struct SetupGuide: View {
         }
         .background(ArcadeBackground())
         .environment(\.colorScheme, .dark)
+        .environment(\.locale, Lang.locale)
         .frame(width: 560, height: 640)
         .onAppear {
             #if DEBUG
@@ -102,25 +105,25 @@ struct SetupGuide: View {
     // MARK: Telas
 
     private var claude: some View {
-        slide(art: TerminalArt(command: "oi", color: Art.claude, fill: 0.62),
+        slide(art: TerminalArt(command: Lang.t("oi"), color: Art.claude, fill: 0.62),
               title: "CLAUDE CODE",
-              text: "Conecte uma vez. Depois, é só usar o Claude Code normalmente.") {
+              text: Lang.t("Conecte uma vez. Depois, é só usar o Claude Code normalmente.")) {
             if hasClaude {
-                chip("Recebendo os números", ok: true)
+                chip(Lang.t("Recebendo os números"), ok: true)
             } else if model.claudeConnected {
-                chip("Conectado. Mande uma mensagem no Claude Code…", ok: false)
+                chip(Lang.t("Conectado. Mande uma mensagem no Claude Code…"), ok: false)
             } else {
-                Button("CONECTAR CLAUDE CODE") { model.connectClaude() }
+                Button(Lang.t("CONECTAR CLAUDE CODE")) { model.connectClaude() }
                     .buttonStyle(ArcadeButtonStyle(tint: Art.claude)).controlSize(.large)
-                if skipClaude { chip("Pulado", ok: true) } else { tiny("NÃO USO") { skipClaude = true } }
+                if skipClaude { chip(Lang.t("Pulado"), ok: true) } else { tiny(Lang.t("NÃO USO")) { skipClaude = true } }
             }
             if let e = model.claudeError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
             // O painel do VS Code não roda a statusline: aí os números vêm pelo login.
             if model.claudeLogin {
                 if let e = model.claudeLoginError { Text(e).font(.caption).foregroundStyle(Arcade.red) }
-                tiny("LENDO PELO LOGIN (VS CODE) · DESLIGAR") { model.claudeLogin = false }
+                tiny(Lang.t("LENDO PELO LOGIN (VS CODE) · DESLIGAR")) { model.claudeLogin = false }
             } else if !hasClaude {
-                tiny("USA O CLAUDE NO PAINEL DO VS CODE? TOQUE AQUI") { model.claudeLogin = true }
+                tiny(Lang.t("USA O CLAUDE NO PAINEL DO VS CODE? TOQUE AQUI")) { model.claudeLogin = true }
             }
         }
     }
@@ -128,14 +131,14 @@ struct SetupGuide: View {
     private var codex: some View {
         slide(art: TerminalArt(command: "codex", color: Art.codex, fill: 0.38),
               title: "CODEX",
-              text: "Nada a configurar: use o Codex e os limites aparecem.") {
+              text: Lang.t("Nada a configurar: use o Codex e os limites aparecem.")) {
             if hasCodex {
-                chip("Recebendo os números", ok: true)
+                chip(Lang.t("Recebendo os números"), ok: true)
             } else if skipCodex {
-                chip("Pulado", ok: true)
+                chip(Lang.t("Pulado"), ok: true)
             } else {
-                chip("Esperando a primeira resposta do Codex…", ok: false)
-                tiny("NÃO USO") { skipCodex = true }
+                chip(Lang.t("Esperando a primeira resposta do Codex…"), ok: false)
+                tiny(Lang.t("NÃO USO")) { skipCodex = true }
             }
         }
     }
@@ -158,10 +161,10 @@ struct SetupGuide: View {
             case .android:
                 let download = androidStep == 0
                 slide(art: ScanArt { QRCode(text: download ? Self.apkURL : model.pairing.link.absoluteString) },
-                      title: download ? "1 · BAIXE O APP" : "2 · PAREIE",
-                      text: download ? "Aponte a câmera do celular e instale o arquivo." : "No app, toque em ESCANEAR QR.") {
+                      title: download ? Lang.t("1 · BAIXE O APP") : Lang.t("2 · PAREIE"),
+                      text: download ? Lang.t("Aponte a câmera do celular e instale o arquivo.") : Lang.t("No app, toque em ESCANEAR QR.")) {
                     if download {
-                        chip("Instalou? Toque em AVANÇAR para parear.", ok: false)
+                        chip(Lang.t("Instalou? Toque em AVANÇAR para parear."), ok: false)
                     } else {
                         connection
                     }
@@ -169,9 +172,9 @@ struct SetupGuide: View {
             case .iphone:
                 slide(art: ScanArt { QRCode(text: model.pairing.link.absoluteString) },
                       title: "IPHONE",
-                      text: "Precisa do app instalado pelo Xcode. Depois: ESCANEAR QR no app.") {
+                      text: Lang.t("Precisa do app instalado pelo Xcode. Depois: ESCANEAR QR no app.")) {
                     connection
-                    Link("O app de iPhone é instalado pelo Xcode: ver como", destination: Self.installURL)
+                    Link(Lang.t("O app de iPhone é instalado pelo Xcode: ver como"), destination: Self.installURL)
                         .font(.caption).foregroundStyle(Arcade.cyan)
                 }
             case .wear:
@@ -179,19 +182,19 @@ struct SetupGuide: View {
                     let code = model.lan.currentCode()
                     slide(art: WatchCodeArt(code: code),
                           title: code,
-                          text: "Digite este código no relógio. Com celular Android, ele recebe sozinho.") {
+                          text: Lang.t("Digite este código no relógio. Com celular Android, ele recebe sozinho.")) {
                         connection
                     }
                 }
             case .watch:
                 slide(art: ScanArt { QRCode(text: model.pairing.link.absoluteString) },
                       title: "APPLE WATCH",
-                      text: "Vem junto com o app do iPhone (Xcode): pareie o iPhone e pronto.") {
+                      text: Lang.t("Vem junto com o app do iPhone (Xcode): pareie o iPhone e pronto.")) {
                     connection
                 }
             case .none:
-                slide(art: MenuBarArt(), title: "SEM CELULAR", text: "Tudo certo: os números ficam na barra de menu deste Mac.") {
-                    chip("Pronto", ok: true)
+                slide(art: MenuBarArt(), title: Lang.t("SEM CELULAR"), text: Lang.t("Tudo certo: os números ficam na barra de menu deste Mac.")) {
+                    chip(Lang.t("Pronto"), ok: true)
                 }
             }
         }
@@ -199,12 +202,12 @@ struct SetupGuide: View {
 
     private var ready: some View {
         slide(art: MenuBarArt(),
-              title: "PRONTO",
-              text: "Clique nas barrinhas da barra de menu. Arraste o display para trocar de IA.") {
+              title: Lang.t("PRONTO"),
+              text: Lang.t("Clique nas barrinhas da barra de menu. Arraste o display para trocar de IA.")) {
             HStack(spacing: 6) {
-                hint("? = ver de novo")
-                hint("Mini = sempre na frente")
-                hint("Widgets: botão direito na mesa")
+                hint(Lang.t("? = ver de novo"))
+                hint(Lang.t("Mini = sempre na frente"))
+                hint(Lang.t("Widgets: botão direito na mesa"))
             }
         }
     }
@@ -212,15 +215,15 @@ struct SetupGuide: View {
     /// Verde quando um aparelho leu este Mac nos últimos 2 minutos.
     @ViewBuilder private var connection: some View {
         if phoneConnected {
-            chip("Aparelho conectado", ok: true)
+            chip(Lang.t("Aparelho conectado"), ok: true)
         } else {
-            chip("Esperando o aparelho (mesmo Wi-Fi)…", ok: false)
+            chip(Lang.t("Esperando o aparelho (mesmo Wi-Fi)…"), ok: false)
         }
     }
 
     private var footer: some View {
         HStack {
-            Button("VOLTAR") { go(-1) }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
+            Button(Lang.t("VOLTAR")) { go(-1) }.buttonStyle(ArcadeButtonStyle(tint: Arcade.dim))
                 .opacity(page == 0 ? 0 : 1).disabled(page == 0)
                 .keyboardShortcut(.leftArrow, modifiers: [])
             Spacer()
@@ -234,7 +237,7 @@ struct SetupGuide: View {
             }
             Spacer()
             let last = page == pages - 1
-            Button(last ? "COMEÇAR" : "AVANÇAR") { last ? finish() : go(1) }
+            Button(last ? Lang.t("COMEÇAR") : Lang.t("AVANÇAR")) { last ? finish() : go(1) }
                 .buttonStyle(ArcadeButtonStyle(tint: done(page) || last ? Arcade.green : Arcade.cyan))
                 .keyboardShortcut(.rightArrow, modifiers: [])
         }

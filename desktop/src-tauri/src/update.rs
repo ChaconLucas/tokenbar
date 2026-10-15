@@ -1,6 +1,6 @@
 // Atualização dentro do app: procura 10 s depois de abrir e a cada 6 h (latest.json do GitHub).
 // Achou versão nova: item "Atualizar para X" na bandeja e evento `update-available` para a tecla ATUALIZAR.
-use crate::App;
+use crate::{i18n, App};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -12,7 +12,7 @@ static INSTALLING: AtomicBool = AtomicBool::new(false);
 
 fn set_error(h: &AppHandle, err: Option<String>) {
     *h.state::<Arc<App>>().update_error.lock().unwrap() = err.clone();
-    if let Some(e) = err { let _ = h.emit("update-error", e); }
+    if let Some(e) = err { let _ = h.emit("update-error", i18n::tr(&e)); }
 }
 
 async fn find(h: &AppHandle) -> Result<Option<String>, String> {
@@ -28,7 +28,7 @@ async fn find(h: &AppHandle) -> Result<Option<String>, String> {
 pub async fn check_update(handle: AppHandle) -> Result<Option<String>, String> {
     let r = find(&handle).await;
     set_error(&handle, r.as_ref().err().cloned());
-    r
+    r.map_err(|e| i18n::tr(&e))
 }
 
 /// Baixa, instala (Windows: instalador sem perguntas) e abre de novo.
@@ -38,7 +38,7 @@ pub async fn install_update(handle: AppHandle) -> Result<(), String> {
     let r = install(&handle).await;
     INSTALLING.store(false, Ordering::SeqCst);
     set_error(&handle, r.as_ref().err().cloned());
-    r?;
+    r.map_err(|e| i18n::tr(&e))?;
     handle.restart()
 }
 
@@ -61,7 +61,7 @@ pub fn start(h: AppHandle, menu: Menu<Wry>) {
             match tauri::async_runtime::block_on(find(&h)) {
                 Ok(Some(v)) => {
                     set_error(&h, None);
-                    let text = format!("Atualizar para {v}");
+                    let text = i18n::update_to(&v);
                     match menu.get("update").and_then(|i| i.as_menuitem().cloned()) {
                         Some(item) => { let _ = item.set_text(text); }
                         None => if let Ok(item) = MenuItem::with_id(&h, "update", text, true, None::<&str>) { let _ = menu.insert(&item, 0); },

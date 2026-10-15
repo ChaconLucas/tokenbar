@@ -262,9 +262,9 @@ struct DotDisplay: View {
 
         let big = w == nil ? "--" : "\(min(Int(p.rounded()), 999))%"
         let reset: String = {
-            guard let w else { return "SEM DADOS" }
+            guard let w else { return Lang.t("SEM DADOS") }
             guard let r = w.resetsAt else { return "" }
-            if w.didReset(at: now) { return "RESETOU" }
+            if w.didReset(at: now) { return Lang.t("RESETOU") }
             let s = max(0, Int(r.timeIntervalSince(now)))
             let d = s / 86400, h = (s % 86400) / 3600, m = (s % 3600) / 60
             return "RESET " + (d > 0 ? "\(d)D \(h)H" : "\(h):" + String(format: "%02d", m))
@@ -411,7 +411,7 @@ struct DotDisplay: View {
     private func rightText() -> (String, String) {
         guard let w = window else { return ("OFF", "LINE") }
         guard let r = w.resetsAt else { return ("--:--", "LEFT") }
-        if w.didReset(at: now) { return ("OK", "NOVO") }
+        if w.didReset(at: now) { return ("OK", Lang.t("NOVO")) }
         let s = max(0, Int(r.timeIntervalSince(now)))
         let d = s / 86400, h = (s % 86400) / 3600, m = (s % 3600) / 60
         return (Self.fitTime(d: d, h: h, m: m), "LEFT")

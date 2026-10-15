@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.tokenbar.core.Lang
 import app.tokenbar.core.Palette
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -50,6 +51,7 @@ private val FRAME = Color(0xFF8C8C9A)
 private val OFF = Color(0xFF1C1C24)
 private const val WHITE = 0xFFFFFFFF.toInt()
 
+/** Título e frase em português (a chave); [Lang.t] traduz na hora de mostrar. */
 private class Slide(val title: String, val line: String)
 
 private val slides = listOf(
@@ -61,7 +63,7 @@ private val slides = listOf(
 
 /** Primeiros passos em 4 telas: o desenho mostra, a frase só confirma. */
 @Composable
-internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, onScan: () -> Unit, onSite: () -> Unit, update: String?, onUpdate: () -> Unit, onClose: () -> Unit) {
+internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, onScan: () -> Unit, onSite: () -> Unit, update: String?, onUpdate: () -> Unit, onLang: (String) -> Unit, onClose: () -> Unit) {
     val pager = rememberPagerState { slides.size }
     val scope = rememberCoroutineScope()
     val loop = rememberInfiniteTransition(label = "guia")
@@ -75,10 +77,15 @@ internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, on
     Box(Modifier.fillMaxSize().background(Color.Black).clickable(remember { MutableInteractionSource() }, null) {}) {
         Column(Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("PRIMEIROS PASSOS  ${page + 1}/${slides.size}", gray)
+                Text(Lang.f("PRIMEIROS PASSOS  %d/%d", page + 1, slides.size), gray)
                 Spacer(Modifier.weight(1f))
+                // PT | EN logo na primeira tela: quem não lê português troca antes de tudo.
+                Key("PT", WHITE, Lang.current == "pt") { onLang("pt") }
+                Spacer(Modifier.width(4.dp))
+                Key("EN", WHITE, Lang.current == "en") { onLang("en") }
+                Spacer(Modifier.width(8.dp))
                 if (update != null) { Key(update, Palette.CODEX) { onUpdate() }; Spacer(Modifier.width(8.dp)) }
-                Key(if (paired) "FECHAR" else "PULAR", WHITE) { onClose() }
+                Key(Lang.t(if (paired) "FECHAR" else "PULAR"), WHITE) { onClose() }
             }
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { p ->
                 Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
@@ -88,41 +95,41 @@ internal fun Guide(paired: Boolean, error: String?, onLink: (String) -> Unit, on
                     }
                     Spacer(Modifier.width(28.dp))
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                        Text(slides[p].title, mono.copy(fontSize = 22.sp))
+                        Text(Lang.t(slides[p].title), mono.copy(fontSize = 22.sp))
                         Spacer(Modifier.height(10.dp))
-                        Text(slides[p].line, mono.copy(color = Color.LightGray, fontSize = 15.sp))
+                        Text(Lang.t(slides[p].line), mono.copy(color = Color.LightGray, fontSize = 15.sp))
                         Spacer(Modifier.height(18.dp))
                         when (p) {
-                            0 -> Key("ABRIR SITE", WHITE) { onSite() }
+                            0 -> Key(Lang.t("ABRIR SITE"), WHITE) { onSite() }
                             2 -> {
-                                Key("ESCANEAR QR", Palette.CODEX, big = true) { onScan() }
+                                Key(Lang.t("ESCANEAR QR"), Palette.CODEX, big = true) { onScan() }
                                 Spacer(Modifier.height(14.dp))
-                                Text("ou cole o link", gray)
+                                Text(Lang.t("ou cole o link"), gray)
                                 Spacer(Modifier.height(6.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     BasicTextField(text, { text = it }, textStyle = mono.copy(fontSize = 13.sp), cursorBrush = SolidColor(Color.White), singleLine = true,
                                         modifier = Modifier.weight(1f).border(1.dp, Color.DarkGray, RoundedCornerShape(8.dp)).padding(8.dp))
                                     Spacer(Modifier.width(10.dp))
-                                    Key("PAREAR", Palette.CLAUDE) { onLink(text) }
+                                    Key(Lang.t("PAREAR"), Palette.CLAUDE) { onLink(text) }
                                 }
                             }
                         }
                         if (error != null) {
                             Spacer(Modifier.height(10.dp))
-                            Text(error, mono.copy(color = Color(0xFFFF8A8A), fontSize = 13.sp))
+                            Text(Lang.t(error), mono.copy(color = Color(0xFFFF8A8A), fontSize = 13.sp))
                         }
                     }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Key("VOLTAR", WHITE, page > 0) { if (page > 0) scope.launch { pager.animateScrollToPage(page - 1) } }
+                Key(Lang.t("VOLTAR"), WHITE, page > 0) { if (page > 0) scope.launch { pager.animateScrollToPage(page - 1) } }
                 Spacer(Modifier.weight(1f))
                 slides.indices.forEach { i ->
                     Box(Modifier.padding(horizontal = 4.dp).size(if (i == page) 9.dp else 7.dp)
                         .background(if (i == page) CYAN else Color.DarkGray, CircleShape))
                 }
                 Spacer(Modifier.weight(1f))
-                Key(if (last) "PRONTO" else "AVANÇAR", if (last) Palette.CODEX else WHITE) {
+                Key(Lang.t(if (last) "PRONTO" else "AVANÇAR"), if (last) Palette.CODEX else WHITE) {
                     if (last) onClose() else scope.launch { pager.animateScrollToPage(page + 1) }
                 }
             }
@@ -232,14 +239,14 @@ private fun DrawScope.openGuide(t: Float) {
     val scr = laptop(70f, 34f, 180f, 116f)
     val menu = 1f - ph(t, 0.42f, 0.52f)
     if (menu > 0f) {
-        label("PRIMEIROS PASSOS", scr.left + 6f, scr.top + 14f, 10f, Color.White.copy(alpha = menu))
+        label(Lang.t("PRIMEIROS PASSOS"), scr.left + 6f, scr.top + 14f, 10f, Color.White.copy(alpha = menu))
         val pick = ph(t, 0.2f, 0.3f)
         for (k in 0..2) {
             val top = scr.top + 24f + k * 24f
             val hot = k == 2
             val border = if (hot) lerp(Color(0xFF3A3A46), CYAN, pick) else Color(0xFF3A3A46)
             drawRoundRect(border.copy(alpha = menu), Offset(scr.left + 6f, top), Size(scr.width - 12f, 18f), CornerRadius(4f), style = Stroke(1.5f))
-            if (hot) label("CELULAR E RELÓGIO", scr.left + 12f, top + 12.5f, 8.5f, (if (pick > 0f) CYAN else Color.LightGray).copy(alpha = menu))
+            if (hot) label(Lang.t("CELULAR E RELÓGIO"), scr.left + 12f, top + 12.5f, 8.5f, (if (pick > 0f) CYAN else Color.LightGray).copy(alpha = menu))
             else drawRoundRect(Color(0xFF3A3A46).copy(alpha = menu), Offset(scr.left + 12f, top + 7f), Size(40f + 30f * k, 4f), CornerRadius(2f))
         }
         // o toque no item
@@ -248,7 +255,7 @@ private fun DrawScope.openGuide(t: Float) {
     }
     val q = ph(t, 0.5f, 0.65f) * (1f - ph(t, 0.92f, 1f))
     if (q > 0f) {
-        label("CELULAR E RELÓGIO", scr.left + 6f, scr.top + 12f, 8.5f, CYAN.copy(alpha = q))
+        label(Lang.t("CELULAR E RELÓGIO"), scr.left + 6f, scr.top + 12f, 8.5f, CYAN.copy(alpha = q))
         qr(scr.center.x - 38f, scr.top + 19f, 76f, q)
     }
 }

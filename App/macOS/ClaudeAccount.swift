@@ -9,10 +9,10 @@ enum ClaudeAccount {
         case noLogin, expired, http(Int), format
         var errorDescription: String? {
             switch self {
-            case .noLogin: "Não achei o login do Claude Code neste Mac (ou o acesso às Chaves foi negado)."
-            case .expired: "Login do Claude expirado: abra o Claude Code uma vez."
-            case .http(let c): "A Anthropic respondeu \(c)."
-            case .format: "Resposta inesperada da Anthropic."
+            case .noLogin: Lang.t("Não achei o login do Claude Code neste Mac (ou o acesso às Chaves foi negado).")
+            case .expired: Lang.t("Login do Claude expirado: abra o Claude Code uma vez.")
+            case .http(let c): Lang.f("A Anthropic respondeu %d.", c)
+            case .format: Lang.t("Resposta inesperada da Anthropic.")
             }
         }
     }

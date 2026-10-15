@@ -7,9 +7,9 @@ enum APIError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .http(let code): "Servidor respondeu \(code)"
-        case .notFound: "Nenhum dado enviado ainda pelo Mac"
-        case .noServer: "Sem servidor configurado"
+        case .http(let code): Lang.f("Servidor respondeu %d", code)
+        case .notFound: Lang.t("Nenhum dado enviado ainda pelo Mac")
+        case .noServer: Lang.t("Sem servidor configurado")
         }
     }
 }

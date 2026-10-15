@@ -29,13 +29,13 @@ enum UsageAlerts {
                     guard sent[id] != cycle else { continue }
                     sent[id] = cycle
                     post(id: id, title: "\(name): \(Int(used.rounded()))%",
-                         body: t >= 95 ? "Quase no limite." : "Passou de \(Int(t))% do limite.",
+                         body: t >= 95 ? Lang.t("Quase no limite.") : Lang.f("Passou de %d%% do limite.", Int(t)),
                          at: nil)
                 }
 
                 // Aviso agendado para o reset: só faz sentido se a janela estava bem usada.
                 if let r = w.resetsAt, r > now, used >= 50 {
-                    post(id: "\(key).reset", title: "\(name) liberado", body: "O limite resetou.", at: r)
+                    post(id: "\(key).reset", title: Lang.f("%@ liberado", name), body: Lang.t("O limite resetou."), at: r)
                 } else {
                     center.removePendingNotificationRequests(withIdentifiers: ["\(key).reset"])
                 }

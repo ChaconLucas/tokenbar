@@ -37,7 +37,7 @@ enum UsageStyle {
     /// "16:40" hoje, "SEX 16:40" em outro dia.
     static func resetText(_ date: Date, now: Date = .now) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
+        f.locale = Lang.locale
         f.dateFormat = Calendar.current.isDate(date, inSameDayAs: now) ? "HH:mm" : "EEE HH:mm"
         return f.string(from: date).replacingOccurrences(of: ".", with: "").uppercased()
     }
@@ -188,7 +188,7 @@ struct WindowRow: View {
             if !compact, let r = window.resetsAt {
                 HStack {
                     if window.didReset(at: now) {
-                        Text("RESETOU")
+                        Text(Lang.t("RESETOU"))
                     } else {
                         Text("RESET \(UsageStyle.resetText(r, now: now))")
                         Spacer()
@@ -234,10 +234,10 @@ struct ProviderCard: View {
 
     private var ageText: String {
         let m = Int(now.timeIntervalSince(provider.observedAt) / 60)
-        if m < 1 { return "AO VIVO" }
-        if m < 60 { return "HÁ \(m) MIN" }
-        if m < 1440 { return "HÁ \(m / 60) H" }
-        return "HÁ \(m / 1440) D"
+        if m < 1 { return Lang.t("AO VIVO") }
+        if m < 60 { return Lang.f("HÁ %d MIN", m) }
+        if m < 1440 { return Lang.f("HÁ %d H", m / 60) }
+        return Lang.f("HÁ %d D", m / 1440)
     }
 }
 
@@ -274,6 +274,37 @@ struct ArcadeButtonStyle: ButtonStyle {
             }
             .shadow(color: tint.opacity(configuration.isPressed ? 0.6 : 0.2), radius: 6)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
+    }
+}
+
+/// Idioma: três teclas AUTO / PT / EN; a escolhida acende em âmbar. Troca na hora, app e widgets.
+struct LangPicker: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            Text("IDIOMA · LANGUAGE").font(Arcade.label(10)).tracking(2).foregroundStyle(Arcade.dim)
+            Spacer(minLength: 8)
+            ForEach(["auto", "pt", "en"], id: \.self) { k in
+                Button(k.uppercased()) { LangStore.shared.lang = k }
+                    .buttonStyle(ArcadeButtonStyle(tint: LangStore.shared.lang == k ? Arcade.amber : Arcade.dim))
+            }
+        }
+    }
+}
+
+/// "PT | EN" pequeno, para o guia: quem não lê português troca antes de ler.
+struct LangToggle: View {
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(["pt", "en"], id: \.self) { k in
+                if k == "en" { Text("|").font(Arcade.label(10)).foregroundStyle(Arcade.dim) }
+                Button(k.uppercased()) { LangStore.shared.lang = k }
+                    .buttonStyle(.plain)
+                    .font(Arcade.label(10)).tracking(1)
+                    .foregroundStyle(Lang.current == k ? Arcade.amber : Arcade.dim)
+                    .accessibilityLabel(k == "en" ? "English" : "Português")
+            }
+        }
+        .padding(.horizontal, 8)
     }
 }
 

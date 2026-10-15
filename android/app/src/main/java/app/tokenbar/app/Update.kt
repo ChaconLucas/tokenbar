@@ -7,6 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.compose.runtime.*
 import androidx.core.content.FileProvider
+import app.tokenbar.core.Lang
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -18,10 +19,12 @@ import java.net.URL
 class Updater(private val context: Context) {
     private val prefs = context.getSharedPreferences("update", Context.MODE_PRIVATE)
     private var latest by mutableStateOf(prefs.getString("latest", null))
-    private var busy by mutableStateOf<String?>(null)    // "BAIXANDO 42%" ou um erro curto
+    private var busy by mutableStateOf<String?>(null)    // chave em português: "BAIXANDO %d%%" ou um erro curto
+    private var pct by mutableIntStateOf(0)
 
     /** O que a tecla mostra; nulo = nada a fazer. */
-    val label: String? get() = busy ?: if (latest?.let { newer(it, BuildConfig.VERSION_NAME) } == true) "ATUALIZAR" else null
+    val label: String? get() = busy?.let { Lang.f(it, pct) }
+        ?: if (latest?.let { newer(it, BuildConfig.VERSION_NAME) } == true) Lang.t("ATUALIZAR") else null
 
     /** Na abertura e depois a cada 6 h, no máximo. */
     suspend fun watch() {
@@ -44,7 +47,7 @@ class Updater(private val context: Context) {
             flash("PERMITA E TOQUE DE NOVO")
             return
         }
-        busy = "BAIXANDO 0%"
+        pct = 0; busy = DOWNLOADING
         val apk = runCatching { download() }.getOrElse { flash("FALHOU O DOWNLOAD"); return }
         busy = null
         runCatching {
@@ -90,7 +93,7 @@ class Updater(private val context: Context) {
                         o.write(buf, 0, n)
                         done += n
                         val pct = if (total > 0) (done * 100 / total).toInt() else -1
-                        if (pct != shown) { shown = pct; withContext(Dispatchers.Main) { busy = "BAIXANDO ${pct.coerceAtLeast(0)}%" } }
+                        if (pct != shown) { shown = pct; withContext(Dispatchers.Main) { this@Updater.pct = pct.coerceAtLeast(0); busy = DOWNLOADING } }
                     }
                 }
             }
@@ -99,6 +102,7 @@ class Updater(private val context: Context) {
     }
 
     companion object {
+        private const val DOWNLOADING = "BAIXANDO %d%%"
         private const val EVERY = 6 * 60 * 60 * 1000L
         private const val API = "https://api.github.com/repos/ChaconLucas/tokenbar/releases/latest"
         private const val APK = "https://github.com/ChaconLucas/tokenbar/releases/latest/download/TokenBar-Android.apk"
