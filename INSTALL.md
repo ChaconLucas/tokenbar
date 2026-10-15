@@ -15,16 +15,56 @@ An LED dot-matrix display that shows how much of each AI's usage limit is spent 
 statusline and Codex's session files. Phones and watches only show what the computer sends,
 over the local Wi-Fi (or an optional server). So the computer is always step 1.
 
-## Step 0 — ask the person (only what you can't detect)
+## Step 0 — interview: detect first, ask only what you can't
 
-1. Which computer: **Mac**, **Windows** or **Linux**? (Detect it yourself if you have a shell: `uname -s`.)
-2. Which AIs they use: **Claude Code**, **Codex**, others? (Detect: `ls ~/.claude ~/.codex`.)
-3. Do they want it on a **phone** or **watch** too? Which: iPhone, Android, Apple Watch, Wear OS?
+Run these yourself when you have a shell, then ask only the gaps — **one short message with all questions**,
+in the person's language. Never guess a device model: ask.
 
-Then tell them the plan before you start, using the table below.
+**Detect:**
+```sh
+uname -s; sw_vers 2>/dev/null                                  # computer + macOS version
+ls -d ~/.claude ~/.codex ~/.gemini 2>/dev/null                 # which AIs are installed
+xcrun devicectl list devices 2>/dev/null | grep -v -i simulat   # iPhones/Apple Watches paired with this Mac (model + state)
+adb devices -l 2>/dev/null                                      # Android phones/watches with USB/Wi-Fi debugging
+xcode-select -p 2>/dev/null                                     # Xcode installed? (needed for iPhone/Apple Watch)
+```
 
-| Device | How hard | What's needed |
-|---|---|---|
+**Ask (whatever detection didn't answer):**
+1. **Computer:** Mac, Windows or Linux? (and is it the computer where they run the AIs?)
+2. **Phone — exact model:** e.g. "iPhone 13", "iPhone 15 Pro", "Galaxy S23", "Pixel 8", "Xiaomi…", "Huawei…".
+   iPhone: also the iOS version (Settings → General → About). Android: Android version.
+3. **Watch — exact model:** e.g. "Apple Watch Series 9", "Galaxy Watch 6", "Pixel Watch", "Huawei Watch GT", "Garmin…".
+   Apple Watch: watchOS version (iPhone → Watch app → General → About).
+4. **AIs and where they use them:** Claude Code in the **terminal** or in the **VS Code / Cursor panel**? Codex
+   (terminal, VS Code or the Codex app)? GitHub Copilot? Windsurf? Others?
+5. **Away from home?** Do they want the phone to update outside their Wi-Fi (needs the optional free server)?
+
+**Then decide with this table and tell them the plan (what will work, what won't, and why) before installing:**
+
+| Answer | What they get / what to do |
+|---|---|
+| **Mac**, macOS 15+ | `curl … install-mac.sh \| sh` (or Homebrew). Mac with a notch → the notch island is on by default |
+| **Mac** older than macOS 15 | not supported (needs macOS 15 Sequoia+) |
+| **Windows** 10/11 | `TokenBar-Windows-setup.exe` from Releases (SmartScreen → More info → Run anyway) |
+| **Linux** | build from source (`desktop/`), no package yet |
+| **iPhone** with iOS 17+ (iPhone XS/XR and newer) | needs **a Mac with Xcode** + free Apple ID → `install-ios.sh`; expires every 7 days, re-run to renew |
+| iPhone **14 Pro / 15 / 16 / 17** (not 16e) | also **Dynamic Island**; all other iOS 17 iPhones get the **Lock Screen** Live Activity only |
+| iPhone on iOS 16 or older / iPhone X, 8 or older | not supported (app needs iOS 17) |
+| iPhone but **no Mac** | not possible for now (needs a paid Apple account for TestFlight). Say so plainly |
+| **Apple Watch**, watchOS 10+ (Series 4+) | comes with the iPhone app: iPhone → Watch app → TokenBar → Install. watchOS 11+ also shows the Live Activity in the Smart Stack. If the watch runs a **beta** watchOS, building needs the matching **Xcode beta** |
+| **Android** 8.0+ (any brand with Google services) | `TokenBar-Android.apk` from Releases; updates itself from inside the app |
+| **Huawei** EMUI/HarmonyOS 2–4 (no Google services) | APK installs, but **Scan QR doesn't work** → paste the link from the computer instead |
+| **Huawei HarmonyOS NEXT**, any **Huawei watch**, Garmin, Amazfit, Fitbit, Galaxy Watch 3 or older (Tizen) | not supported |
+| **Wear OS 3+** (Galaxy Watch 4+, Pixel Watch, …) | `TokenBar-WearOS.apk` via `adb`; with an Android phone it syncs by itself, without a phone type the 6-digit code |
+| Claude Code in the **terminal** | connect via the app's "Connect Claude Code" (statusline) |
+| Claude Code in the **VS Code / Cursor panel** | statusline doesn't run there → turn on "Read from the Claude Code login" (Mac asks Keychain once: Always Allow) |
+| **Codex** (any of terminal / VS Code / app) | automatic |
+| **GitHub Copilot** | opt-in toggle in settings (uses `gh auth token`) |
+| **Windsurf** | automatic |
+| Lives in **VS Code** all day | also install the VS Code extension (`TokenBar-VSCode.vsix`) |
+| Wants it **away from home** | optional free Cloudflare server (README → Optional server) |
+
+---|---|---|
 | **Mac** (macOS 15+) | 1 command | nothing |
 | **Windows** | download `TokenBar-Windows-setup.exe` | click through SmartScreen once |
 | **Linux** | build from source (no package yet) | Rust + Node |
