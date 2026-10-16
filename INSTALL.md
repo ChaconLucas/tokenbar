@@ -61,10 +61,13 @@ xcode-select -p 2>/dev/null                                     # Xcode installe
 | **Codex** (any of terminal / VS Code / app) | automatic |
 | **GitHub Copilot** | opt-in toggle in settings (uses `gh auth token`) |
 | **Windsurf** | automatic |
-| Lives in **VS Code** all day | also install the VS Code extension (`TokenBar-VSCode.vsix`) |
+| Lives in **VS Code** all day | also install the VS Code extension (Marketplace: `chaconlucas.tokenbar`) |
 | Wants it **away from home** | optional free Cloudflare server (README → Optional server) |
 
----|---|---|
+**Effort per device:**
+
+| Device | How | What it needs |
+|---|---|---|
 | **Mac** (macOS 15+) | 1 command | nothing |
 | **Windows** | download `TokenBar-Windows-setup.exe` | click through SmartScreen once |
 | **Linux** | build from source (no package yet) | Rust + Node |
@@ -111,7 +114,7 @@ Claude Code only exposes its limits (`rate_limits`) to the **statusline** comman
 installs a tiny script that saves a copy of that JSON to `~/.tokenbar/claude.json` and then runs
 the person's previous statusline, so what they see in the terminal doesn't change.
 
-- **Preferred:** ask them to click **EDITAR → Mais ajustes… → Conectar Claude Code** in the app.
+- **Preferred:** ask them to click **Ajustes → IAS → CLAUDE CODE → CONECTAR** in the app (Windows/Linux: ⚙ → CLAUDE CODE).
   It backs up `~/.claude/settings.json` to `~/.claude/settings.json.tokenbar-backup` first.
 - Numbers appear the next time a Claude Code session refreshes its statusline (send any message).
 - **Verify:** `cat ~/.tokenbar/claude.json` contains `"rate_limits"`.
@@ -126,7 +129,7 @@ The statusline only runs in the **terminal**. If the person uses Claude Code in 
 extension **panel**, no numbers arrive. Two options — explain both and let them choose:
 
 1. Use `claude` in VS Code's integrated terminal (Ctrl+`) instead of the panel. Works now, nothing to turn on.
-2. Turn on **"Ler pelo login do Claude Code"** (Mac: Ajustes → CLAUDE CODE; Windows/Linux: ⚙ → CLAUDE CODE;
+2. Turn on **"Ler pelo login do Claude Code"** (Mac: Ajustes → IAS → PAINEL DO VS CODE, or **LIGAR** on the hint under the device; Windows/Linux: ⚙ → CLAUDE CODE;
    or the "painel do VS Code" link on the guide's Claude slide). TokenBar then reads the login Claude Code
    already saved (Mac: Keychain item `Claude Code-credentials` — answer **Always Allow** when macOS asks;
    Windows/Linux: `~/.claude/.credentials.json`) and asks `api.anthropic.com/api/oauth/usage` every 5 minutes.
@@ -189,7 +192,7 @@ On Windows the Claude hook is a PowerShell script; elsewhere it's `sh`.
 1. On the phone, open https://github.com/ChaconLucas/tokenbar/releases/latest and download
    `TokenBar-Android.apk`.
 2. Open it, allow "install unknown apps" for the browser. If Play Protect warns: **Install anyway**.
-3. Pair: on the computer open **Mais ajustes** (Mac) or **⚙** (Windows/Linux) → in the app tap
+3. Pair: on the computer open **Ajustes → APARELHOS** (Mac) or **⚙** (Windows/Linux) → in the app tap
    **ESCANEAR QR** and point at the QR code. Same Wi-Fi as the computer.
 
 Huawei with HarmonyOS NEXT, and Huawei watches, are **not supported**.
@@ -209,7 +212,7 @@ Works with or without the phone.
    ```
 3. With a phone: it gets the numbers from the Android app automatically.
    Without a phone: type on the watch the **6-digit code** from the computer's settings
-   (*RELÓGIO SEM CELULAR*). Valid once, changes every 10 minutes, same Wi-Fi.
+   (Mac: *WEAR OS SEM CELULAR* in Ajustes → APARELHOS; Windows/Linux: *RELÓGIO SEM CELULAR (WEAR OS)*). Valid once, changes every 10 minutes, same Wi-Fi.
 
 ---
 
