@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokenBar — AI usage limits on an LED display</title>
+<meta name="description" content="See how much of your Claude Code, Codex, Copilot or any AI usage limit you have used, on Mac, Windows, Linux, iPhone, Android and watches. Local API, CLI, MCP server and webhooks.">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#07070b; --panel:#0f0f16; --line:#1f1f2b; --text:#e8e8ef; --dim:#8a8a9a; --claude:#9e5cff; --codex:#ee29c2; --cyan:#5ad8ff; --green:#39ff6b; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.65 Inter, system-ui, sans-serif; }
+  a { color:var(--cyan); text-decoration:none; } a:hover { text-decoration:underline; }
+  header { position:sticky; top:0; z-index:5; background:rgba(7,7,11,.86); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .bar { max-width:1100px; margin:auto; display:flex; align-items:center; gap:18px; padding:12px 20px; }
+  .bar img { width:28px; height:28px; border-radius:7px; }
+  .bar b { font-family:'JetBrains Mono',monospace; letter-spacing:3px; }
+  .bar nav { margin-left:auto; display:flex; gap:16px; flex-wrap:wrap; font-size:14px; }
+  .bar nav a { color:var(--dim); } .bar nav a.on, .bar nav a:hover { color:var(--text); text-decoration:none; }
+  .hero { max-width:1100px; margin:auto; padding:72px 20px 40px; display:grid; grid-template-columns:1.1fr .9fr; gap:40px; align-items:center; }
+  .hero h1 { font-size:46px; line-height:1.08; margin:0 0 16px; font-weight:800; letter-spacing:-1px; }
+  .hero h1 span { background:linear-gradient(90deg,var(--claude),var(--codex)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p { color:var(--dim); font-size:18px; margin:0 0 24px; }
+  .hero img { width:100%; border-radius:18px; box-shadow:0 30px 80px rgba(158,92,255,.25); }
+  .cmd { background:#000; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font:13px 'JetBrains Mono',monospace; color:#d9d9e6; overflow-x:auto; white-space:nowrap; position:relative; }
+  .cmd + .cmd { margin-top:10px; }
+  .cmd small { display:block; color:var(--dim); font-family:Inter; font-size:11px; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+  .cards { max-width:1100px; margin:auto; padding:0 20px 40px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .card h3 { margin:0 0 6px; font-size:15px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; }
+  .card p { margin:0; color:var(--dim); font-size:14px; }
+  main { max-width:860px; margin:auto; padding:20px 20px 80px; }
+  main h1 { font-size:34px; } main h2 { margin-top:48px; padding-top:16px; border-top:1px solid var(--line); } main h3 { margin-top:30px; }
+  main code { font:13.5px 'JetBrains Mono',monospace; background:#14141d; padding:2px 6px; border-radius:6px; }
+  main pre { background:#000; border:1px solid var(--line); border-radius:12px; padding:16px; overflow-x:auto; }
+  main pre code { background:none; padding:0; font-size:13px; line-height:1.55; }
+  main table { border-collapse:collapse; width:100%; font-size:14px; display:block; overflow-x:auto; }
+  main th, main td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  main th { background:var(--panel); }
+  main blockquote { margin:0; padding:4px 16px; border-left:3px solid var(--claude); color:var(--dim); }
+  main img { max-width:100%; }
+  .loading { color:var(--dim); font-family:'JetBrains Mono',monospace; }
+  footer { border-top:1px solid var(--line); color:var(--dim); font-size:13px; text-align:center; padding:28px 20px; }
+  @media (max-width:820px) { .hero { grid-template-columns:1fr; padding-top:40px; } .hero h1 { font-size:34px; } .bar nav { gap:10px; font-size:13px; } }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <img src="icon.png" alt=""><b>TOKENBAR</b>
+  <nav>
+    <a href="#/" data-page="home">Home</a>
+    <a href="#/api" data-page="api">API</a>
+    <a href="#/providers" data-page="providers">Add an AI</a>
+    <a href="https://github.com/ChaconLucas/tokenbar/releases/latest">Download</a>
+    <a href="https://github.com/ChaconLucas/tokenbar">GitHub</a>
+  </nav>
+</div></header>
+
+<section id="home">
+  <div class="hero">
+    <div>
+      <h1>Your <span>AI usage limits</span>, on an LED display.</h1>
+      <p>Claude Code, Codex, GitHub Copilot, Windsurf or any AI — how much of the 5-hour and 7-day limits you've used and when they reset. On Mac, Windows, Linux, iPhone, Android, Apple Watch, Wear OS, VS Code, Raycast and Stream Deck.</p>
+      <div class="cmd"><small>Mac</small>curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-mac.sh | sh</div>
+      <div class="cmd"><small>CLI + MCP server</small>curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh | sh</div>
+      <div class="cmd"><small>Local API</small>curl localhost:41777/v1/usage</div>
+    </div>
+    <img src="mac-device.png" alt="TokenBar LED device on the Mac">
+  </div>
+  <div class="cards">
+    <div class="card"><h3>LOCAL API</h3><p>JSON on <code>localhost:41777</code>. Every app and script on your computer can read your usage.</p></div>
+    <div class="card"><h3>MCP SERVER</h3><p>Claude Code, Codex and Cursor can check your budget before starting a long task.</p></div>
+    <div class="card"><h3>CLI</h3><p><code>tokenbar</code>, <code>--json</code>, <code>--prompt</code> for your shell prompt, <code>get</code> for scripts.</p></div>
+    <div class="card"><h3>WEBHOOKS</h3><p>80%, 95% and reset events to Slack, Discord, Home Assistant or any URL.</p></div>
+    <div class="card"><h3>ANY AI</h3><p>Write a small JSON file and it shows up everywhere — phone, watch and widgets included.</p></div>
+  </div>
+</section>
+
+<main id="doc" hidden><p class="loading">loading…</p></main>
+
+<footer>MIT · <a href="https://github.com/ChaconLucas/tokenbar">github.com/ChaconLucas/tokenbar</a> · Not affiliated with Anthropic, OpenAI, GitHub or Codeium.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+  // As páginas são os .md do próprio repositório: o site nunca fica atrás da documentação.
+  const pages = { api: 'api.md', providers: 'providers.md' };
+  const cache = {};
+  const slug = (t) => t.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+
+  async function show() {
+    const [, page = '', anchor] = location.hash.match(/^#\/?([^#/]*)(?:#(.*))?/) || [];
+    document.querySelectorAll('nav a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === (page || 'home')));
+    const home = document.getElementById('home'), doc = document.getElementById('doc');
+    if (!pages[page]) { home.hidden = false; doc.hidden = true; return; }
+    home.hidden = true; doc.hidden = false;
+    if (!cache[page]) {
+      const md = await (await fetch(pages[page], { cache: 'no-cache' })).text();
+      const html = marked.parse(md);
+      const tmp = document.createElement('div'); tmp.innerHTML = html;
+      tmp.querySelectorAll('h1,h2,h3').forEach(h => h.id = slug(h.innerHTML));
+      // Links relativos do repositório (../README.md, ../cli/…) apontam para o GitHub.
+      tmp.querySelectorAll('a[href]').forEach(a => {
+        const h = a.getAttribute('href');
+        if (/^(https?:|#|mailto:)/.test(h)) return;
+        if (h === 'providers.md') { a.href = '#/providers'; return; }
+        if (h === 'api.md') { a.href = '#/api'; return; }
+        a.href = 'https://github.com/ChaconLucas/tokenbar/blob/main/docs/' + h;
+      });
+      cache[page] = tmp.innerHTML;
+    }
+    doc.innerHTML = cache[page];
+    window.scrollTo(0, 0);
+    if (anchor) document.getElementById(anchor)?.scrollIntoView();
+  }
+  addEventListener('hashchange', show);
+  show();
+</script>
+</body>
+</html>
