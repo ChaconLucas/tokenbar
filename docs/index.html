@@ -68,7 +68,7 @@
       <div class="cmd"><small>CLI + MCP server</small>curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh | sh</div>
       <div class="cmd"><small>Local API</small>curl localhost:41777/v1/usage</div>
     </div>
-    <img src="mac-device.png" alt="TokenBar LED device on the Mac">
+    <img src="iphone-device.png" alt="TokenBar LED device on an iPhone">
   </div>
   <div class="cards">
     <div class="card"><h3>LOCAL API</h3><p>JSON on <code>localhost:41777</code>. Every app and script on your computer can read your usage.</p></div>
@@ -104,7 +104,8 @@
       // Links relativos do repositório (../README.md, ../cli/…) apontam para o GitHub.
       tmp.querySelectorAll('a[href]').forEach(a => {
         const h = a.getAttribute('href');
-        if (/^(https?:|#|mailto:)/.test(h)) return;
+        if (h.startsWith('#')) { a.href = '#/' + page + h; return; }
+        if (/^(https?:|mailto:)/.test(h)) return;
         if (h === 'providers.md') { a.href = '#/providers'; return; }
         if (h === 'api.md') { a.href = '#/api'; return; }
         a.href = 'https://github.com/ChaconLucas/tokenbar/blob/main/docs/' + h;
