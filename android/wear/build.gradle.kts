@@ -10,8 +10,8 @@ android {
         applicationId = "app.tokenbar"   // igual ao do celular: o Wear OS só liga apps com o mesmo id
         minSdk = 30
         targetSdk = 34
-        versionCode = 25
-        versionName = "0.5.3"
+        versionCode = 26
+        versionName = "0.5.4"
     }
     // Assinatura definitiva: a chave fica fora do repositório (~/.tokenbar-keys). Sem ela, gera só o debug.
     val keyFile = file(System.getProperty("user.home") + "/.tokenbar-keys/release.jks")

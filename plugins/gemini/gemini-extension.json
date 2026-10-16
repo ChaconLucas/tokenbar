@@ -1,6 +1,6 @@
 {
   "name": "tokenbar",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "AI usage limits (Claude Code, Codex, Copilot, Windsurf, any AI) inside Gemini CLI: TokenBar MCP tools and a /tokenbar command.",
   "mcpServers": {
     "tokenbar": {

@@ -3,7 +3,7 @@
   "manifest_version": "0.3",
   "name": "tokenbar",
   "display_name": "TokenBar",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Lets Claude check your AI usage limits (Claude Code, Codex, Copilot, Windsurf) before starting long tasks.",
   "long_description": "TokenBar shows how much of your AI subscription limits you have used (Claude Code, Codex, GitHub Copilot, Windsurf and any AI you add). This extension gives Claude three read-only tools:\n\n- **get_usage**: current usage of every limit window (usually 5h and 7d), with the percentage used now and when each window resets.\n- **time_until_reset**: seconds (and human text) until a provider's usage window resets.\n- **check_budget**: whether a provider is still below a usage threshold (default 80%), so Claude can decide to start a long or expensive task now or wait for the reset.\n\nIt reads the data from the TokenBar app (local API on 127.0.0.1) when it is running, and otherwise falls back to reading the local files the AI tools keep on your computer. Nothing is sent over the network.",
   "author": {
