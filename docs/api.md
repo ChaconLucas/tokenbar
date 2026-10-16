@@ -182,6 +182,12 @@ over **stdio** (protocol `2025-06-18`), so AI agents can check their own limits.
 | `time_until_reset` | `provider`, `window?` (`5h`\|`7d`, default the first) | `{provider, window, seconds, resetsAt, human, usedNow}` |
 | `check_budget` | `provider`, `max_percent?` (default 80), `window?` | `{ok, usedNow, resetsInSeconds, resetsAt, advice, window, windows[]…}`. Without `window` it checks the most used one |
 
+### Claude Desktop (one click)
+
+Download `TokenBar.mcpb` from [Releases](https://github.com/ChaconLucas/tokenbar/releases) and double-click it
+(or drag it into Claude Desktop → Settings → Extensions). It bundles the server, so the CLI install is not needed;
+Claude Desktop runs it with its own Node.
+
 ### Claude Code
 
 ```sh

@@ -27,3 +27,5 @@ streamdeck/dist/
 streamdeck/*.sdPlugin/bin/
 streamdeck/*.sdPlugin/logs/
 *.streamDeckPlugin
+mcpb/server/
+*.mcpb

@@ -170,6 +170,12 @@ via **stdio** (protocolo `2025-06-18`), para que agentes de IA consultem os pró
 | `time_until_reset` | `provider`, `window?` (`5h`\|`7d`, padrão a primeira) | `{provider, window, seconds, resetsAt, human, usedNow}` |
 | `check_budget` | `provider`, `max_percent?` (padrão 80), `window?` | `{ok, usedNow, resetsInSeconds, resetsAt, advice, window, windows[]…}`. Sem `window`, verifica a mais usada |
 
+### Claude Desktop (um clique)
+
+Baixe o `TokenBar.mcpb` em [Releases](https://github.com/ChaconLucas/tokenbar/releases) e dê dois cliques
+(ou arraste para Claude Desktop → Settings → Extensions). O servidor vem dentro do arquivo, então não precisa instalar a CLI;
+o Claude Desktop o roda com o próprio Node.
+
 ### Claude Code
 
 ```sh

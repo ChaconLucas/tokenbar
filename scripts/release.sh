@@ -30,7 +30,8 @@ for f in android/app/build.gradle.kts android/wear/build.gradle.kts; do
   code=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' "$f")
   sed -i '' -e "s/versionCode = [0-9]*/versionCode = $((code + 1))/" -e "s/versionName = \"[^\"]*\"/versionName = \"$V\"/" "$f"
 done
-sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" desktop/src-tauri/tauri.conf.json desktop/package.json vscode/package.json
+sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" desktop/src-tauri/tauri.conf.json desktop/package.json vscode/package.json cli/package.json
+sed -i '' "s/^export const VERSION = \"[^\"]*\";/export const VERSION = \"$V\";/" cli/lib/data.mjs
 sed -i '' "1,/^version = /s/^version = \"[^\"]*\"/version = \"$V\"/" desktop/src-tauri/Cargo.toml
 sed -i '' "1,/\"Version\"/s/\"Version\": \"[^\"]*\"/\"Version\": \"$V.0\"/" streamdeck/com.chaconlucas.tokenbar.sdPlugin/manifest.json
 
@@ -59,10 +60,26 @@ sh scripts/windows-updater-manifest.sh "$V" "$OUT/TokenBar-Windows-setup.exe.sig
 say "Extensão do VS Code"
 (cd vscode && npm install --silent >/dev/null 2>&1 && npx tsc -p . && npx --yes @vscode/vsce package --no-dependencies -o "$OUT/TokenBar-VSCode.vsix" >/dev/null)
 
+say "Claude Desktop (.mcpb)"
+sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" mcpb/manifest.json
+sh mcpb/build.sh "$OUT" >/dev/null
+
 say "Stream Deck"
 (cd streamdeck && npm install --silent >/dev/null 2>&1 && npm run build >/dev/null \
   && npx --yes @elgato/cli pack com.chaconlucas.tokenbar.sdPlugin -o "$OUT" --force >/dev/null)
 mv "$OUT/com.chaconlucas.tokenbar.streamDeckPlugin" "$OUT/TokenBar-StreamDeck.streamDeckPlugin"
+
+say "MCP Registry (server.json)"
+python3 - "$V" "$(shasum -a 256 "$OUT/TokenBar.mcpb" | cut -d' ' -f1)" <<'PY2'
+import json, sys
+v, sha = sys.argv[1], sys.argv[2]
+d = json.load(open("server.json"))
+d["version"] = v
+p = d["packages"][0]
+p["identifier"] = f"https://github.com/ChaconLucas/tokenbar/releases/download/v{v}/TokenBar.mcpb"
+p["fileSha256"] = sha
+open("server.json", "w").write(json.dumps(d, indent=2, ensure_ascii=False) + "\n")
+PY2
 
 say "Commit, tag e Release no GitHub"
 git add -A
@@ -76,7 +93,7 @@ NOTES="$NOTES
 gh release create "v$V" --title "TokenBar $V" --notes "$NOTES" \
   "$OUT/TokenBar-macOS.zip" "$OUT/TokenBar-Android.apk" "$OUT/TokenBar-WearOS.apk" \
   "$OUT/TokenBar-Windows-setup.exe" "$OUT/TokenBar-Windows-setup.exe.sig" "$OUT/latest.json" \
-  "$OUT/TokenBar-VSCode.vsix" "$OUT/TokenBar-StreamDeck.streamDeckPlugin"
+  "$OUT/TokenBar-VSCode.vsix" "$OUT/TokenBar-StreamDeck.streamDeckPlugin" "$OUT/TokenBar.mcpb"
 
 say "Homebrew"
 TAP=$(brew --repository chaconlucas/tokenbar 2>/dev/null || true)
