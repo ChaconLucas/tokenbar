@@ -7,13 +7,13 @@
     "url": "https://github.com/ChaconLucas/tokenbar",
     "source": "github"
   },
-  "version": "0.5.4",
+  "version": "0.5.5",
   "websiteUrl": "https://chaconlucas.github.io/tokenbar/",
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/ChaconLucas/tokenbar/releases/download/v0.5.4/TokenBar.mcpb",
-      "fileSha256": "41badd8b42c5825c1e4fce9fd08bc3de78514da733f1bfbc301c065cf9425de5",
+      "identifier": "https://github.com/ChaconLucas/tokenbar/releases/download/v0.5.5/TokenBar.mcpb",
+      "fileSha256": "d0323e6b6b6e015fbbce882e42cb2f5e2ec50a5d11bdbe552abe387448572ce3",
       "transport": {
         "type": "stdio"
       }
