@@ -131,7 +131,9 @@
     home.hidden = true; doc.hidden = false;
     const file = pages[page][lang];
     if (!cache[file]) {
-      const md = await (await fetch(file, { cache: 'no-cache' })).text();
+      // A linha "English version / Versão em português" é para o GitHub; aqui o seletor PT/EN faz isso.
+      const md = (await (await fetch(file, { cache: 'no-cache' })).text())
+        .replace(/^(English version|Versão em português):.*\n+/m, '');
       const html = marked.parse(md);
       const tmp = document.createElement('div'); tmp.innerHTML = html;
       tmp.querySelectorAll('h1,h2,h3').forEach(h => h.id = slug(h.innerHTML));
