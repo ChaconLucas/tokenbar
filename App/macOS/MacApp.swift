@@ -55,6 +55,16 @@ final class MacModel: ObservableObject {
     }
     var notchIsland: Bool { showIn != "bar" }
 
+    /// API local (http://localhost:41777/v1/usage). Ligada por padrão.
+    @Published var apiEnabled = UserDefaults.standard.object(forKey: "localAPI") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(apiEnabled, forKey: "localAPI")
+            LocalAPI.shared.setEnabled(apiEnabled)
+        }
+    }
+    @Published var apiPort: UInt16?
+    @Published var apiFailed = false
+
     private var timer: Timer?
     private var lastPushed: UsageSnapshot?
     let lan = LANServer()
@@ -67,7 +77,16 @@ final class MacModel: ObservableObject {
     }
 
     init() {
+        LocalAPI.shared.onState = { [weak self] port, failed in
+            self?.apiPort = port
+            self?.apiFailed = failed
+        }
         refresh()
+        LocalAPI.shared.setEnabled(apiEnabled)
+        #if DEBUG
+        // -TBWebhookTest YES: manda um evento "test" ao abrir (teste sem clicar).
+        if UserDefaults.standard.bool(forKey: "TBWebhookTest") { Webhooks.shared.sendTest(snapshot: snapshot) }
+        #endif
         Updater.shared.start()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
             Task { @MainActor in self.refresh() }
@@ -107,6 +126,8 @@ final class MacModel: ObservableObject {
         }
         claudeConnected = ClaudeHook.isInstalled
         lan.publish(fresh, pairing: pairing)
+        LocalAPI.shared.update(fresh)
+        Webhooks.shared.check(fresh)
         Task { await push(force: false) }
     }
 
@@ -232,6 +253,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if target == "main" { openMain?() } else { openMini?() }
     }
     var openMini: (() -> Void)?
+
+    private var termSignal: DispatchSourceSignal?
+
+    /// `kill` (SIGTERM) também sai pelo caminho normal, para o api.json não ficar para trás.
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        signal(SIGTERM, SIG_IGN)
+        let s = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        s.setEventHandler { NSApp.terminate(nil) }
+        s.resume()
+        termSignal = s
+    }
+
+    /// Sai do app: a API local para e o ~/.tokenbar/api.json some.
+    func applicationWillTerminate(_ notification: Notification) {
+        LocalAPI.shared.stop()
+    }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         if !hasVisibleWindows { openMain?() }

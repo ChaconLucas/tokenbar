@@ -34,6 +34,19 @@ const EN = {
   "O Windsurf aparece sozinho quando está instalado.": "Windsurf shows up on its own when it's installed.",
   "Qualquer IA aparece aqui ao gravar um arquivo em <code>~/.tokenbar/providers/</code> (veja docs/providers.md no GitHub).":
     "Any AI shows up here when it writes a file to <code>~/.tokenbar/providers/</code> (see docs/providers.md on GitHub).",
+  "API LOCAL": "LOCAL API",
+  "API local": "Local API",
+  "Outros apps e scripts neste computador leem {0}. Só este computador acessa.":
+    "Other apps and scripts on this computer read {0}. Only this computer can access it.",
+  "Porta {0}.": "Port {0}.",
+  "Desligada.": "Off.",
+  "Avisa um endereço (Slack, Discord ou qualquer URL) quando uma IA passa de 80% / 95% e quando reseta.":
+    "Notifies an address (Slack, Discord or any URL) when an AI passes 80% / 95% and when it resets.",
+  "TESTAR": "TEST",
+  "Enviando…": "Sending…",
+  "✓ Enviado às {0}": "✓ Sent at {0}",
+  "Falhou às {0}: {1}": "Failed at {0}: {1}",
+  "Salvo.": "Saved.",
   "VERSÃO": "VERSION",
   "BUSCAR ATUALIZAÇÃO": "CHECK FOR UPDATES",
   "Conectado pela statusline. Os números chegam enquanto alguma sessão do Claude Code estiver aberta.":

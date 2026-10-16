@@ -8,6 +8,11 @@ struct SettingsView: View {
     @AppStorage("settingsTab") private var tab = "general"
     @State private var lastClient: Date?
     @State private var confirmReset = false
+    @ObservedObject private var webhooks = Webhooks.shared
+    @AppStorage(Webhooks.urlKey) private var webhookURL = ""
+    @AppStorage("webhook80") private var hook80 = true
+    @AppStorage("webhook95") private var hook95 = true
+    @AppStorage("webhookReset") private var hookReset = true
 
     var body: some View {
         VStack(spacing: 14) {
@@ -183,6 +188,67 @@ struct SettingsView: View {
     }
 
     private var server: some View {
+        VStack(spacing: 14) {
+            cloud
+            localAPI
+            webhook
+        }
+    }
+
+    private var localAPI: some View {
+        LEDGroup {
+            LEDRow(label: Lang.t("API LOCAL"), info: Lang.t("Outros apps e scripts neste Mac leem os números em http://localhost:41777/v1/usage. Só este computador acessa.")) {
+                if model.apiEnabled {
+                    if let p = model.apiPort {
+                        LEDStatus(kind: .ok, text: "localhost:\(p)")
+                    } else if model.apiFailed {
+                        LEDStatus(kind: .error, text: Lang.t("PORTA OCUPADA"))
+                    } else {
+                        LEDStatus(kind: .wait, text: Lang.t("LIGANDO"))
+                    }
+                }
+                LEDSwitch(isOn: $model.apiEnabled)
+            }
+        }
+    }
+
+    private var webhook: some View {
+        LEDGroup {
+            LEDRow(label: "WEBHOOK", info: Lang.t("Avisa um endereço quando uma IA passa de 80% ou 95% e quando o limite reseta. Slack e Discord recebem uma frase; outros endereços, o JSON completo.")) {
+                DotKey(text: Lang.t("TESTAR"), on: true, color: Arcade.cyan, dot: 1.4) {
+                    webhooks.sendTest(snapshot: model.snapshot)
+                }
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("", text: $webhookURL, prompt: Text("https://hooks.slack.com/services/…").foregroundStyle(.white.opacity(0.3)))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, design: .monospaced))
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(.black).overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.12))))
+                if let e = webhooks.lastError {
+                    LEDStatus(kind: .error, text: Lang.f("ÚLTIMO ENVIO: %@", e.uppercased()))
+                } else if let t = webhooks.lastOK {
+                    LEDStatus(kind: .ok, text: Lang.f("ÚLTIMO ENVIO: %@", ago(t)))
+                } else {
+                    LEDStatus(kind: .off, text: Lang.t("NENHUM ENVIO AINDA"))
+                }
+            }
+            .padding(.vertical, 8)
+            LEDRow(label: Lang.t("AVISAR EM")) {
+                HStack(spacing: 8) {
+                    hookLabel("80%"); LEDSwitch(isOn: $hook80, color: Arcade.amber)
+                    hookLabel("95%"); LEDSwitch(isOn: $hook95, color: Arcade.red)
+                    hookLabel("RESET"); LEDSwitch(isOn: $hookReset)
+                }
+            }
+        }
+    }
+
+    private func hookLabel(_ s: String) -> some View {
+        Text(s).font(Arcade.label(10)).tracking(1).foregroundStyle(.white.opacity(0.6)).padding(.leading, 4)
+    }
+
+    private var cloud: some View {
         LEDGroup {
             LEDRow(label: Lang.t("ENDEREÇO"), info: Lang.t("Opcional, para ver os números fora de casa. Suba o seu, grátis, na Cloudflare (veja o README). Vazio = só Wi-Fi. Mudou? Escaneie o QR de novo no celular.")) {
                 EmptyView()

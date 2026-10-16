@@ -264,6 +264,19 @@ Any AI shows up if something writes a JSON file to `~/.tokenbar/providers/<id>.j
 If the person uses an AI whose limits you can read (an API, a CLI, a log), offer to write a small
 script or scheduled job that keeps that file updated.
 
+## CLI, MCP server and API (optional, for developers)
+
+Offer this only to people who use the terminal or AI agents. Needs Node.js 18+ (`node --version`).
+
+- Mac/Linux: `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh | sh`
+- Windows (PowerShell): `irm https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.ps1 | iex`
+
+It installs `tokenbar` (usage in the terminal; `tokenbar --prompt` for the shell prompt) and the
+`tokenbar-mcp` server, and asks before registering it in Claude Code
+(`claude mcp add tokenbar --scope user -- node ~/.tokenbar/cli/mcp.mjs`). If `~/.local/bin` isn't in
+the PATH, add the `export` line it prints. Codex/Cursor setup, the local API
+(`http://localhost:41777/v1/usage`) and webhooks: [docs/api.md](docs/api.md).
+
 ## Optional server (see numbers away from home)
 
 Without it, phones update only on the same Wi-Fi as the computer. With a free Cloudflare

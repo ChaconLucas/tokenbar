@@ -203,6 +203,21 @@ To keep the app in Applications, use **Product → Archive → Distribute App �
 - **Paid account (US$99/year):** lets you distribute through TestFlight or the App Store.
 - **Android:** the `.apk` files are on [Releases](https://github.com/ChaconLucas/tokenbar/releases) (see **Android and Wear OS → Download**).
 
+## API & developers
+
+TokenBar's numbers are yours to use in scripts and agents:
+
+- **Local API** while the app runs: `curl http://localhost:41777/v1/usage` (localhost only; real port in `~/.tokenbar/api.json`).
+- **CLI** `tokenbar` (Node 18+): bars in the terminal, `tokenbar --prompt` for your shell prompt or tmux, `tokenbar get claude 5h` for scripts. Works without the app too.
+- **MCP server** `tokenbar-mcp`: Claude Code, Codex or Cursor can call `check_budget` before a long task.
+- **Webhooks** at 80% / 95% / reset (Slack, Discord, Home Assistant…), and `~/.tokenbar/providers/*.json` to add any AI.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh | sh
+```
+
+Everything (schemas and examples in curl, JavaScript, Python, starship, tmux, zsh): [docs/api.md](docs/api.md).
+
 ## Optional server (see your numbers away from home)
 
 Without a server, the iPhone only updates when it's on the same Wi-Fi as the Mac; elsewhere it shows the last number. To update from anywhere, deploy your own free server on Cloudflare (Worker + D1):

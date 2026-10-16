@@ -55,6 +55,22 @@
       <p id="server-msg" class="dim"></p>
     </div>
     <div class="panel">
+      <h2 data-t>API LOCAL</h2>
+      <label class="check"><input type="checkbox" id="api-on"> <span data-t>API local</span></label>
+      <p id="api-line" class="dim"></p>
+      <p id="api-msg" class="err" hidden></p>
+    </div>
+    <div class="panel">
+      <h2>WEBHOOK</h2>
+      <p class="dim" data-t>Avisa um endereço (Slack, Discord ou qualquer URL) quando uma IA passa de 80% / 95% e quando reseta.</p>
+      <input id="webhook-url" placeholder="https://hooks.slack.com/services/…">
+      <button id="test-webhook" data-t>TESTAR</button>
+      <label class="check"><input type="checkbox" id="webhook-t80"> <span>80%</span></label>
+      <label class="check"><input type="checkbox" id="webhook-t95"> <span>95%</span></label>
+      <label class="check"><input type="checkbox" id="webhook-reset"> <span>RESET</span></label>
+      <p id="webhook-msg" class="dim"></p>
+    </div>
+    <div class="panel">
       <h2 data-t>OUTRAS IAS</h2>
       <label class="check"><input type="checkbox" id="copilot-on"> <span data-t>Ler a cota do GitHub Copilot</span></label>
       <p class="dim" data-t>Lê a cota mensal de premium requests usando o login do GitHub CLI (gh) ou do Copilot. O token só vai para o GitHub.</p>

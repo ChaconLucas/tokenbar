@@ -1,11 +1,13 @@
 // Windows: sem janela de console atrás do app.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod api;
 mod collector;
 mod hook;
 mod i18n;
 mod net;
 mod update;
+mod webhook;
 
 use collector::UsageSnapshot;
 use net::{Lan, Pairing};
@@ -15,7 +17,7 @@ use std::time::{Duration, Instant};
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder, Wry};
+use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WebviewUrl, WebviewWindowBuilder, Wry};
 
 struct App {
     snapshot: Mutex<UsageSnapshot>,
@@ -53,6 +55,11 @@ struct Status {
     /// Escolha guardada ("auto" | "pt" | "en") e o idioma em uso ("pt" | "en").
     lang: String,
     lang_resolved: String,
+    /// API local (127.0.0.1): ligada e a porta em uso.
+    api_on: bool,
+    api_port: Option<u16>,
+    webhook: webhook::Config,
+    webhook_last: Option<webhook::Last>,
 }
 
 fn qr_svg(text: &str) -> String {
@@ -89,6 +96,10 @@ fn status(app: State<Arc<App>>, handle: AppHandle) -> Status {
         update_error: app.update_error.lock().unwrap().as_deref().map(i18n::tr),
         lang: i18n::setting(),
         lang_resolved: i18n::lang().into(),
+        api_on: api::enabled(),
+        api_port: api::port(),
+        webhook: webhook::load(),
+        webhook_last: webhook::last().map(|l| webhook::Last { error: l.error.as_deref().map(i18n::tr), ..l }),
     }
 }
 
@@ -145,6 +156,25 @@ fn set_server(app: State<Arc<App>>, url: String) -> Result<(), String> {
     p.save();
     app.lan.lock().unwrap().link = p.link();
     Ok(())
+}
+
+/// Liga/desliga a API local; devolve a porta em uso.
+#[tauri::command]
+fn set_api(on: bool) -> Result<Option<u16>, String> {
+    api::set_enabled(on)
+}
+
+#[tauri::command]
+fn set_webhook(url: String, t80: bool, t95: bool, reset: bool) -> Result<(), String> {
+    webhook::save(&webhook::Config { url, t80, t95, reset })
+}
+
+/// TESTAR: manda um aviso agora (fora da thread da janela; até 10 s).
+#[tauri::command]
+async fn test_webhook(app: State<'_, Arc<App>>) -> Result<(), String> {
+    let snap = app.snapshot.lock().unwrap().clone();
+    tauri::async_runtime::spawn_blocking(move || webhook::test(&snap)).await.map_err(|e| e.to_string())?
+        .map_err(|e| i18n::tr(&e))
 }
 
 /// Troca o idioma: guarda, refaz os textos da bandeja e avisa todas as janelas.
@@ -247,7 +277,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_copilot, set_server, set_lang, open_mini, open_main, qr,
+        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_copilot, set_server, set_lang, open_mini, open_main, qr, set_api, set_webhook, test_webhook,
             update::check_update, update::install_update])
         .setup(move |app| {
             let h = app.handle().clone();
@@ -278,6 +308,10 @@ fn main() {
             *state.menu.lock().unwrap() = Some(menu.clone());
             update::start(h.clone(), menu);
 
+            // API local para scripts deste computador (lê a mesma última leitura das janelas).
+            let st = state.clone();
+            api::init(h.package_info().version.to_string(), move || st.snapshot.lock().unwrap().clone());
+
             // Coleta a cada 30 s: atualiza janelas, bandeja, Wi-Fi e servidor.
             let st = state.clone();
             std::thread::spawn(move || {
@@ -301,6 +335,7 @@ fn main() {
                         last_pushed = Some(snap.clone());
                     }
                     *st.snapshot.lock().unwrap() = snap.clone();
+                    webhook::check(&snap);
                     let _ = h.emit("snapshot", &snap);
                     // Cópia para a extensão do VS Code e scripts (datas em segundos Unix).
                     if let Ok(json) = serde_json::to_string(&snap) {
@@ -312,6 +347,7 @@ fn main() {
             });
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("erro ao abrir o TokenBar");
+        .build(tauri::generate_context!())
+        .expect("erro ao abrir o TokenBar")
+        .run(|_, e| if let RunEvent::Exit = e { api::shutdown() });
 }

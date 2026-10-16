@@ -365,6 +365,20 @@ enum Lang {
         "ILHA NO NOTCH": "NOTCH ISLAND",
         "Uma pílula preta em volta da câmera com a % de cada IA; passe o mouse para abrir.": "A black pill around the camera with each AI's %; hover to open it.",
         "Abrir o aparelho": "Open the device",
+        // API local e webhook (Mac)
+        "API LOCAL": "LOCAL API",
+        "Outros apps e scripts neste Mac leem os números em http://localhost:41777/v1/usage. Só este computador acessa.": "Other apps and scripts on this Mac read the numbers at http://localhost:41777/v1/usage. Only this computer has access.",
+        "PORTA OCUPADA": "PORT BUSY",
+        "LIGANDO": "STARTING",
+        "Avisa um endereço quando uma IA passa de 80% ou 95% e quando o limite reseta. Slack e Discord recebem uma frase; outros endereços, o JSON completo.": "Pings a URL when an AI passes 80% or 95% and when the limit resets. Slack and Discord get a sentence; other URLs get the full JSON.",
+        "TESTAR": "TEST",
+        "ÚLTIMO ENVIO: %@": "LAST SENT: %@",
+        "NENHUM ENVIO AINDA": "NOTHING SENT YET",
+        "AVISAR EM": "NOTIFY AT",
+        "%@ %@ passou de %d%% (%d%%). Reseta em %@.": "%@ %@ passed %d%% (%d%%). Resets in %@.",
+        "%@ %@ passou de %d%% (%d%%).": "%@ %@ passed %d%% (%d%%).",
+        "%@ %@ resetou: voltou a 0%%.": "%@ %@ reset: back to 0%%.",
+        "Teste do TokenBar: o webhook está funcionando.": "TokenBar test: the webhook is working.",
     ]
 }
 

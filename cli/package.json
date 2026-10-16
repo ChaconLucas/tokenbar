@@ -1,0 +1,28 @@
+{
+  "name": "tokenbar",
+  "version": "0.5.0",
+  "description": "AI usage limits (Claude Code, Codex, Copilot, Windsurf, any AI) in your terminal, shell prompt and AI agents (MCP server). Companion to the TokenBar app.",
+  "type": "module",
+  "bin": {
+    "tokenbar": "tokenbar.mjs",
+    "tokenbar-mcp": "mcp.mjs"
+  },
+  "files": [
+    "tokenbar.mjs",
+    "mcp.mjs",
+    "lib/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["claude", "claude-code", "codex", "copilot", "windsurf", "usage", "rate-limit", "mcp", "cli", "tokenbar"],
+  "license": "MIT",
+  "homepage": "https://github.com/ChaconLucas/tokenbar/blob/main/docs/api.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChaconLucas/tokenbar.git",
+    "directory": "cli"
+  },
+  "bugs": "https://github.com/ChaconLucas/tokenbar/issues"
+}

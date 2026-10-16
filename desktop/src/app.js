@@ -179,6 +179,12 @@ async function openSettings() {
   $("code").textContent = s.code;
   $("server").value = s.server || "";
   $("server-msg").textContent = s.pushError ? f("Erro ao enviar: {0}", s.pushError) : "";
+  apiView(s.apiOn, s.apiPort);
+  $("webhook-url").value = s.webhook.url || "";
+  $("webhook-t80").checked = s.webhook.t80;
+  $("webhook-t95").checked = s.webhook.t95;
+  $("webhook-reset").checked = s.webhook.reset;
+  webhookLast(s.webhookLast);
   $("copy-link").onclick = () => navigator.clipboard.writeText(s.link);
   $("version").textContent = s.version;
   if (s.update) setUpdate(s.update);
@@ -215,7 +221,44 @@ $("save-server").onclick = async () => {
   catch (e) { $("server-msg").textContent = String(e); }
 };
 
-// ---------- atualização (o Rust procura sozinho; aqui só mostra e instala) ----------
+/** API local (só 127.0.0.1): a linha mostra a porta de verdade (4777 ou a próxima livre). */
+function apiView(on, port) {
+  $("api-on").checked = on;
+  $("api-line").textContent = on && port
+    ? f("Outros apps e scripts neste computador leem {0}. Só este computador acessa.", `http://localhost:${port}/v1/usage`) + " " + f("Porta {0}.", port)
+    : t("Desligada.");
+}
+$("api-on").onchange = async (e) => {
+  let err = null, port = null;
+  try { port = await invoke("set_api", { on: e.target.checked }); } catch (x) { err = String(x); }
+  apiView(e.target.checked && !err, port);
+  loginMsg($("api-msg"), err);
+};
+/** Webhook: grava a cada mudança; TESTAR grava e manda um aviso na hora. */
+const hhmm = (s) => new Date(s * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+function webhookLast(l) {
+  const el = $("webhook-msg");
+  el.className = l && !l.ok ? "err" : "dim";
+  el.textContent = !l ? "" : l.ok ? f("✓ Enviado às {0}", hhmm(l.at)) : f("Falhou às {0}: {1}", hhmm(l.at), l.error || "");
+}
+async function saveWebhook() {
+  await invoke("set_webhook", { url: $("webhook-url").value, t80: $("webhook-t80").checked, t95: $("webhook-t95").checked, reset: $("webhook-reset").checked });
+}
+async function saveWebhookShow() {
+  try { await saveWebhook(); $("webhook-msg").className = "dim"; $("webhook-msg").textContent = t("Salvo."); }
+  catch (e) { $("webhook-msg").className = "err"; $("webhook-msg").textContent = String(e); }
+}
+["webhook-url", "webhook-t80", "webhook-t95", "webhook-reset"].forEach((id) => { $(id).onchange = saveWebhookShow; });
+$("test-webhook").onclick = async () => {
+  const el = $("webhook-msg"), btn = $("test-webhook");
+  btn.disabled = true; el.className = "dim"; el.textContent = t("Enviando…");
+  let error = null;
+  try { await saveWebhook(); await invoke("test_webhook"); } catch (x) { error = String(x); }
+  webhookLast({ ok: !error, error, at: Date.now() / 1000 });
+  btn.disabled = false;
+};
+
+// ---------- atualização// ---------- atualização (o Rust procura sozinho; aqui só mostra e instala) ----------
 function setUpdate(v) {
   update = v;
   $("install-update").textContent = f("ATUALIZAR PARA {0}", v); $("install-update").hidden = false;

@@ -54,6 +54,8 @@ const EN: &[(&str, &str)] = &[
     ("Resposta inválida da Anthropic.", "Invalid response from Anthropic."),
     ("Sem conexão com a Anthropic.", "Can't reach Anthropic."),
     ("Resposta sem limites do Claude.", "The response had no Claude limits."),
+    ("Informe o endereço do webhook.", "Enter the webhook address."),
+    ("Nenhuma porta livre para a API local.", "No free port for the local API."),
 ];
 
 /// Texto fixo do Rust no idioma atual.
