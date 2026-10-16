@@ -1,6 +1,6 @@
 {
   "name": "tokenbar",
-  "version": "0.5.0",
+  "version": "0.5.3",
   "description": "AI usage limits (Claude Code, Codex, Copilot, Windsurf, any AI) in your terminal, shell prompt and AI agents (MCP server). Companion to the TokenBar app.",
   "type": "module",
   "bin": {

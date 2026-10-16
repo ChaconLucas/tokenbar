@@ -2,7 +2,7 @@
 	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
 	"UUID": "com.chaconlucas.tokenbar",
 	"Name": "TokenBar",
-	"Version": "0.5.2.0",
+	"Version": "0.5.3.0",
 	"Author": "Lucas Chacon",
 	"Description": "AI usage limits on your Stream Deck: Claude Code, Codex, Copilot, Windsurf and any AI, in the TokenBar LED look. Reads the TokenBar app on this computer; nothing leaves it.",
 	"URL": "https://github.com/ChaconLucas/tokenbar",
