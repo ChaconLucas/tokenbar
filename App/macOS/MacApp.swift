@@ -32,6 +32,19 @@ final class MacModel: ObservableObject {
         }
     }
     @Published var copilotError: String?
+    /// Cursor pelo login do editor. Desligado até a pessoa ligar.
+    @Published var cursorOn = UserDefaults.standard.bool(forKey: "cursorOn") {
+        didSet {
+            UserDefaults.standard.set(cursorOn, forKey: "cursorOn")
+            forget(.cursor)
+            refresh()
+        }
+    }
+    /// IAs de chave de API: ligadas quando há chave no Keychain.
+    @Published var connectorKeyed = Set(Connector.allCases.filter { $0.needsKey && ConnectorKeys.get($0.id) != nil }.map(\.id))
+    @Published var connectorErrors: [String: String] = [:]
+    private var connectorUsage: [String: ProviderUsage] = [:]
+    private var connectorFetched: [String: Date] = [:]
     private var copilot: ProviderUsage?
     private var lastCopilotFetch: Date?
     private var accountClaude: ProviderUsage?
@@ -111,6 +124,15 @@ final class MacModel: ObservableObject {
             lastCopilotFetch = .now
             Task { await fetchCopilot() }
         }
+        // Cursor, GLM, MiniMax, Kimi, OpenRouter, Droid: uma chamada a cada 5 min por IA; entre elas, o último número bom.
+        for c in Connector.allCases where isOn(c) {
+            fresh.providers.removeAll { $0.id == c.id }   // um arquivo em providers/ com o mesmo id repetiria
+            if let u = connectorUsage[c.id] { fresh.providers.append(u) }
+            if connectorFetched[c.id].map({ Date.now.timeIntervalSince($0) > 300 }) ?? true {
+                connectorFetched[c.id] = .now
+                Task { await fetchConnector(c) }
+            }
+        }
         // Pergunta à Anthropic no máximo a cada 5 minutos.
         if claudeLogin, lastAccountFetch.map({ Date.now.timeIntervalSince($0) > 300 }) ?? true {
             lastAccountFetch = .now
@@ -186,6 +208,39 @@ final class MacModel: ObservableObject {
             refresh()
         } catch {
             if copilotOn { copilotError = error.localizedDescription }
+        }
+    }
+
+    func isOn(_ c: Connector) -> Bool { c.needsKey ? connectorKeyed.contains(c.id) : cursorOn }
+
+    /// Guarda (ou apaga, com nil) a chave e já tenta uma leitura. Droid com o campo vazio usa ~/.factory/.env.
+    func setKey(_ c: Connector, _ key: String?) {
+        var k = key?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if k?.isEmpty == true { k = c == .factory ? Connector.factoryEnvKey() : nil }
+        if key != nil, k == nil { connectorErrors[c.id] = Connector.Failure.noKey.localizedDescription; return }
+        ConnectorKeys.set(c.id, k)
+        if k == nil { connectorKeyed.remove(c.id) } else { connectorKeyed.insert(c.id) }
+        forget(c)
+        refresh()
+    }
+
+    private func forget(_ c: Connector) {
+        connectorUsage[c.id] = nil
+        connectorFetched[c.id] = nil
+        connectorErrors[c.id] = nil
+    }
+
+    /// Falhou: fica o último número bom e o erro aparece nos Ajustes.
+    private func fetchConnector(_ c: Connector) async {
+        let key = c.needsKey ? ConnectorKeys.get(c.id) : nil
+        do {
+            let got = try await c.fetch(key: key)
+            guard isOn(c) else { return }
+            connectorUsage[c.id] = got
+            connectorErrors[c.id] = nil
+            refresh()
+        } catch {
+            if isOn(c) { connectorErrors[c.id] = error.localizedDescription }
         }
     }
 

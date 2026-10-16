@@ -3,6 +3,7 @@
 
 mod api;
 mod collector;
+mod connectors;
 mod hook;
 mod i18n;
 mod net;
@@ -47,6 +48,8 @@ struct Status {
     /// GitHub Copilot pela API do GitHub (opcional, desligado por padrão).
     copilot_on: bool,
     copilot_error: Option<String>,
+    /// Cursor e as IAs de chave de API.
+    connectors: Vec<connectors::Status>,
     push_error: Option<String>,
     last_client_ago: Option<u64>,
     version: String,
@@ -89,6 +92,7 @@ fn status(app: State<Arc<App>>, handle: AppHandle) -> Status {
         claude_login_error: if claude_login { collector::claude_login_error().map(|e| i18n::tr(&e)) } else { None },
         copilot_on: collector::copilot_on(),
         copilot_error: if collector::copilot_on() { collector::copilot_error() } else { None },
+        connectors: connectors::statuses(),
         push_error: app.push_error.lock().unwrap().clone(),
         last_client_ago,
         version: handle.package_info().version.to_string(),
@@ -140,6 +144,16 @@ fn set_claude_login(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result
 #[tauri::command]
 fn set_copilot(app: State<Arc<App>>, handle: AppHandle, on: bool) -> Result<(), String> {
     let r = collector::set_copilot(on);
+    let snap = collector::collect();
+    *app.snapshot.lock().unwrap() = snap.clone();
+    let _ = handle.emit("snapshot", &snap);
+    r
+}
+
+/// Cursor (liga/desliga) ou uma chave de API (vazia apaga). Ao ligar, já tenta uma leitura.
+#[tauri::command]
+fn set_connector(app: State<Arc<App>>, handle: AppHandle, id: String, on: bool, key: Option<String>) -> Result<(), String> {
+    let r = connectors::set(&id, on, key);
     let snap = collector::collect();
     *app.snapshot.lock().unwrap() = snap.clone();
     let _ = handle.emit("snapshot", &snap);
@@ -277,7 +291,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(state.clone())
-        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_copilot, set_server, set_lang, open_mini, open_main, qr, set_api, set_webhook, test_webhook,
+        .invoke_handler(tauri::generate_handler![status, connect_claude, disconnect_claude, reset_pairing, set_claude_login, set_copilot, set_connector, set_server, set_lang, open_mini, open_main, qr, set_api, set_webhook, test_webhook,
             update::check_update, update::install_update])
         .setup(move |app| {
             let h = app.handle().clone();

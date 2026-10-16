@@ -36,7 +36,7 @@ xcode-select -p 2>/dev/null                                     # Xcode installe
 3. **Watch — exact model:** e.g. "Apple Watch Series 9", "Galaxy Watch 6", "Pixel Watch", "Huawei Watch GT", "Garmin…".
    Apple Watch: watchOS version (iPhone → Watch app → General → About).
 4. **AIs and where they use them:** Claude Code in the **terminal** or in the **VS Code / Cursor panel**? Codex
-   (terminal, VS Code or the Codex app)? GitHub Copilot? Windsurf? Others?
+   (terminal, VS Code or the Codex app)? GitHub Copilot? Windsurf? Cursor? GLM, MiniMax, Kimi, OpenRouter or Factory Droid (need an API key)? Others?
 5. **Away from home?** Do they want the phone to update outside their Wi-Fi (needs the optional free server)?
 
 **Then decide with this table and tell them the plan (what will work, what won't, and why) before installing:**
@@ -61,6 +61,8 @@ xcode-select -p 2>/dev/null                                     # Xcode installe
 | **Codex** (any of terminal / VS Code / app) | automatic |
 | **GitHub Copilot** | opt-in toggle in settings (uses `gh auth token`) |
 | **Windsurf** | automatic |
+| **Cursor** (usage limit of the plan) | opt-in toggle in settings (uses the login Cursor saved) |
+| **GLM / Z.ai, MiniMax, Kimi Code, OpenRouter, Factory Droid** | paste the API key in Settings → AIs |
 | Lives in **VS Code** all day | also install the VS Code extension (Marketplace: `chaconlucas.tokenbar`) |
 | Wants it **away from home** | optional free Cloudflare server (README → Optional server) |
 

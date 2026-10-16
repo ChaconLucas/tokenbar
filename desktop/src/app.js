@@ -175,6 +175,7 @@ async function openSettings() {
   loginMsg($("claude-login-msg"), s.claudeLoginError);
   $("copilot-on").checked = s.copilotOn;
   loginMsg($("copilot-msg"), s.copilotError);
+  renderConnectors(s.connectors);
   $("qr").innerHTML = s.qrSvg;
   $("code").textContent = s.code;
   $("server").value = s.server || "";
@@ -216,6 +217,59 @@ $("copilot-on").onchange = async (e) => {
   try { await invoke("set_copilot", { on: e.target.checked }); } catch (x) { err = String(x); }
   loginMsg($("copilot-msg"), err);
 };
+/** Cursor (caixa de ligar) e as IAs de chave de API (campo + SALVAR; com chave, REMOVER). */
+function renderConnectors(list) {
+  const box = $("connectors");
+  box.replaceChildren();
+  for (const c of list) {
+    const row = document.createElement("div");
+    const msg = document.createElement("p");
+    msg.className = "err";
+    loginMsg(msg, c.error);
+    const set = async (on, key) => {
+      try { await invoke("set_connector", { id: c.id, on, key }); openSettings(); }
+      catch (x) { loginMsg(msg, String(x)); }
+    };
+    if (!c.needsKey) {
+      const label = document.createElement("label");
+      label.className = "check";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = c.on;
+      box.onchange = () => set(box.checked, null);
+      const span = document.createElement("span");
+      span.textContent = f("Ler {0}", c.title);
+      label.append(box, " ", span);
+      row.append(label);
+    } else {
+      const h = document.createElement("p");
+      h.className = "check";
+      h.textContent = c.title + (c.on ? " · " + t("CHAVE SALVA") : "");
+      row.append(h);
+      if (c.on) {
+        const rm = document.createElement("button");
+        rm.textContent = t("REMOVER");
+        rm.onclick = () => set(false, null);
+        row.append(rm);
+      } else {
+        const input = document.createElement("input");
+        input.type = "password";
+        input.autocomplete = "off";
+        input.placeholder = c.id === "factory" ? t("vazio = usar ~/.factory/.env") : t("cole a chave de API");
+        const save = document.createElement("button");
+        save.textContent = t("SALVAR");
+        save.onclick = () => set(true, input.value);
+        input.onkeydown = (e) => { if (e.key === "Enter") save.onclick(); };
+        row.append(input, save);
+      }
+    }
+    const info = document.createElement("p");
+    info.className = "dim";
+    info.textContent = t(c.info);
+    row.append(info, msg);
+    box.append(row);
+  }
+}
 $("save-server").onclick = async () => {
   try { await invoke("set_server", { url: $("server").value }); $("server-msg").textContent = t("Salvo. Escaneie o QR de novo no celular."); }
   catch (e) { $("server-msg").textContent = String(e); }

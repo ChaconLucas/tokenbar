@@ -3,7 +3,7 @@
 <h1 align="center">TokenBar</h1>
 
 <p align="center">
-Os limites do <b>Claude Code</b>, do <b>Codex</b>, do <b>Copilot</b>, do <b>Windsurf</b> (ou de qualquer IA) e quando eles resetam,<br>
+Os limites do <b>Claude Code</b>, do <b>Codex</b>, do <b>Copilot</b>, do <b>Windsurf</b>, do <b>Cursor</b>, do <b>GLM</b>, do <b>Kimi</b>… (ou de qualquer IA) e quando eles resetam,<br>
 num display de LED em todo lugar: Mac, Windows, Linux, iPhone, Android, Apple Watch e Wear OS.
 </p>
 
@@ -90,6 +90,8 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 - **Codex**: automático, pelo terminal, pelo VS Code ou pelo app do Codex.
 - **GitHub Copilot**: opcional (premium requests do mês, via `gh auth token`).
 - **Windsurf**: automático.
+- **Cursor**: opcional (uso do mês do plano, com o login que o Cursor já guardou).
+- **GLM (Z.ai), MiniMax, Kimi Code, OpenRouter, Factory Droid**: cole uma chave de API em **Ajustes → IAs** (no Mac, fica no Keychain).
 - **Qualquer outra IA** com um arquivo JSON pequeno: [docs/providers.md](docs/providers.md).
 
 **E mais**
@@ -144,7 +146,7 @@ Esquemas e exemplos (curl, JavaScript, Python, starship, tmux, zsh): [docs/api.m
  Computador ───────────────────────────────────► iPhone / Android ─────────────────────► Apple Watch / Wear OS
  (Mac, Windows, Linux)                             widgets, Tela Bloqueada,               complicações
   │ Claude Code: cópia da statusline (ou login)     Atividade ao Vivo
-  │ Codex: ~/.codex/sessions · Windsurf · Copilot
+  │ Codex: ~/.codex/sessions · Windsurf · Copilot · Cursor · GLM · MiniMax · Kimi · OpenRouter · Droid
   │ qualquer IA: ~/.tokenbar/providers/*.json
   │
   └──── PUT ────► servidor (opcional) ◄── GET ── celulares e relógios, fora de casa

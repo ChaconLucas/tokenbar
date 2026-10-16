@@ -12,8 +12,16 @@ TokenBar reads these on its own, on Mac and on Windows/Linux. Nothing leaves the
 | **Codex** | automatic | latest `rate_limits` from the files in `~/.codex/sessions/YYYY/MM/DD/*.jsonl` |
 | **GitHub Copilot** | **optional, off by default** (Settings → AIs → GitHub Copilot) | `GET https://api.github.com/copilot_internal/user` with the token from `gh auth token` (or the `oauth_token` from `~/.config/github-copilot/apps.json`; on Windows `%LOCALAPPDATA%\github-copilot\apps.json`). Shows the monthly premium requests quota (on the free plan, the chat one), `1M`, resetting at `quota_reset_date_utc`. At most 1 call every 5 min; the token only goes to GitHub. Accounts without a limit don't show up |
 | **Windsurf** | automatic, no network | `windsurf.settings.cachedPlanInfo` key from the editor's `state.vscdb` database, opened read-only: `~/Library/Application Support/Windsurf/User/globalStorage/` (Mac), `%APPDATA%\Windsurf\User\globalStorage\` (Windows), `~/.config/Windsurf/User/globalStorage/` (Linux). `1d` and `7d` windows (`quotaUsage`); on older plans, messages for the month (`1M`) |
+| **Cursor** | **optional** (Settings → AIs → Cursor) | token `cursorAuth/accessToken` from Cursor's `state.vscdb` (same folders as Windsurf, with `Cursor` instead of `Windsurf`), read-only. `GET https://cursor.com/api/usage-summary` with the cookie `WorkosCursorSessionToken=<id>%3A%3A<token>`. Shows the plan's `totalPercentUsed`, `1M`, resetting at `billingCycleEnd`. The token only goes to cursor.com |
+| **GLM (Z.ai)** | API key in Settings | `GET https://api.z.ai/api/monitor/usage/quota/limit` (China keys: `open.bigmodel.cn`). Coding Plan 5-hour and weekly windows |
+| **MiniMax** | Coding Plan key in Settings | `GET https://api.minimax.io/v1/token_plan/remains` (China: `api.minimaxi.com`). Current window and week |
+| **Kimi Code** | API key in Settings | `GET https://api.kimi.com/coding/v1/usages` (or `api.kimi.ai`). 5-hour and weekly windows |
+| **OpenRouter** | API key in Settings | `GET https://openrouter.ai/api/v1/key`: how much of the key's limit is spent; key without a limit → `/api/v1/credits` (credits used, `$`) |
+| **Factory Droid** | API key in Settings (empty = `FACTORY_API_KEY` from `~/.factory/.env`) | `GET https://api.factory.ai/api/billing/limits`. 5-hour and weekly windows |
 
-The ids `claude`, `codex`, `copilot` and `windsurf` are reserved: a file in `providers/` using them is ignored.
+Network reads: at most 1 call every 5 min per AI, and the key only goes to that AI's own site. On Mac the keys live in the Keychain; on Windows/Linux in `~/.tokenbar/connectors.json` (on Linux, readable only by your user). Endpoints and formats checked against the open-source [CodexBar](https://github.com/steipete/CodexBar).
+
+The ids `claude`, `codex`, `copilot` and `windsurf` are reserved: a file in `providers/` using them is ignored. A file with the id of a connected AI above (`cursor`, `zai`, `minimax`, `kimi`, `openrouter`, `factory`) is ignored while that AI is turned on.
 
 ## Any other AI
 

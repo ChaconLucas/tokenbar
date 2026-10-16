@@ -52,7 +52,7 @@ fn modified(p: &Path) -> f64 {
         .and_then(|t| t.duration_since(UNIX_EPOCH).ok()).map(|d| d.as_secs_f64()).unwrap_or_else(now)
 }
 
-fn num(v: Option<&Value>) -> Option<f64> {
+pub fn num(v: Option<&Value>) -> Option<f64> {
     match v? {
         Value::Number(n) => n.as_f64(),
         Value::String(s) => s.parse().ok(),
@@ -70,6 +70,10 @@ pub fn collect() -> UsageSnapshot {
     let copilot = if copilot_on() { copilot_usage(false).ok().flatten() } else { None };
     let mut providers: Vec<ProviderUsage> = [claude, read_codex(), copilot, read_windsurf()].into_iter().flatten().collect();
     providers.extend(read_extra());
+    // Cursor, GLM, MiniMax, Kimi, OpenRouter, Droid: um arquivo em providers/ com o mesmo id repetiria.
+    let net = crate::connectors::usages();
+    providers.retain(|p| !crate::connectors::on(&p.id));
+    providers.extend(net);
     UsageSnapshot { providers, updated_at: now() }
 }
 
@@ -191,7 +195,7 @@ fn parse_account(body: &Value, observed_at: f64) -> Option<ProviderUsage> {
 }
 
 /// "2026-10-15T20:39:59.523289+00:00" (ou "Z") → segundos Unix.
-fn rfc3339(s: &str) -> Option<f64> {
+pub fn rfc3339(s: &str) -> Option<f64> {
     let b = s.as_bytes();
     if b.len() < 20 || b[4] != b'-' || b[7] != b'-' || !matches!(b[10], b'T' | b't' | b' ') || b[13] != b':' || b[16] != b':' { return None }
     let n = |r: std::ops::Range<usize>| s.get(r)?.parse::<i64>().ok();
@@ -398,7 +402,7 @@ fn windsurf_db() -> Option<PathBuf> {
 fn read_windsurf() -> Option<ProviderUsage> {
     let file = windsurf_db()?;
     if !file.is_file() { return None }
-    let json = sqlite_value(&file, "windsurf.settings.cachedPlanInfo")?;
+    let json = sqlite_value(&file, "windsurf.settings.cachedPlanInfo", false)?;
     let root: Value = serde_json::from_str(&json).ok()?;
     let wal = file.with_file_name("state.vscdb-wal");
     let observed = if wal.is_file() { modified(&file).max(modified(&wal)) } else { modified(&file) };
@@ -406,22 +410,31 @@ fn read_windsurf() -> Option<ProviderUsage> {
 }
 
 /// "file:///C:/a%20b/state.vscdb?mode=ro&immutable=1": imutável = sem trava e sem gravar nada no arquivo do editor.
-fn sqlite_uri(path: &Path) -> String {
+fn sqlite_uri(path: &Path, live: bool) -> String {
     let p = path.to_string_lossy().replace('\\', "/");
     let mut out = String::from("file://");
     if !p.starts_with('/') { out.push('/') }
     for b in p.bytes() {
         if b.is_ascii_alphanumeric() || b"/:-._~".contains(&b) { out.push(b as char) } else { out.push_str(&format!("%{b:02X}")) }
     }
-    out + "?mode=ro&immutable=1"
+    out + if live { "?mode=ro" } else { "?mode=ro&immutable=1" }
 }
 
-fn sqlite_value(path: &Path, key: &str) -> Option<String> {
+/// `live`: só leitura, mas enxergando o WAL (valor que o editor acabou de trocar, como um token renovado).
+pub fn sqlite_value(path: &Path, key: &str, live: bool) -> Option<String> {
+    if live { if let Some(v) = sqlite_read(path, key, true) { return Some(v) } }
+    sqlite_read(path, key, false)
+}
+
+fn sqlite_read(path: &Path, key: &str, live: bool) -> Option<String> {
     use rusqlite::{types::ValueRef, Connection, OpenFlags};
-    let db = Connection::open_with_flags(sqlite_uri(path),
+    let db = Connection::open_with_flags(sqlite_uri(path, live),
         OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_URI | OpenFlags::SQLITE_OPEN_NO_MUTEX).ok()?;
     db.query_row("SELECT value FROM ItemTable WHERE key = ?1", [key], |r| {
         Ok(match r.get_ref(0)? {
+            // Alguns editores gravam em UTF-16LE (um zero a cada dois bytes).
+            ValueRef::Blob(t) if t.len() >= 2 && t.len() % 2 == 0 && t[1] == 0 =>
+                Some(String::from_utf16_lossy(&t.chunks(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect::<Vec<_>>())),
             ValueRef::Text(t) | ValueRef::Blob(t) => Some(String::from_utf8_lossy(t).into_owned()),
             _ => None,
         })
@@ -616,11 +629,11 @@ mod tests {
         db.execute_batch(r#"CREATE TABLE ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB);
             INSERT INTO ItemTable VALUES ('windsurf.settings.cachedPlanInfo', '{"quotaUsage":{"dailyRemainingPercent":90,"weeklyRemainingPercent":60}}');"#).unwrap();
         drop(db);
-        let json = sqlite_value(&f, "windsurf.settings.cachedPlanInfo").unwrap();
+        let json = sqlite_value(&f, "windsurf.settings.cachedPlanInfo", false).unwrap();
         let p = parse_windsurf(&serde_json::from_str(&json).unwrap(), 0.0).unwrap();
         assert_eq!((p.windows[0].used_percent, p.windows[1].used_percent), (10.0, 40.0));
-        assert!(sqlite_value(&f, "nada").is_none());
-        assert!(sqlite_uri(Path::new(r"C:\Users\a b\x.db")).starts_with("file:///C:/Users/a%20b/x.db?"));
+        assert!(sqlite_value(&f, "nada", false).is_none());
+        assert!(sqlite_uri(Path::new(r"C:\Users\a b\x.db"), false).starts_with("file:///C:/Users/a%20b/x.db?"));
         let _ = fs::remove_dir_all(&dir);
     }
 }

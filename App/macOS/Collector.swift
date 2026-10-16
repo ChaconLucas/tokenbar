@@ -162,9 +162,15 @@ enum Collector {
     private static func epoch(_ v: Double) -> Date { Date(timeIntervalSince1970: v > 1e11 ? v / 1000 : v) }
 
     /// Abre o SQLite como imutável (sem trava, sem gravar nada) e lê um valor do `ItemTable`.
-    static func sqliteValue(_ file: URL, key: String) -> String? {
+    /// `live`: só leitura, mas enxergando o WAL (valor que o editor acabou de trocar, como um token renovado).
+    static func sqliteValue(_ file: URL, key: String, live: Bool = false) -> String? {
+        if live, let v = sqliteValue(file, key: key, query: "?mode=ro") { return v }
+        return sqliteValue(file, key: key, query: "?mode=ro&immutable=1")
+    }
+
+    private static func sqliteValue(_ file: URL, key: String, query: String) -> String? {
         var db: OpaquePointer?
-        let uri = file.absoluteString + "?mode=ro&immutable=1"
+        let uri = file.absoluteString + query
         defer { sqlite3_close(db) }
         guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK else { return nil }
         var stmt: OpaquePointer?
@@ -174,7 +180,12 @@ enum Collector {
         sqlite3_bind_text(stmt, 1, key, -1, transient)
         guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
         if sqlite3_column_type(stmt, 0) == SQLITE_BLOB, let p = sqlite3_column_blob(stmt, 0) {
-            return String(decoding: Data(bytes: p, count: Int(sqlite3_column_bytes(stmt, 0))), as: UTF8.self)
+            let data = Data(bytes: p, count: Int(sqlite3_column_bytes(stmt, 0)))
+            // Alguns editores gravam em UTF-16LE (um zero a cada dois bytes).
+            if data.count >= 2, data.count % 2 == 0, data[data.startIndex + 1] == 0 {
+                return String(data: data, encoding: .utf16LittleEndian)
+            }
+            return String(decoding: data, as: UTF8.self)
         }
         return sqlite3_column_text(stmt, 0).map { String(cString: $0) }
     }

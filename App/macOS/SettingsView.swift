@@ -8,6 +8,8 @@ struct SettingsView: View {
     @AppStorage("settingsTab") private var tab = "general"
     @State private var lastClient: Date?
     @State private var confirmReset = false
+    @State private var editingKey: String?
+    @State private var keyText = ""
     @ObservedObject private var webhooks = Webhooks.shared
     @AppStorage(Webhooks.urlKey) private var webhookURL = ""
     @AppStorage("webhook80") private var hook80 = true
@@ -108,7 +110,7 @@ struct SettingsView: View {
                     status("codex")
                 }
             }
-            let others = model.snapshot.providers.filter { !["claude", "codex", "copilot"].contains($0.id) }
+            let others = model.snapshot.providers.filter { !["claude", "codex", "copilot"].contains($0.id) && Connector(rawValue: $0.id) == nil }
             LEDGroup {
                 LEDRow(label: "GITHUB COPILOT", info: Lang.t("Lê a cota mensal de premium requests usando o login do GitHub CLI (gh) ou do Copilot. O token só vai para o GitHub.")) {
                     if model.copilotOn { status("copilot") }
@@ -117,6 +119,9 @@ struct SettingsView: View {
                 if model.copilotOn, let e = model.copilotError {
                     Text(e).font(.caption).foregroundStyle(Arcade.red).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
                 }
+            }
+            LEDGroup {
+                ForEach(Connector.allCases) { c in connectorRow(c) }
             }
             LEDGroup {
                 ForEach(others) { p in
@@ -294,6 +299,48 @@ struct SettingsView: View {
     /// "HÁ 2 MIN" / "2 MIN AGO", no idioma escolhido.
     private func ago(_ d: Date) -> String {
         d.formatted(Date.RelativeFormatStyle(presentation: .named, locale: Lang.locale)).uppercased()
+    }
+
+    /// Cursor: liga e desliga. As outras: botão CHAVE abre o campo; com chave, mostra o estado e REMOVER.
+    @ViewBuilder
+    private func connectorRow(_ c: Connector) -> some View {
+        VStack(spacing: 0) {
+            LEDRow(label: c.title, info: c.info) {
+                if !c.needsKey {
+                    if model.cursorOn { status(c.id) }
+                    LEDSwitch(isOn: $model.cursorOn)
+                } else if model.isOn(c) {
+                    status(c.id)
+                    DotKey(text: Lang.t("REMOVER"), on: false, color: .white, dot: 1.3) { model.setKey(c, nil) }
+                } else {
+                    DotKey(text: Lang.t("CHAVE"), on: editingKey == c.id, color: Arcade.cyan, dot: 1.4) {
+                        editingKey = editingKey == c.id ? nil : c.id
+                        keyText = ""
+                    }
+                }
+            }
+            if editingKey == c.id, !model.isOn(c) {
+                HStack(spacing: 8) {
+                    SecureField("", text: $keyText, prompt: Text(c == .factory ? Lang.t("vazio = usar ~/.factory/.env") : Lang.t("cole a chave de API")).foregroundStyle(.white.opacity(0.3)))
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12, design: .monospaced))
+                        .padding(10)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.black).overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.12))))
+                        .onSubmit { saveKey(c) }
+                    DotKey(text: Lang.t("SALVAR"), on: true, color: Arcade.cyan, dot: 1.4) { saveKey(c) }
+                }
+                .padding(.vertical, 8)
+            }
+            if let e = model.connectorErrors[c.id] {
+                Text(e).font(.caption).foregroundStyle(Arcade.red).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+            }
+        }
+    }
+
+    private func saveKey(_ c: Connector) {
+        model.setKey(c, keyText)
+        keyText = ""
+        if model.isOn(c) { editingKey = nil }
     }
 
     /// Estado de uma IA: recebendo (com há quanto tempo) ou esperando.

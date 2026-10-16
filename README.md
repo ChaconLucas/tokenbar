@@ -3,7 +3,7 @@
 <h1 align="center">TokenBar</h1>
 
 <p align="center">
-Your <b>Claude Code</b>, <b>Codex</b>, <b>Copilot</b>, <b>Windsurf</b> (or any AI) usage limits and when they reset,<br>
+Your <b>Claude Code</b>, <b>Codex</b>, <b>Copilot</b>, <b>Windsurf</b>, <b>Cursor</b>, <b>GLM</b>, <b>Kimi</b>… (or any AI) usage limits and when they reset,<br>
 on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch and Wear OS.
 </p>
 
@@ -90,6 +90,8 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 - **Codex**: automatic, from the terminal, VS Code or the Codex app.
 - **GitHub Copilot**: opt-in (monthly premium requests, via `gh auth token`).
 - **Windsurf**: automatic.
+- **Cursor**: opt-in (the plan's monthly usage, with the login Cursor already saved).
+- **GLM (Z.ai), MiniMax, Kimi Code, OpenRouter, Factory Droid**: paste an API key in **Settings → AIs** (Mac: stored in the Keychain).
 - **Any other AI** through a small JSON file: [docs/providers.md](docs/providers.md).
 
 **Everything else**
@@ -144,7 +146,7 @@ Schemas and examples (curl, JavaScript, Python, starship, tmux, zsh): [docs/api.
  Computer ─────────────────────────────────────► iPhone / Android ─────────────────────► Apple Watch / Wear OS
  (Mac, Windows, Linux)                             widgets, Lock Screen,                  complications
   │ Claude Code: copy of the statusline (or login)  Live Activity
-  │ Codex: ~/.codex/sessions · Windsurf · Copilot
+  │ Codex: ~/.codex/sessions · Windsurf · Copilot · Cursor · GLM · MiniMax · Kimi · OpenRouter · Droid
   │ any AI: ~/.tokenbar/providers/*.json
   │
   └──── PUT ────► server (optional) ◄── GET ──── phones and watches, away from home
