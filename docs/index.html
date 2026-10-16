@@ -20,7 +20,7 @@
   .bar b { font-family:'JetBrains Mono',monospace; letter-spacing:3px; }
   .bar nav { margin-left:auto; display:flex; gap:16px; flex-wrap:wrap; font-size:14px; }
   .bar nav a { color:var(--dim); } .bar nav a.on, .bar nav a:hover { color:var(--text); text-decoration:none; }
-  .hero { max-width:1100px; margin:auto; padding:72px 20px 40px; display:grid; grid-template-columns:1.1fr .9fr; gap:40px; align-items:center; }
+  .hero { max-width:1100px; margin:auto; padding:72px 20px 40px; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:40px; align-items:center; }
   .hero h1 { font-size:46px; line-height:1.08; margin:0 0 16px; font-weight:800; letter-spacing:-1px; }
   .hero h1 span { background:linear-gradient(90deg,var(--claude),var(--codex)); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .hero p { color:var(--dim); font-size:18px; margin:0 0 24px; }
