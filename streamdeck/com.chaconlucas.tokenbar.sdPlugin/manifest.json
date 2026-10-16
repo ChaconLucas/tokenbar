@@ -1,0 +1,76 @@
+{
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+	"UUID": "com.chaconlucas.tokenbar",
+	"Name": "TokenBar",
+	"Version": "0.5.1.0",
+	"Author": "Lucas Chacon",
+	"Description": "AI usage limits on your Stream Deck: Claude Code, Codex, Copilot, Windsurf and any AI, in the TokenBar LED look. Reads the TokenBar app on this computer; nothing leaves it.",
+	"URL": "https://github.com/ChaconLucas/tokenbar",
+	"Category": "TokenBar",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"Icon": "imgs/plugin/marketplace",
+	"CodePath": "bin/plugin.js",
+	"SDKVersion": 2,
+	"Software": {
+		"MinimumVersion": "6.5"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "12"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "20",
+		"Debug": "disabled"
+	},
+	"Actions": [
+		{
+			"Name": "AI usage",
+			"UUID": "com.chaconlucas.tokenbar.usage",
+			"Icon": "imgs/actions/usage/icon",
+			"Tooltip": "% used of an AI's 5h or 7d limit. Press to switch 5h / 7d.",
+			"PropertyInspectorPath": "ui/settings.html",
+			"Controllers": [
+				"Keypad",
+				"Encoder"
+			],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Rotate": "Switch AI",
+					"Push": "5h / 7d",
+					"Touch": "5h / 7d"
+				}
+			},
+			"UserTitleEnabled": false,
+			"States": [
+				{
+					"Image": "imgs/actions/usage/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"Name": "Reset countdown",
+			"UUID": "com.chaconlucas.tokenbar.countdown",
+			"Icon": "imgs/actions/countdown/icon",
+			"Tooltip": "Time until an AI's limit resets. Press to switch 5h / 7d.",
+			"PropertyInspectorPath": "ui/settings.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"UserTitleEnabled": false,
+			"States": [
+				{
+					"Image": "imgs/actions/countdown/key",
+					"ShowTitle": false
+				}
+			]
+		}
+	]
+}

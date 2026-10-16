@@ -32,6 +32,7 @@ for f in android/app/build.gradle.kts android/wear/build.gradle.kts; do
 done
 sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$V\"/" desktop/src-tauri/tauri.conf.json desktop/package.json vscode/package.json
 sed -i '' "1,/^version = /s/^version = \"[^\"]*\"/version = \"$V\"/" desktop/src-tauri/Cargo.toml
+sed -i '' "1,/\"Version\"/s/\"Version\": \"[^\"]*\"/\"Version\": \"$V.0\"/" streamdeck/com.chaconlucas.tokenbar.sdPlugin/manifest.json
 
 mkdir -p "$OUT"
 
@@ -58,6 +59,11 @@ sh scripts/windows-updater-manifest.sh "$V" "$OUT/TokenBar-Windows-setup.exe.sig
 say "Extensão do VS Code"
 (cd vscode && npm install --silent >/dev/null 2>&1 && npx tsc -p . && npx --yes @vscode/vsce package --no-dependencies -o "$OUT/TokenBar-VSCode.vsix" >/dev/null)
 
+say "Stream Deck"
+(cd streamdeck && npm install --silent >/dev/null 2>&1 && npm run build >/dev/null \
+  && npx --yes @elgato/cli pack com.chaconlucas.tokenbar.sdPlugin -o "$OUT" --force >/dev/null)
+mv "$OUT/com.chaconlucas.tokenbar.streamDeckPlugin" "$OUT/TokenBar-StreamDeck.streamDeckPlugin"
+
 say "Commit, tag e Release no GitHub"
 git add -A
 git commit -q -m "Versão $V"
@@ -70,7 +76,7 @@ NOTES="$NOTES
 gh release create "v$V" --title "TokenBar $V" --notes "$NOTES" \
   "$OUT/TokenBar-macOS.zip" "$OUT/TokenBar-Android.apk" "$OUT/TokenBar-WearOS.apk" \
   "$OUT/TokenBar-Windows-setup.exe" "$OUT/TokenBar-Windows-setup.exe.sig" "$OUT/latest.json" \
-  "$OUT/TokenBar-VSCode.vsix"
+  "$OUT/TokenBar-VSCode.vsix" "$OUT/TokenBar-StreamDeck.streamDeckPlugin"
 
 say "Homebrew"
 TAP=$(brew --repository chaconlucas/tokenbar 2>/dev/null || true)

@@ -20,3 +20,10 @@ build-notch/
 build-watch/
 build-watchdev/
 build-api/
+raycast/node_modules/
+raycast/dist/
+streamdeck/node_modules/
+streamdeck/dist/
+streamdeck/*.sdPlugin/bin/
+streamdeck/*.sdPlugin/logs/
+*.streamDeckPlugin

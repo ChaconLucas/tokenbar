@@ -49,6 +49,8 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 | **Mac (Homebrew)** | `brew install --cask chaconlucas/tokenbar/tokenbar` |
 | **Windows (winget)** | `winget install ChaconLucas.TokenBar` (pending Microsoft review) |
 | **VS Code** | usage in VS Code's status bar: search **TokenBar** in Extensions ([Marketplace](https://marketplace.visualstudio.com/items?itemName=chaconlucas.tokenbar)) |
+| **Raycast** | usage in the Mac menu bar and a Raycast command: with [Raycast](https://raycast.com) installed, run `cd raycast && npm install && npm run dev` (see [`raycast/README.md`](raycast/README.md)) |
+| **Stream Deck** | AI usage and reset countdown keys (and Stream Deck + dials) in the LED look: download `TokenBar-StreamDeck.streamDeckPlugin` from [Releases](https://github.com/ChaconLucas/tokenbar/releases) and double-click it (works with the virtual Stream Deck, no hardware needed) |
 | **Android** | `TokenBar-Android.apk` in [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` in Releases, installed with `adb` |
 | **iPhone** | on a Mac with Xcode (free) and the iPhone plugged in: `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh`. Run it again to update and renew the free Apple account's 7 days |

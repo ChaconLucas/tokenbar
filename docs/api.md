@@ -38,6 +38,7 @@
 | Read without the app running | [CLI](#cli) (falls back to the files) or [`snapshot.json`](#snapshotjson) |
 | Be notified at 80% / 95% / reset | [Webhooks](#webhooks) |
 | Add another AI to TokenBar | [Write a provider file](#writing-add-any-ai) |
+| See usage in Raycast / VS Code / Stream Deck | [Integrations](#integrations) |
 
 ---
 
@@ -440,6 +441,16 @@ windows (short first). Optional: `name`, `color`, `windows[].label`, `windows[].
 printf '{"id":"myai","name":"My AI","windows":[{"label":"1d","usedPercent":%s}]}' "$PCT" \
   > ~/.tokenbar/providers/myai.json.tmp && mv ~/.tokenbar/providers/myai.json.tmp ~/.tokenbar/providers/myai.json
 ```
+
+---
+
+## Integrations
+
+Ready-made clients of the local API (they fall back to `snapshot.json` and the files, like the CLI):
+
+- **VS Code**: status bar extension, source in [`vscode/`](../vscode), on the [Marketplace](https://marketplace.visualstudio.com/items?itemName=chaconlucas.tokenbar).
+- **Raycast**: menu bar command (`CL 28% · CX 0%`, refreshed every minute) and a list with details and copy actions. Source in [`raycast/`](../raycast). To install it, put Raycast on the Mac, then run `cd raycast && npm install && npm run dev`.
+- **Elgato Stream Deck** (Mac and Windows): "AI usage" key (% of the 5h/7d limit, dot bar, countdown; press toggles 5h/7d; on a Stream Deck + dial, rotate switches AI) and "Reset countdown" key with a draining ring. Source in [`streamdeck/`](../streamdeck); `npm install && npm run pack` builds `com.chaconlucas.tokenbar.streamDeckPlugin` (double-click installs it).
 
 ---
 

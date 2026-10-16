@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>TokenBar</title>
+		<!-- Property inspector components: https://sdpi-components.dev/docs/components -->
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="AI">
+			<!-- Filled by the plugin (onSendToPlugin "getProviders") with the AIs TokenBar sees now. -->
+			<sdpi-select setting="provider" datasource="getProviders" hot-reload loading="Loading…" placeholder="First AI in TokenBar"></sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Limit">
+			<sdpi-radio setting="window" default="5h" columns="2">
+				<option value="5h">5h</option>
+				<option value="7d">7d</option>
+			</sdpi-radio>
+		</sdpi-item>
+		<sdpi-item>
+			<p style="margin: 0; color: #969696; font-size: 9pt; line-height: 1.4">
+				Press the key to switch 5h / 7d. Numbers come from the TokenBar app on this computer
+				(<code>~/.tokenbar</code>); turns red at 85%.
+			</p>
+		</sdpi-item>
+	</body>
+</html>

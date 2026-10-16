@@ -47,6 +47,8 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 | **Mac (Homebrew)** | `brew install --cask chaconlucas/tokenbar/tokenbar` |
 | **Windows (winget)** | `winget install ChaconLucas.TokenBar` (em análise pela Microsoft) |
 | **VS Code** | a % na barra de baixo do VS Code: procure **TokenBar** em Extensões ([loja](https://marketplace.visualstudio.com/items?itemName=chaconlucas.tokenbar)) |
+| **Raycast** | a % na barra de menus do Mac e um comando no Raycast: com o [Raycast](https://raycast.com) instalado, rode `cd raycast && npm install && npm run dev` (veja o [`raycast/README.md`](raycast/README.md)) |
+| **Stream Deck** | teclas com o uso da IA e a contagem até o reset (e os botões giratórios do Stream Deck +) no visual de LED: baixe `TokenBar-StreamDeck.streamDeckPlugin` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) e dê dois cliques (funciona no Stream Deck virtual, sem aparelho) |
 | **Android** | `TokenBar-Android.apk` nos [Releases](https://github.com/ChaconLucas/tokenbar/releases) |
 | **Wear OS** | `TokenBar-WearOS.apk` nos Releases, instalado com `adb` |
 | **iPhone** | no Mac com o Xcode (grátis) e o iPhone no cabo: `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-ios.sh | sh`. Rodar de novo atualiza e renova os 7 dias da conta gratuita da Apple |

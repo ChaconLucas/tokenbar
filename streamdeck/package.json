@@ -1,0 +1,31 @@
+{
+  "name": "tokenbar-streamdeck",
+  "version": "0.5.1",
+  "private": true,
+  "description": "TokenBar for Elgato Stream Deck: AI usage limits (Claude Code, Codex, Copilot, Windsurf, any AI) on your keys and dials.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.chaconlucas.tokenbar\"",
+    "images": "node scripts/images.mjs",
+    "preview": "node scripts/preview.mjs",
+    "validate": "streamdeck validate com.chaconlucas.tokenbar.sdPlugin",
+    "pack": "npm run build && streamdeck pack com.chaconlucas.tokenbar.sdPlugin -o dist -f"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^1.4.1"
+  },
+  "devDependencies": {
+    "@elgato/cli": "^1.10.2",
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^15.2.2",
+    "@rollup/plugin-terser": "^1.0.0",
+    "@rollup/plugin-typescript": "^12.1.0",
+    "@tsconfig/node20": "^20.1.2",
+    "@types/node": "~20.19.0",
+    "rollup": "^4.0.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "tokenbar",
+  "title": "TokenBar",
+  "description": "Claude Code, Codex, Copilot, Windsurf and any AI usage limits (5h / 7d) in the menu bar, read from the local TokenBar app.",
+  "icon": "icon.png",
+  "author": "chaconlucas",
+  "categories": [
+    "Developer Tools",
+    "Productivity"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "codex",
+    "copilot",
+    "windsurf",
+    "ai",
+    "usage",
+    "rate limit",
+    "tokens"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "menu-bar",
+      "title": "AI Usage in Menu Bar",
+      "subtitle": "TokenBar",
+      "description": "Shows the usage of each AI (5h / 7d windows) in the menu bar, with the time left until each reset.",
+      "mode": "menu-bar",
+      "interval": "1m"
+    },
+    {
+      "name": "usage",
+      "title": "Show AI Usage",
+      "subtitle": "TokenBar",
+      "description": "Lists every AI with its usage windows, reset countdown and details.",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "window",
+      "title": "Menu Bar Window",
+      "description": "Which usage window the menu bar title shows.",
+      "type": "dropdown",
+      "required": false,
+      "default": "5h",
+      "data": [
+        {
+          "title": "5h (short window)",
+          "value": "5h"
+        },
+        {
+          "title": "7d (long window)",
+          "value": "7d"
+        },
+        {
+          "title": "Both (5h / 7d)",
+          "value": "both"
+        }
+      ]
+    },
+    {
+      "name": "providers",
+      "title": "AIs",
+      "description": "Comma-separated AI ids to show (e.g. claude, codex). Empty shows all.",
+      "type": "textfield",
+      "required": false,
+      "default": "",
+      "placeholder": "claude, codex"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.0",
+    "@raycast/utils": "^2.2.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.0.4",
+    "@types/node": "22.13.10",
+    "@types/react": "19.0.10",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
