@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import http from "node:http";
 
-export const VERSION = "0.5.5";
+export const VERSION = "0.5.6";
 export const DEFAULT_PORT = 41777;
 const API_TIMEOUT_MS = 1500;
 const SNAPSHOT_MAX_AGE = 10 * 60;

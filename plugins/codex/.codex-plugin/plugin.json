@@ -1,6 +1,6 @@
 {
   "name": "tokenbar",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "AI usage limits (Codex, Claude Code, Copilot, Windsurf, any AI) inside Codex: MCP tools and a skill that checks the budget before long tasks.",
   "author": {
     "name": "Lucas Chacon",
