@@ -32,14 +32,8 @@ final class MacModel: ObservableObject {
         }
     }
     @Published var copilotError: String?
-    /// Cursor pelo login do editor. Desligado até a pessoa ligar.
-    @Published var cursorOn = UserDefaults.standard.bool(forKey: "cursorOn") {
-        didSet {
-            UserDefaults.standard.set(cursorOn, forKey: "cursorOn")
-            forget(.cursor)
-            refresh()
-        }
-    }
+    /// Cursor, Gemini CLI e Kiro pelo login do próprio programa. Desligados até a pessoa ligar.
+    @Published var localOn = Set(UserDefaults.standard.stringArray(forKey: "connectorsOn") ?? (UserDefaults.standard.bool(forKey: "cursorOn") ? ["cursor"] : []))
     /// IAs de chave de API: ligadas quando há chave no Keychain.
     @Published var connectorKeyed = Set(Connector.allCases.filter { $0.needsKey && ConnectorKeys.get($0.id) != nil }.map(\.id))
     @Published var connectorErrors: [String: String] = [:]
@@ -211,12 +205,19 @@ final class MacModel: ObservableObject {
         }
     }
 
-    func isOn(_ c: Connector) -> Bool { c.needsKey ? connectorKeyed.contains(c.id) : cursorOn }
+    func isOn(_ c: Connector) -> Bool { c.needsKey ? connectorKeyed.contains(c.id) : localOn.contains(c.id) }
 
-    /// Guarda (ou apaga, com nil) a chave e já tenta uma leitura. Droid com o campo vazio usa ~/.factory/.env.
+    func setLocal(_ c: Connector, _ on: Bool) {
+        if on { localOn.insert(c.id) } else { localOn.remove(c.id) }
+        UserDefaults.standard.set(Array(localOn).sorted(), forKey: "connectorsOn")
+        forget(c)
+        refresh()
+    }
+
+    /// Guarda (ou apaga, com nil) a chave e já tenta uma leitura. Campo vazio: a chave que o próprio programa guardou (Droid, Amp).
     func setKey(_ c: Connector, _ key: String?) {
         var k = key?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if k?.isEmpty == true { k = c == .factory ? Connector.factoryEnvKey() : nil }
+        if k?.isEmpty == true { k = c.fallbackKey() }
         if key != nil, k == nil { connectorErrors[c.id] = Connector.Failure.noKey.localizedDescription; return }
         ConnectorKeys.set(c.id, k)
         if k == nil { connectorKeyed.remove(c.id) } else { connectorKeyed.insert(c.id) }

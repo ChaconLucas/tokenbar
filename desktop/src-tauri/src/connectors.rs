@@ -13,9 +13,13 @@ use std::time::{Duration, Instant};
 
 pub struct Def { pub id: &'static str, name: &'static str, title: &'static str, color: &'static str, needs_key: bool, info: &'static str }
 
-pub const ALL: [Def; 6] = [
+pub const ALL: [Def; 9] = [
     Def { id: "cursor", name: "Cursor", title: "CURSOR", color: "#e5e5e5", needs_key: false,
           info: "Lê o uso do mês do plano usando o login que o Cursor já guardou neste computador. O token só vai para cursor.com." },
+    Def { id: "gemini", name: "Gemini", title: "GEMINI CLI", color: "#4285f4", needs_key: false,
+          info: "Cota diária dos modelos Pro e Flash, pelo login que o Gemini CLI guardou (~/.gemini). O Google só libera para contas Workspace e Code Assist. O token só vai para o Google." },
+    Def { id: "kiro", name: "Kiro", title: "KIRO", color: "#9046ff", needs_key: false,
+          info: "Créditos do mês do plano, pelo login do kiro-cli. O token só vai para a AWS." },
     Def { id: "zai", name: "GLM", title: "Z.AI GLM", color: "#3b82f6", needs_key: true,
           info: "Coding Plan do GLM: limites de 5 horas e da semana. Crie uma chave de API em z.ai (ou open.bigmodel.cn) e cole aqui. A chave só vai para a Z.ai." },
     Def { id: "minimax", name: "MiniMax", title: "MINIMAX", color: "#f43f5e", needs_key: true,
@@ -26,6 +30,8 @@ pub const ALL: [Def; 6] = [
           info: "Quanto do limite da chave (ou dos créditos) já foi gasto. Cole uma chave de openrouter.ai/keys. A chave só vai para o OpenRouter." },
     Def { id: "factory", name: "Droid", title: "FACTORY DROID", color: "#f97316", needs_key: true,
           info: "Limites de 5 horas e da semana do Droid. Cole a chave de app.factory.ai/settings/api-keys (ou deixe em ~/.factory/.env). A chave só vai para a Factory." },
+    Def { id: "amp", name: "Amp", title: "AMP", color: "#f34e3f", needs_key: true,
+          info: "Uso do plano ou do Amp Free. Usa o login do Amp CLI (~/.local/share/amp) ou uma chave de ampcode.com/settings. A chave só vai para a Amp." },
 ];
 
 fn def(id: &str) -> Option<&'static Def> { ALL.iter().find(|d| d.id == id) }
@@ -33,16 +39,29 @@ fn def(id: &str) -> Option<&'static Def> { ALL.iter().find(|d| d.id == id) }
 // ---------- estado ----------
 
 #[derive(Clone, Debug, PartialEq)]
-enum Fail { NoLogin, Expired, NoKey, BadKey, Http(u16), Format, Offline }
+enum Fail { NoLogin, Expired, Unsupported, NoKey, BadKey, Http(u16), Format, Offline }
 
 impl Fail {
-    fn text(&self, name: &str) -> String {
+    fn text(&self, d: &Def) -> String {
         let en = crate::i18n::lang() == "en";
+        let name = d.name;
+        // Onde a pessoa entra na conta.
+        let hint = match (d.id, en) {
+            ("gemini", false) => "rode gemini e entre com a conta Google",
+            ("gemini", true) => "run gemini and sign in with your Google account",
+            ("kiro", false) => "rode kiro-cli login",
+            ("kiro", true) => "run kiro-cli login",
+            (_, false) => "abra o Cursor e entre na conta",
+            (_, true) => "open Cursor and sign in",
+        };
+        let again = if d.id == "cursor" { if en { "open Cursor once" } else { "abra o Cursor uma vez" } } else { hint };
         match (self, en) {
-            (Fail::NoLogin, false) => "Não achei o login do Cursor neste computador: abra o Cursor e entre na conta.".into(),
-            (Fail::NoLogin, true) => "Couldn't find a Cursor login on this computer: open Cursor and sign in.".into(),
-            (Fail::Expired, false) => "Login do Cursor expirado: abra o Cursor uma vez.".into(),
-            (Fail::Expired, true) => "Cursor login expired: open Cursor once.".into(),
+            (Fail::NoLogin, false) => format!("Não achei o login do {name} neste computador: {hint}."),
+            (Fail::NoLogin, true) => format!("Couldn't find a {name} login on this computer: {hint}."),
+            (Fail::Expired, false) => format!("Login do {name} expirado: {again}."),
+            (Fail::Expired, true) => format!("{name} login expired: {again}."),
+            (Fail::Unsupported, false) => "O Google só libera a cota do Gemini CLI para contas Workspace e Code Assist.".into(),
+            (Fail::Unsupported, true) => "Google only exposes the Gemini CLI quota to Workspace and Code Assist accounts.".into(),
             (Fail::NoKey, false) => "Falta a chave de API.".into(),
             (Fail::NoKey, true) => "The API key is missing.".into(),
             (Fail::BadKey, false) => format!("{name} recusou a chave."),
@@ -97,7 +116,7 @@ pub struct Status { id: &'static str, title: &'static str, info: String, needs_k
 pub fn statuses() -> Vec<Status> {
     ALL.iter().map(|d| {
         let on = on(d.id);
-        let error = if on { with(d.id, |e| e.error.clone()).map(|f| f.text(d.name)) } else { None };
+        let error = if on { with(d.id, |e| e.error.clone()).map(|f| f.text(d)) } else { None };
         Status { id: d.id, title: d.title, info: d.info.into(), needs_key: d.needs_key, on, error }
     }).collect()
 }
@@ -109,8 +128,8 @@ pub fn set(id: &str, on_: bool, new_key: Option<String>) -> Result<(), String> {
     if !v.is_object() { v = json!({}) }
     if d.needs_key {
         let mut k = new_key.map(|k| k.trim().to_string()).filter(|k| !k.is_empty());
-        if on_ && k.is_none() && d.id == "factory" { k = factory_env_key() }
-        if on_ && k.is_none() { return Err(Fail::NoKey.text(d.name)) }
+        if on_ && k.is_none() { k = fallback_key(d.id) }
+        if on_ && k.is_none() { return Err(Fail::NoKey.text(d)) }
         if !v.get("keys").map(|k| k.is_object()).unwrap_or(false) { v["keys"] = json!({}) }
         match k.filter(|_| on_) { Some(k) => { v["keys"][d.id] = json!(k) }, None => { v["keys"].as_object_mut().unwrap().remove(d.id); } }
     } else {
@@ -120,7 +139,7 @@ pub fn set(id: &str, on_: bool, new_key: Option<String>) -> Result<(), String> {
     with(d.id, |e| *e = Entry::default());
     if !on_ { return Ok(()) }
     refresh(d);
-    match with(d.id, |e| e.error.clone()) { Some(f) => Err(f.text(d.name)), None => Ok(()) }
+    match with(d.id, |e| e.error.clone()) { Some(f) => Err(f.text(d)), None => Ok(()) }
 }
 
 /// Os números das IAs ligadas. Leitura velha (5 min) é renovada numa thread; até lá fica o último bom.
@@ -149,12 +168,15 @@ fn refresh(d: &'static Def) {
 
 /// Tenta os endereços em ordem (internacional, depois China): vale o primeiro 200.
 /// 401/403/404 passam para o próximo; se todos recusam, a chave é que está errada.
-fn first_ok(d: &Def, urls: &[String], headers: &[(&str, String)]) -> Result<Value, Fail> {
+fn first_ok(d: &Def, urls: &[String], headers: &[(&str, String)]) -> Result<Value, Fail> { send(d, urls, headers, None) }
+
+fn send(d: &Def, urls: &[String], headers: &[(&str, String)], body: Option<&Value>) -> Result<Value, Fail> {
     let (mut refused, mut last) = (false, 0);
     for u in urls {
-        let mut req = ureq::get(u).timeout(Duration::from_secs(15)).set("User-Agent", "TokenBar");
+        let mut req = if body.is_some() { ureq::post(u) } else { ureq::get(u) }.timeout(Duration::from_secs(15)).set("User-Agent", "TokenBar");
         for (k, v) in headers { req = req.set(k, v) }
-        match req.call() {
+        let res = match body { Some(b) => req.send_string(&b.to_string()), None => req.call() };
+        match res {
             Ok(r) => return r.into_json().map_err(|_| Fail::Format),
             Err(ureq::Error::Status(401 | 403, _)) => refused = true,
             Err(ureq::Error::Status(404, _)) => last = 404,
@@ -167,7 +189,7 @@ fn first_ok(d: &Def, urls: &[String], headers: &[(&str, String)]) -> Result<Valu
 }
 
 fn fetch(d: &Def) -> Result<Option<ProviderUsage>, Fail> {
-    let k = if d.needs_key { key(d.id).ok_or(Fail::NoKey)? } else { String::new() };
+    let k = if d.needs_key { key(d.id).or_else(|| fallback_key(d.id)).ok_or(Fail::NoKey)? } else { String::new() };
     let bearer = vec![("Authorization", format!("Bearer {k}")), ("Accept", "application/json".into())];
     let urls = |hosts: &[&str], paths: &[&str]| -> Vec<String> {
         hosts.iter().flat_map(|h| paths.iter().map(move |p| format!("{h}{p}"))).collect()
@@ -175,6 +197,20 @@ fn fetch(d: &Def) -> Result<Option<ProviderUsage>, Fail> {
     let t = now();
     match d.id {
         "cursor" => fetch_cursor(d),
+        "gemini" => fetch_gemini(d),
+        "kiro" => fetch_kiro(d),
+        "amp" => {
+            let mut h = bearer.clone();
+            h.push(("Content-Type", "application/json".into()));
+            let root = send(d, &["https://ampcode.com/api/internal?userDisplayBalanceInfo".into()], &h,
+                            Some(&json!({"method": "userDisplayBalanceInfo", "params": {}})))?;
+            if root.get("ok").and_then(|v| v.as_bool()) == Some(false) {
+                let auth = root.get("error").and_then(|e| e.get("code")).and_then(|c| c.as_str()) == Some("auth-required");
+                return Err(if auth { Fail::BadKey } else { Fail::Format })
+            }
+            let text = root.get("result").and_then(|r| r.get("displayText")).and_then(|v| v.as_str()).ok_or(Fail::Format)?;
+            Ok(parse_amp(text, t))
+        }
         "zai" => Ok(parse_zai(&first_ok(d, &urls(&["https://api.z.ai", "https://open.bigmodel.cn"], &["/api/monitor/usage/quota/limit"]), &bearer)?, t)),
         "minimax" => {
             let root = first_ok(d, &urls(&["https://api.minimax.io", "https://api.minimaxi.com"],
@@ -233,6 +269,69 @@ fn fetch_cursor(d: &Def) -> Result<Option<ProviderUsage>, Fail> {
     Ok(parse_cursor(&root, now()))
 }
 
+// ---------- Gemini CLI ----------
+
+/// Login do Gemini CLI (~/.gemini/oauth_creds.json). O token vale ~1h e quem renova é o próprio CLI:
+/// o TokenBar não usa o refresh token, só relê o arquivo (vencido = fica o último número bom).
+fn fetch_gemini(d: &Def) -> Result<Option<ProviderUsage>, Fail> {
+    let creds: Value = fs::read_to_string(home().join(".gemini").join("oauth_creds.json")).ok()
+        .and_then(|t| serde_json::from_str(&t).ok()).ok_or(Fail::NoLogin)?;
+    let token = creds.get("access_token").and_then(|v| v.as_str()).filter(|t| !t.is_empty()).ok_or(Fail::NoLogin)?;
+    if num(creds.get("expiry_date")).map(|e| e / 1000.0 < now() + 60.0).unwrap_or(false) { return Err(Fail::Expired) }
+    let h = [("Authorization", format!("Bearer {token}")), ("Content-Type", "application/json".into()), ("Accept", "application/json".into())];
+    let base = "https://cloudcode-pa.googleapis.com/v1internal:";
+    let load = send(d, &[format!("{base}loadCodeAssist")], &h, Some(&json!({"metadata": {"ideType": "GEMINI_CLI", "pluginType": "GEMINI"}})))?;
+    // Conta pessoal: o Google responde 200 sem `currentTier` e marca este cliente como não suportado.
+    let unsupported = load.get("ineligibleTiers").and_then(|v| v.as_array())
+        .map(|a| a.iter().any(|e| e.get("reasonCode").and_then(|r| r.as_str()) == Some("UNSUPPORTED_CLIENT"))).unwrap_or(false);
+    if load.get("currentTier").is_none() && unsupported { return Err(Fail::Unsupported) }
+    let cp = load.get("cloudaicompanionProject");
+    let project = cp.and_then(|v| v.as_str()).or_else(|| cp?.get("id")?.as_str());
+    let body = project.map(|p| json!({"project": p})).unwrap_or_else(|| json!({}));
+    match send(d, &[format!("{base}retrieveUserQuota")], &h, Some(&body)) {
+        Ok(q) => Ok(parse_gemini(&q, now())),
+        Err(Fail::Expired) => Err(Fail::Unsupported),   // 403 SUBSCRIPTION_REQUIRED
+        Err(e) => Err(e),
+    }
+}
+
+// ---------- Kiro ----------
+
+/// Banco do kiro-cli, só leitura (quem renova o token é o CLI). Mac: Application Support; Linux: ~/.local/share.
+fn kiro_db() -> Option<std::path::PathBuf> { Some(dirs::data_local_dir()?.join("kiro-cli").join("data.sqlite3")) }
+
+/// `GetUsageLimits` da AWS na região do perfil (us-east-1 ou eu-central-1).
+fn fetch_kiro(d: &Def) -> Result<Option<ProviderUsage>, Fail> {
+    use crate::collector::sqlite_table_value;
+    let db = kiro_db().filter(|p| p.is_file()).ok_or(Fail::NoLogin)?;
+    let field = |table: &str, key: &str, f: &str| -> Option<String> {
+        let v: Value = serde_json::from_str(&sqlite_table_value(&db, table, key, true)?).ok()?;
+        v.get(f)?.as_str().map(String::from)
+    };
+    let token = field("auth_kv", "kirocli:odic:token", "access_token").ok_or(Fail::NoLogin)?;
+    let arn = field("state", "api.codewhisperer.profile", "arn").ok_or(Fail::NoLogin)?;
+    let url = match arn.split(':').nth(3) {
+        Some("us-east-1") => "https://codewhisperer.us-east-1.amazonaws.com/",
+        Some("eu-central-1") => "https://q.eu-central-1.amazonaws.com/",
+        _ => return Err(Fail::Format),
+    };
+    let h = [("Authorization", format!("Bearer {token}")), ("Content-Type", "application/x-amz-json-1.0".into()),
+             ("X-Amz-Target", "AmazonCodeWhispererService.GetUsageLimits".into())];
+    Ok(parse_kiro(&send(d, &[url.into()], &h, Some(&json!({"profileArn": arn})))?, now()))
+}
+
+/// Chave guardada pelo próprio programa: o Droid em ~/.factory/.env, o Amp CLI em ~/.local/share/amp/secrets.json.
+fn fallback_key(id: &str) -> Option<String> {
+    match id {
+        "factory" => factory_env_key(),
+        "amp" => {
+            let v: Value = serde_json::from_str(&fs::read_to_string(home().join(".local").join("share").join("amp").join("secrets.json")).ok()?).ok()?;
+            v.get("apiKey@https://ampcode.com/")?.as_str().filter(|s| !s.is_empty()).map(String::from)
+        }
+        _ => None,
+    }
+}
+
 // ---------- leitura das respostas ----------
 
 fn label(minutes: Option<i64>) -> String {
@@ -272,6 +371,96 @@ fn parse_cursor(root: &Value, t: f64) -> Option<ProviderUsage> {
         .or_else(|| [plan, ind.and_then(|i| i.get("overall")), root.get("teamUsage").and_then(|x| x.get("pooled"))].into_iter()
             .find_map(|p| { let (u, l) = (num(p?.get("used"))?, num(p?.get("limit"))?); if l > 0.0 { Some(u / l * 100.0) } else { None } }))?;
     provider("cursor", vec![win("month", "1M".into(), pct, iso(root.get("billingCycleEnd")), None)], t)
+}
+
+/// `buckets[]` por modelo com `remainingFraction` (0–1): vale o menor de cada família. Pro primeiro, depois Flash.
+fn parse_gemini(root: &Value, t: f64) -> Option<ProviderUsage> {
+    let mut worst: HashMap<&str, (f64, Option<f64>)> = HashMap::new();
+    for b in root.get("buckets")?.as_array()? {
+        let (Some(model), Some(f)) = (b.get("modelId").and_then(|v| v.as_str()), num(b.get("remainingFraction"))) else { continue };
+        let m = model.to_lowercase();
+        let family = if m.contains("flash-lite") { "lite" } else if m.contains("flash") { "flash" } else if m.contains("pro") { "pro" } else { continue };
+        let reset = iso(b.get("resetTime"));
+        match worst.get(family).copied() {
+            Some((wf, wr)) if wf <= f => { if wr.is_none() { worst.insert(family, (wf, reset)); } }
+            prev => { worst.insert(family, (f, reset.or(prev.and_then(|p| p.1)))); }
+        }
+    }
+    let windows = [("pro", "PRO"), ("flash", "FL"), ("lite", "LT")].iter().filter_map(|(k, l)| {
+        let (f, reset) = worst.get(k)?;
+        Some(win(k, (*l).into(), ((1.0 - f) * 100.0).clamp(0.0, 100.0), *reset, Some(1440)))
+    }).collect();
+    provider("gemini", windows, t)
+}
+
+/// `usageBreakdownList[]` do tipo CREDIT. O uso inclui o excedente: o plano é `uso − excedente`.
+fn parse_kiro(root: &Value, t: f64) -> Option<ProviderUsage> {
+    let c = root.get("usageBreakdownList")?.as_array()?.iter().find(|c| c.get("resourceType").and_then(|v| v.as_str()) == Some("CREDIT"))?;
+    let limit = num(c.get("usageLimitWithPrecision")).filter(|l| *l > 0.0)?;
+    let used = (num(c.get("currentUsageWithPrecision"))? - num(c.get("currentOveragesWithPrecision")).unwrap_or(0.0)).max(0.0);
+    let reset = num(c.get("nextDateReset")).or_else(|| num(root.get("nextDateReset"))).map(epoch);
+    provider("kiro", vec![win("month", "1M".into(), used / limit * 100.0, reset, None)], t)
+}
+
+/// O texto que o `amp usage` imprime. Plano pago: "Amp X Tier: agent usage $R of $L remaining … resets upon renewal in N days".
+/// Grátis: "Amp Free: $R/$L remaining" ou "Amp Free: P% remaining today (resets daily)" (zera às 20h de Nova York).
+fn parse_amp(raw: &str, t: f64) -> Option<ProviderUsage> {
+    let text = raw.replace("**", "").replace(',', "");
+    let nums_after = |line: &str, from: &str| -> Vec<f64> {
+        let rest = &line[line.find(from).map(|i| i + from.len()).unwrap_or(line.len())..];
+        rest.split(|c: char| !(c.is_ascii_digit() || c == '.')).filter_map(|p| p.trim_matches('.').parse().ok()).collect()
+    };
+    let mut windows = vec![];
+    for line in text.lines().map(str::trim) {
+        let low = line.to_lowercase();
+        if low.starts_with("amp ") && low.contains(" tier:") && low.contains("agent usage $") && low.contains("resets upon renewal in") {
+            let v = nums_after(&low, "agent usage");
+            let n = nums_after(&low, "resets upon renewal in");
+            if let (Some(&left), Some(&limit), Some(&count)) = (v.first(), v.get(1), n.first()) {
+                if limit > 0.0 {
+                    let after = &low[low.find("resets upon renewal in").unwrap()..];
+                    let days = if after.contains("month") { count * 30.0 } else { count };
+                    windows.push(win("tier", "1M".into(), (limit - left).max(0.0) / limit * 100.0, Some(t + days * 86400.0), None));
+                }
+            }
+        } else if low.starts_with("amp free:") {
+            let v = nums_after(&low, "amp free:");
+            let Some(&first) = v.first() else { continue };
+            if low.contains("% remaining") {
+                windows.push(win("free", "1d".into(), 100.0 - first.clamp(0.0, 100.0), Some(next_new_york_8pm(t)), Some(1440)));
+            } else if let Some(&limit) = v.get(1).filter(|l| **l > 0.0) {
+                windows.push(win("free", "$".into(), (limit - first).max(0.0) / limit * 100.0, None, None));
+            }
+        }
+    }
+    provider("amp", windows, t)
+}
+
+/// 20h em Nova York (horário de verão do 2º domingo de março ao 1º domingo de novembro, às 2h locais).
+fn next_new_york_8pm(t: f64) -> f64 {
+    fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
+        let y = if m <= 2 { y - 1 } else { y };
+        let era = y.div_euclid(400);
+        let yoe = y - era * 400;
+        let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + d - 1;
+        era * 146097 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719468
+    }
+    fn year_of(day: i64) -> i64 { let mut y = 1970 + day / 366; while days_from_civil(y + 1, 1, 1) <= day { y += 1 } y }
+    // n-ésimo domingo do mês, em dias desde 1970 (1970-01-01 foi quinta).
+    let sunday = |y: i64, m: i64, n: i64| { let first = days_from_civil(y, m, 1); first + (3 - first).rem_euclid(7) + 7 * (n - 1) };
+    let offset_at = |utc: f64| -> f64 {
+        let y = year_of((utc / 86400.0).floor() as i64);
+        let start = (sunday(y, 3, 2) * 86400 + 7 * 3600) as f64;   // 2h EST = 7h UTC
+        let end = (sunday(y, 11, 1) * 86400 + 6 * 3600) as f64;    // 2h EDT = 6h UTC
+        if utc >= start && utc < end { -4.0 * 3600.0 } else { -5.0 * 3600.0 }
+    };
+    let local_day = ((t + offset_at(t)) / 86400.0).floor();
+    for add in 0..3 {
+        let guess = (local_day + add as f64) * 86400.0 + 20.0 * 3600.0;   // 20h local, em "UTC local"
+        let utc = guess - offset_at(guess - offset_at(guess));
+        if utc > t { return utc }
+    }
+    t + 86400.0
 }
 
 /// `data.limits[]`: TOKENS_LIMIT/CREDIT_LIMIT (TIME_LIMIT é a cota de MCP, fica de fora).
@@ -468,6 +657,32 @@ mod tests {
         assert_eq!(ws(parse_openrouter_key(&json!({"data": {"limit": 20, "limit_remaining": 15, "limit_reset": "monthly"}}), 0.0)), vec![("1M".into(), 25.0, None)]);
         assert!(parse_openrouter_key(&json!({"data": {"limit": null, "usage": 5}}), 0.0).is_none());
         assert_eq!(ws(parse_openrouter_credits(&json!({"data": {"total_credits": 50, "total_usage": 12.5}}), 0.0)), vec![("$".into(), 25.0, None)]);
+    }
+
+    #[test]
+    fn gemini() {
+        let v = json!({"buckets": [{"modelId": "gemini-2.5-pro", "remainingFraction": 0.6, "resetTime": "2026-10-17T07:00:00Z"},
+            {"modelId": "gemini-2.5-pro-preview", "remainingFraction": 0.4}, {"modelId": "gemini-2.5-flash", "remainingFraction": 0.9},
+            {"modelId": "gemini-2.5-flash-lite", "remainingFraction": 1}]});
+        assert_eq!(ws(parse_gemini(&v, 0.0)), vec![("PRO".into(), 60.0, Some(1792220400.0)), ("FL".into(), 10.0, None)]);
+    }
+
+    #[test]
+    fn kiro() {
+        let v = json!({"usageBreakdownList": [{"resourceType": "CREDIT", "currentUsageWithPrecision": 60, "usageLimitWithPrecision": 50,
+            "currentOveragesWithPrecision": 20, "nextDateReset": 1793491200}]});
+        assert_eq!(ws(parse_kiro(&v, 0.0)), vec![("1M".into(), 80.0, Some(1793491200.0))]);
+    }
+
+    #[test]
+    fn amp() {
+        let t = 1792179366.0;   // 16/10/2026 15:36 em Nova York (EDT)
+        let a = "Signed in as a@b.c\nAmp Megawatt Tier: agent usage $18.57 of $20 remaining (93%), resets upon renewal in 27 days\n**Amp Free:** 61% remaining today (resets daily) - https://ampcode.com/settings";
+        assert_eq!(ws(parse_amp(a, t)), vec![("1M".into(), 7.1, Some(t + 27.0 * 86400.0)), ("1d".into(), 39.0, Some(1792195200.0))]);
+        assert_eq!(ws(parse_amp("Amp Free: $6/$10 remaining (replenishes +$0.5/hour)", t)), vec![("$".into(), 40.0, None)]);
+        assert_eq!(ws(parse_amp("Amp Example Tier: agent usage $900 of $1,000 remaining - resets upon renewal in 1 month", t))[0].1, 10.0);
+        // inverno (EST): 15/01/2026 12:00 UTC → 20h EST = 01:00 UTC do dia 16
+        assert_eq!(next_new_york_8pm(1768478400.0), 1768525200.0);
     }
 
     #[test]

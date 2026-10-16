@@ -163,18 +163,18 @@ enum Collector {
 
     /// Abre o SQLite como imutável (sem trava, sem gravar nada) e lê um valor do `ItemTable`.
     /// `live`: só leitura, mas enxergando o WAL (valor que o editor acabou de trocar, como um token renovado).
-    static func sqliteValue(_ file: URL, key: String, live: Bool = false) -> String? {
-        if live, let v = sqliteValue(file, key: key, query: "?mode=ro") { return v }
-        return sqliteValue(file, key: key, query: "?mode=ro&immutable=1")
+    static func sqliteValue(_ file: URL, key: String, table: String = "ItemTable", live: Bool = false) -> String? {
+        if live, let v = sqliteValue(file, key: key, table: table, query: "?mode=ro") { return v }
+        return sqliteValue(file, key: key, table: table, query: "?mode=ro&immutable=1")
     }
 
-    private static func sqliteValue(_ file: URL, key: String, query: String) -> String? {
+    private static func sqliteValue(_ file: URL, key: String, table: String, query: String) -> String? {
         var db: OpaquePointer?
         let uri = file.absoluteString + query
         defer { sqlite3_close(db) }
         guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK else { return nil }
         var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, "SELECT value FROM ItemTable WHERE key = ?1", -1, &stmt, nil) == SQLITE_OK else { return nil }
+        guard sqlite3_prepare_v2(db, "SELECT value FROM \(table) WHERE key = ?1", -1, &stmt, nil) == SQLITE_OK else { return nil }
         defer { sqlite3_finalize(stmt) }
         let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
         sqlite3_bind_text(stmt, 1, key, -1, transient)

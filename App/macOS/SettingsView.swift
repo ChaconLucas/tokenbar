@@ -301,14 +301,14 @@ struct SettingsView: View {
         d.formatted(Date.RelativeFormatStyle(presentation: .named, locale: Lang.locale)).uppercased()
     }
 
-    /// Cursor: liga e desliga. As outras: botão CHAVE abre o campo; com chave, mostra o estado e REMOVER.
+    /// Cursor, Gemini, Kiro: liga e desliga. As outras: botão CHAVE abre o campo; com chave, mostra o estado e REMOVER.
     @ViewBuilder
     private func connectorRow(_ c: Connector) -> some View {
         VStack(spacing: 0) {
             LEDRow(label: c.title, info: c.info) {
                 if !c.needsKey {
-                    if model.cursorOn { status(c.id) }
-                    LEDSwitch(isOn: $model.cursorOn)
+                    if model.isOn(c) { status(c.id) }
+                    LEDSwitch(isOn: Binding(get: { model.isOn(c) }, set: { model.setLocal(c, $0) }))
                 } else if model.isOn(c) {
                     status(c.id)
                     DotKey(text: Lang.t("REMOVER"), on: false, color: .white, dot: 1.3) { model.setKey(c, nil) }
@@ -321,7 +321,7 @@ struct SettingsView: View {
             }
             if editingKey == c.id, !model.isOn(c) {
                 HStack(spacing: 8) {
-                    SecureField("", text: $keyText, prompt: Text(c == .factory ? Lang.t("vazio = usar ~/.factory/.env") : Lang.t("cole a chave de API")).foregroundStyle(.white.opacity(0.3)))
+                    SecureField("", text: $keyText, prompt: Text(c == .factory ? Lang.t("vazio = usar ~/.factory/.env") : c == .amp ? Lang.t("vazio = usar o login do Amp CLI") : Lang.t("cole a chave de API")).foregroundStyle(.white.opacity(0.3)))
                         .textFieldStyle(.plain)
                         .font(.system(size: 12, design: .monospaced))
                         .padding(10)

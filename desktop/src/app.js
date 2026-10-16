@@ -255,7 +255,7 @@ function renderConnectors(list) {
         const input = document.createElement("input");
         input.type = "password";
         input.autocomplete = "off";
-        input.placeholder = c.id === "factory" ? t("vazio = usar ~/.factory/.env") : t("cole a chave de API");
+        input.placeholder = c.id === "factory" ? t("vazio = usar ~/.factory/.env") : c.id === "amp" ? t("vazio = usar o login do Amp CLI") : t("cole a chave de API");
         const save = document.createElement("button");
         save.textContent = t("SALVAR");
         save.onclick = () => set(true, input.value);

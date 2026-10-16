@@ -421,16 +421,18 @@ fn sqlite_uri(path: &Path, live: bool) -> String {
 }
 
 /// `live`: só leitura, mas enxergando o WAL (valor que o editor acabou de trocar, como um token renovado).
-pub fn sqlite_value(path: &Path, key: &str, live: bool) -> Option<String> {
-    if live { if let Some(v) = sqlite_read(path, key, true) { return Some(v) } }
-    sqlite_read(path, key, false)
+pub fn sqlite_value(path: &Path, key: &str, live: bool) -> Option<String> { sqlite_table_value(path, "ItemTable", key, live) }
+
+pub fn sqlite_table_value(path: &Path, table: &str, key: &str, live: bool) -> Option<String> {
+    if live { if let Some(v) = sqlite_read(path, table, key, true) { return Some(v) } }
+    sqlite_read(path, table, key, false)
 }
 
-fn sqlite_read(path: &Path, key: &str, live: bool) -> Option<String> {
+fn sqlite_read(path: &Path, table: &str, key: &str, live: bool) -> Option<String> {
     use rusqlite::{types::ValueRef, Connection, OpenFlags};
     let db = Connection::open_with_flags(sqlite_uri(path, live),
         OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_URI | OpenFlags::SQLITE_OPEN_NO_MUTEX).ok()?;
-    db.query_row("SELECT value FROM ItemTable WHERE key = ?1", [key], |r| {
+    db.query_row(&format!("SELECT value FROM {table} WHERE key = ?1"), [key], |r| {
         Ok(match r.get_ref(0)? {
             // Alguns editores gravam em UTF-16LE (um zero a cada dois bytes).
             ValueRef::Blob(t) if t.len() >= 2 && t.len() % 2 == 0 && t[1] == 0 =>
