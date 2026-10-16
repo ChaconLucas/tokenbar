@@ -98,9 +98,10 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H e 7D juntos">
 <img src="docs/mac-device.png" width="49%" alt="TokenBar no Mac">
 </p>
+<p align="center"><img src="docs/iphone-real-home.png" width="60%" alt="iPhone real: Dynamic Island e o widget da tela inicial"></p>
 <p align="center">
 <img src="docs/iphone-lockscreen.png" width="30%" alt="Atividade ao Vivo na tela bloqueada do iPhone">
-<img src="docs/iphone-island.png" width="66%" alt="Dynamic Island: compacta e aberta">
+<img src="docs/iphone-real-island.png" width="66%" alt="iPhone real: Dynamic Island aberta">
 </p>
 <p align="center"><img src="docs/mac-notch.png" width="640" alt="A ilha no notch do Mac, aberta"></p>
 <p align="center">

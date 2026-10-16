@@ -98,9 +98,10 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H and 7D together">
 <img src="docs/mac-device.png" width="49%" alt="TokenBar on the Mac">
 </p>
+<p align="center"><img src="docs/iphone-real-home.png" width="60%" alt="Real iPhone: Dynamic Island and the home-screen widget"></p>
 <p align="center">
 <img src="docs/iphone-lockscreen.png" width="30%" alt="Live Activity on the iPhone Lock Screen">
-<img src="docs/iphone-island.png" width="66%" alt="Dynamic Island: compact and expanded">
+<img src="docs/iphone-real-island.png" width="66%" alt="Real iPhone: Dynamic Island expanded">
 </p>
 <p align="center"><img src="docs/mac-notch.png" width="640" alt="The notch island on the Mac, open"></p>
 <p align="center">
