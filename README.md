@@ -11,6 +11,9 @@ on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch 
 
 **English** · [Português](README.pt-BR.md)
 
+
+**Website & API docs:** https://chaconlucas.github.io/tokenbar/
+
 ---
 
 ## Install

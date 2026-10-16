@@ -11,6 +11,9 @@ num display de LED em todo lugar: Mac, Windows, Linux, iPhone, Android, Apple Wa
 
 [English](README.md) · **Português**
 
+
+**Site e documentação da API:** https://chaconlucas.github.io/tokenbar/
+
 ---
 
 ## Instalar
