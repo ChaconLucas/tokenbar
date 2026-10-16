@@ -1,0 +1,16 @@
+{
+  "name": "tokenbar",
+  "description": "TokenBar: AI usage limits (Claude Code, Codex, Copilot, Windsurf, any AI) inside Claude Code",
+  "owner": {
+    "name": "Lucas Chacon",
+    "url": "https://github.com/ChaconLucas"
+  },
+  "plugins": [
+    {
+      "name": "tokenbar",
+      "source": "./plugins/claude-code",
+      "description": "MCP tools (get_usage, check_budget, time_until_reset), a /tokenbar command and a warning when a usage window passes 80%",
+      "category": "productivity"
+    }
+  ]
+}

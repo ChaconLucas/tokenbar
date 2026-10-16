@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "tokenbar": {
+      "command": "node",
+      "args": ["./server/mcp.mjs"],
+      "cwd": "."
+    }
+  }
+}

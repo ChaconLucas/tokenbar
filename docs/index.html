@@ -42,6 +42,18 @@
   main th { background:var(--panel); }
   main blockquote { margin:0; padding:4px 16px; border-left:3px solid var(--claude); color:var(--dim); }
   main img { max-width:100%; }
+  .ai { max-width:1100px; margin:auto; padding:8px 20px 56px; }
+  .ai h2 { font-size:26px; margin:0 0 6px; letter-spacing:-.5px; }
+  .ai > p { color:var(--dim); margin:0 0 18px; max-width:760px; }
+  .ai-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+  .ai-btn { display:flex; flex-direction:column; gap:2px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; color:var(--text); transition:border-color .15s, transform .15s; }
+  .ai-btn:hover { text-decoration:none; border-color:var(--dim); transform:translateY(-1px); }
+  .ai-btn b { font-weight:600; font-size:15px; }
+  .ai-btn span { color:var(--dim); font-size:12px; font-family:'JetBrains Mono',monospace; }
+  .ai-btn.one { border-color:transparent; background:linear-gradient(var(--panel),var(--panel)) padding-box, linear-gradient(90deg,var(--claude),var(--codex)) border-box; }
+  .ai-btn.one span { color:var(--cyan); }
+  .ai .cmd { margin-top:16px; }
+  @media (prefers-reduced-motion:reduce) { .ai-btn { transition:none; } .ai-btn:hover { transform:none; } }
   .lang { display:inline-flex; border:1px solid var(--line); border-radius:99px; overflow:hidden; margin-left:4px; }
   .lang button { background:none; border:0; color:var(--dim); font:12px 'JetBrains Mono',monospace; padding:3px 9px; cursor:pointer; }
   .lang button.on { background:var(--claude); color:#fff; }
@@ -81,6 +93,31 @@
     <div class="card"><h3>WEBHOOKS</h3><p data-t="c4.p">80%, 95% and reset events to Slack, Discord, Home Assistant or any URL.</p></div>
     <div class="card"><h3 data-t="c5.t">ANY AI</h3><p data-t="c5.p">Write a small JSON file and it shows up everywhere — phone, watch and widgets included.</p></div>
   </div>
+  <section class="ai" id="install">
+    <h2 data-t="ai.t">Install in your AI</h2>
+    <p data-t="ai.p">The MCP server lets your AI check its own limit before a long task. Install the CLI first (command above), then click your tool. Cursor and VS Code install in one click; for the others, the installer writes the config for you with <code>--add-to</code>.</p>
+    <div class="ai-grid">
+      <a class="ai-btn one" href="cursor://anysphere.cursor-deeplink/mcp/install?name=tokenbar&amp;config=eyJjb21tYW5kIjoibm9kZSIsImFyZ3MiOlsiJHt1c2VySG9tZX0vLnRva2VuYmFyL2NsaS9tY3AubWpzIl19"><b>Cursor</b><span data-t="ai.one">one click ↗</span></a>
+      <a class="ai-btn one" href="vscode:mcp/install?%7B%22name%22%3A%22tokenbar%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22%24%7BuserHome%7D%2F.tokenbar%2Fcli%2Fmcp.mjs%22%5D%7D"><b>VS Code</b><span data-t="ai.one">one click ↗</span></a>
+      <a class="ai-btn one" href="vscode-insiders:mcp/install?%7B%22name%22%3A%22tokenbar%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22%24%7BuserHome%7D%2F.tokenbar%2Fcli%2Fmcp.mjs%22%5D%7D"><b>VS Code Insiders</b><span data-t="ai.one">one click ↗</span></a>
+      <a class="ai-btn one" href="https://github.com/ChaconLucas/tokenbar/releases/latest"><b>Claude Desktop</b><span data-t="ai.mcpb">TokenBar.mcpb ↗</span></a>
+      <a class="ai-btn" href="#/api#claude-code" data-anchor="claude-code"><b>Claude Code</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#codex-codexconfigtoml" data-anchor="codex-codexconfigtoml"><b>Codex</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#windsurf-devin-desktop" data-anchor="windsurf-devin-desktop"><b>Windsurf / Devin</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#gemini-cli-and-antigravity" data-anchor="gemini-cli-and-antigravity" data-anchor-pt="gemini-cli-e-antigravity"><b>Gemini CLI</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#gemini-cli-and-antigravity" data-anchor="gemini-cli-and-antigravity" data-anchor-pt="gemini-cli-e-antigravity"><b>Antigravity</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#cline" data-anchor="cline"><b>Cline</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#opencode" data-anchor="opencode"><b>OpenCode</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#continue" data-anchor="continue"><b>Continue</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#goose" data-anchor="goose"><b>Goose</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#zed" data-anchor="zed"><b>Zed</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#kiro" data-anchor="kiro"><b>Kiro</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#amp" data-anchor="amp"><b>Amp</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#jetbrains-ai-assistant-and-warp" data-anchor="jetbrains-ai-assistant-and-warp" data-anchor-pt="jetbrains-ai-assistant-e-warp"><b>JetBrains AI</b><span data-t="ai.setup">setup →</span></a>
+      <a class="ai-btn" href="#/api#jetbrains-ai-assistant-and-warp" data-anchor="jetbrains-ai-assistant-and-warp" data-anchor-pt="jetbrains-ai-assistant-e-warp"><b>Warp</b><span data-t="ai.setup">setup →</span></a>
+    </div>
+    <div class="cmd"><small data-t="ai.cmd">Write the config for any tool (Mac / Linux)</small>curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh | sh -s -- --add-to cursor,vscode,zed</div>
+  </section>
 </section>
 
 <main id="doc" hidden><p class="loading">loading…</p></main>
@@ -105,6 +142,10 @@
     'c3.p': '<code>tokenbar</code>, <code>--json</code>, <code>--prompt</code> para o prompt do terminal, <code>get</code> para scripts.',
     'c4.p': 'Avisos de 80%, 95% e reset no Slack, Discord, Home Assistant ou qualquer URL.',
     'c5.t': 'QUALQUER IA', 'c5.p': 'Grave um JSON pequeno e ela aparece em tudo — celular, relógio e widgets também.',
+    'ai.t': 'Instalar na sua IA',
+    'ai.p': 'O servidor MCP deixa a sua IA conferir o próprio limite antes de uma tarefa longa. Instale a CLI antes (comando acima) e clique na sua ferramenta. O Cursor e o VS Code instalam com um clique; nas outras, o instalador escreve a configuração por você com <code>--add-to</code>.',
+    'ai.one': 'um clique ↗', 'ai.setup': 'como instalar →', 'ai.mcpb': 'TokenBar.mcpb ↗',
+    'ai.cmd': 'Escrever a configuração de qualquer ferramenta (Mac / Linux)',
     'foot': 'Sem vínculo com Anthropic, OpenAI, GitHub ou Codeium.',
   };
   const EN = {};
@@ -115,6 +156,8 @@
     document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
     document.querySelectorAll('[data-t]').forEach(e => e.innerHTML = (lang === 'pt' ? PT : EN)[e.dataset.t] ?? EN[e.dataset.t]);
     document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+    // Os títulos da API mudam com o idioma, e as âncoras junto.
+    document.querySelectorAll('[data-anchor]').forEach(a => a.href = '#/api#' + ((lang === 'pt' && a.dataset.anchorPt) || a.dataset.anchor));
   }
   document.querySelectorAll('.lang button').forEach(b => b.onclick = () => {
     lang = b.dataset.lang; try { localStorage.setItem('lang', lang); } catch {}

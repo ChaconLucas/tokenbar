@@ -34,7 +34,8 @@ num display de LED em todo lugar: Mac, Windows, Linux, iPhone, Android, Apple Wa
 | **Extras** | VS Code | procure **TokenBar** em Extensões ([Marketplace](https://marketplace.visualstudio.com/items?itemName=chaconlucas.tokenbar), id `chaconlucas.tokenbar`) |
 | | Raycast | pelo código: `cd raycast && npm install && npm run dev` ([detalhes](raycast/README.md)) |
 | | Stream Deck | `TokenBar-StreamDeck.streamDeckPlugin` nas Releases, clique duas vezes ([detalhes](streamdeck/README.md)) |
-| | CLI + MCP | `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh \| sh` (Node 18+). Claude Desktop: `TokenBar.mcpb` em Releases, dois cliques |
+| | Plugins | Claude Code: `claude plugin marketplace add ChaconLucas/tokenbar && claude plugin install tokenbar@tokenbar`. Codex e Gemini CLI: [Plugins](docs/api.pt-BR.md#plugins) (servidor MCP, `/tokenbar`, aviso em 80%) |
+| | CLI + MCP | `curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh \| sh` (Node 18+). Claude Desktop: `TokenBar.mcpb` em Releases, dois cliques. Cursor, VS Code, Windsurf, Zed, Gemini, Goose…: [Instalar na sua IA](docs/api.pt-BR.md#instalar-na-sua-ia) (um clique, ou `--add-to <ferramenta>`) |
 
 **Atualizações:** Mac, Windows e Android mostram um botão de atualizar dentro do app. O iPhone (e o app do relógio) atualiza rodando o `install-ios.sh` de novo, ou sozinho com `--auto`. O VS Code atualiza pelo Marketplace.
 

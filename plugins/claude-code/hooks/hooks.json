@@ -1,0 +1,17 @@
+{
+  "description": "TokenBar: one-line warning when a Claude Code usage window reaches 80% (at most every 30 min)",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/budget.mjs"],
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

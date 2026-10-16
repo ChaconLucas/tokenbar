@@ -1,0 +1,29 @@
+{
+  "name": "tokenbar",
+  "version": "0.5.3",
+  "description": "AI usage limits (Codex, Claude Code, Copilot, Windsurf, any AI) inside Codex: MCP tools and a skill that checks the budget before long tasks.",
+  "author": {
+    "name": "Lucas Chacon",
+    "url": "https://github.com/ChaconLucas"
+  },
+  "homepage": "https://github.com/ChaconLucas/tokenbar/blob/main/docs/api.md#plugins",
+  "repository": "https://github.com/ChaconLucas/tokenbar",
+  "license": "MIT",
+  "keywords": ["usage", "rate-limit", "limits", "mcp", "tokenbar"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "TokenBar",
+    "shortDescription": "Your AI usage limits (5h / 7d) inside Codex",
+    "longDescription": "Reads the usage limits shown by the TokenBar app (or Codex and Claude Code's own files when the app is not running) and lets Codex check its budget before long or expensive tasks. Everything stays on your machine.",
+    "developerName": "Lucas Chacon",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "websiteURL": "https://github.com/ChaconLucas/tokenbar",
+    "defaultPrompt": [
+      "How much of my Codex usage is left?",
+      "When does my 5h limit reset?"
+    ],
+    "brandColor": "#9E5CFF"
+  }
+}

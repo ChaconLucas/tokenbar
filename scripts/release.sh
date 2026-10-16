@@ -37,6 +37,9 @@ sed -i '' "1,/\"Version\"/s/\"Version\": \"[^\"]*\"/\"Version\": \"$V.0\"/" stre
 
 mkdir -p "$OUT"
 
+say "Plugins do Claude Code, Codex e Gemini CLI (cópias do servidor em plugins/*/server)"
+sh plugins/build.sh "$OUT" >/dev/null
+
 say "Mac"
 xcodegen generate -q
 xcodebuild -project TokenBar.xcodeproj -scheme TokenBarMac -configuration Release -derivedDataPath build/release-mac build -quiet
@@ -93,7 +96,8 @@ NOTES="$NOTES
 gh release create "v$V" --title "TokenBar $V" --notes "$NOTES" \
   "$OUT/TokenBar-macOS.zip" "$OUT/TokenBar-Android.apk" "$OUT/TokenBar-WearOS.apk" \
   "$OUT/TokenBar-Windows-setup.exe" "$OUT/TokenBar-Windows-setup.exe.sig" "$OUT/latest.json" \
-  "$OUT/TokenBar-VSCode.vsix" "$OUT/TokenBar-StreamDeck.streamDeckPlugin" "$OUT/TokenBar.mcpb"
+  "$OUT/TokenBar-VSCode.vsix" "$OUT/TokenBar-StreamDeck.streamDeckPlugin" "$OUT/TokenBar.mcpb" \
+  "$OUT/darwin.tokenbar-gemini.tar.gz" "$OUT/linux.tokenbar-gemini.tar.gz" "$OUT/win32.tokenbar-gemini.tar.gz"
 
 say "Homebrew"
 TAP=$(brew --repository chaconlucas/tokenbar 2>/dev/null || true)

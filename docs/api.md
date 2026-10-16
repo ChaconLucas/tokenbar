@@ -35,6 +35,8 @@
 | Read usage from a script on the same computer | [Local API](#local-api) or [`tokenbar get`](#cli) |
 | Show usage in the shell prompt / tmux | [`tokenbar --prompt`](#shell-prompts) |
 | Let an AI agent check its own budget | [MCP server](#mcp-server) |
+| Add TokenBar to Cursor, VS Code, Windsurf, Zed, Gemini… | [Install in your AI](#install-in-your-ai) (one click or `--add-to`) |
+| Install TokenBar as a Claude Code, Codex or Gemini CLI plugin | [Plugins](#plugins) (MCP server, command, budget warning) |
 | Read without the app running | [CLI](#cli) (falls back to the files) or [`snapshot.json`](#snapshotjson) |
 | Be notified at 80% / 95% / reset | [Webhooks](#webhooks) |
 | Add another AI to TokenBar | [Write a provider file](#writing-add-any-ai) |
@@ -175,6 +177,7 @@ Exit codes: `0` ok, `1` usage error or empty field (e.g. no reset time), `2` no 
 
 `tokenbar-mcp` (`cli/mcp.mjs`) is a [Model Context Protocol](https://modelcontextprotocol.io) server
 over **stdio** (protocol `2025-06-18`), so AI agents can check their own limits. Same data loader as the CLI.
+To add it to Cursor, VS Code, Windsurf, Zed, Gemini, Goose and others, see [Install in your AI](#install-in-your-ai).
 
 | Tool | Arguments | Returns |
 |---|---|---|
@@ -198,6 +201,12 @@ claude mcp add tokenbar --scope user -- node ~/.tokenbar/cli/mcp.mjs
 
 ### Codex (`~/.codex/config.toml`)
 
+```sh
+codex mcp add tokenbar -- node ~/.tokenbar/cli/mcp.mjs
+```
+
+or by hand:
+
 ```toml
 [mcp_servers.tokenbar]
 command = "node"
@@ -211,7 +220,7 @@ args = ["/Users/you/.tokenbar/cli/mcp.mjs"]
 ```
 
 VS Code uses `"servers"` instead of `"mcpServers"`. Use the absolute path (no `~`). Windows:
-`"C:\\Users\\you\\.tokenbar\\cli\\mcp.mjs"`. Installed from npm instead? Use `"command": "tokenbar-mcp"`, no args.
+`"C:\\Users\\you\\.tokenbar\\cli\\mcp.mjs"`. Or `"command": "tokenbar-mcp"`, no args (the installer's shim, if the app sees `~/.local/bin` in its `PATH`).
 
 ### Example agent prompt
 
@@ -230,6 +239,259 @@ A session looks like:
 → check_budget {"provider":"claude"}
 ← OK: Claude Code 7d window is at 43% (budget 80%, 37 points left). Fine to proceed; …
 ```
+
+---
+
+## Install in your AI
+
+Every tool below runs the same stdio server, `~/.tokenbar/cli/mcp.mjs`, so install the CLI first
+([CLI](#cli); Claude Desktop is the exception: its `.mcpb` brings its own copy). Then pick one of three ways:
+
+1. **One click** (Cursor, VS Code): the buttons below.
+2. **Let the installer write the config** for you (any tool in the table), it's safe to re-run:
+
+   ```sh
+   # Mac / Linux: comma-separated, or "all" for every tool it finds on this computer
+   curl -fsSL https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.sh | sh -s -- --add-to cursor,vscode,codex
+   ```
+
+   ```powershell
+   # Windows (PowerShell)
+   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/ChaconLucas/tokenbar/main/scripts/install-cli.ps1))) -AddTo cursor,vscode,codex
+   ```
+
+   It backs up each file it changes (`<file>.tokenbar-backup-<time>`), adds only the `tokenbar` entry (your other
+   servers, settings and comments stay), never adds it twice, and skips tools that aren't installed.
+   Names: `cursor` `windsurf` `vscode` `cline` `opencode` `continue` `goose` `zed` `gemini` `antigravity` `codex`
+   `claude` `claude-desktop` `kiro` `amp` `all`.
+3. **Paste the snippet** for your tool (below).
+
+**Which command and path?** The path to `mcp.mjs` differs per user, and TokenBar isn't on npm (no `npx`).
+So: the one-click links use `${userHome}`, which Cursor and VS Code expand themselves; `--add-to` writes the
+absolute path of your `node` and of `mcp.mjs`, because desktop apps on macOS don't see your shell's `PATH`
+(Homebrew or nvm `node` is invisible to them). Terminal tools (Claude Code, Codex, Gemini, OpenCode, Amp) see your
+`PATH`, so plain `node` works there. The installer also creates the shim `tokenbar-mcp` (`~/.local/bin`, Windows
+`%USERPROFILE%\.tokenbar\bin\tokenbar-mcp.cmd`): `"command": "tokenbar-mcp"` with no args works wherever that folder
+is on the app's `PATH`. In the snippets, replace `/Users/you` with your home folder (Windows:
+`C:\\Users\\you\\.tokenbar\\cli\\mcp.mjs`). Switched Node versions or moved Node? Run `--add-to` again.
+
+| Tool | One step | Config file (user level) |
+|---|---|---|
+| Cursor | [Add to Cursor](https://cursor.com/en/install-mcp?name=tokenbar&config=eyJjb21tYW5kIjoibm9kZSIsImFyZ3MiOlsiJHt1c2VySG9tZX0vLnRva2VuYmFyL2NsaS9tY3AubWpzIl19) · `--add-to cursor` | `~/.cursor/mcp.json` |
+| VS Code (Copilot) | [Install in VS Code](https://vscode.dev/redirect/mcp/install?name=tokenbar&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22%24%7BuserHome%7D%2F.tokenbar%2Fcli%2Fmcp.mjs%22%5D%7D) · [Insiders](https://vscode.dev/redirect/mcp/install?name=tokenbar&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22%24%7BuserHome%7D%2F.tokenbar%2Fcli%2Fmcp.mjs%22%5D%7D&quality=insiders) · `--add-to vscode` | user `mcp.json` (*MCP: Open User Configuration*) |
+| Claude Code | [`claude mcp add`](#claude-code) · `--add-to claude` | managed by `claude` |
+| Claude Desktop | [`TokenBar.mcpb`](#claude-desktop-one-click) · `--add-to claude-desktop` | `claude_desktop_config.json` |
+| Codex | [`codex mcp add`](#codex-codexconfigtoml) · `--add-to codex` | `~/.codex/config.toml` |
+| Windsurf / Devin Desktop | `--add-to windsurf` | `~/.config/devin/mcp_config.json` (older: `~/.codeium/windsurf/mcp_config.json`) |
+| Cline | `--add-to cline` | `cline_mcp_settings.json` |
+| Gemini CLI | [`gemini mcp add`](#gemini-cli-and-antigravity) · `--add-to gemini` | `~/.gemini/settings.json` |
+| Antigravity | `--add-to antigravity` | `~/.gemini/config/mcp_config.json` |
+| OpenCode | `--add-to opencode` | `~/.config/opencode/opencode.json` |
+| Continue | `--add-to continue` | `~/.continue/config.yaml` |
+| Goose | `goose configure` · `--add-to goose` | `~/.config/goose/config.yaml` |
+| Zed | `--add-to zed` | `~/.config/zed/settings.json` |
+| Kiro | `--add-to kiro` | `~/.kiro/settings/mcp.json` |
+| Amp | [`amp mcp add`](#amp) · `--add-to amp` | `~/.config/amp/settings.json` |
+| JetBrains AI Assistant, Warp | [paste the JSON](#jetbrains-ai-assistant-and-warp) in the app | (managed by the app) |
+
+### Cursor (one click)
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=tokenbar&config=eyJjb21tYW5kIjoibm9kZSIsImFyZ3MiOlsiJHt1c2VySG9tZX0vLnRva2VuYmFyL2NsaS9tY3AubWpzIl19)
+
+The button opens `cursor://anysphere.cursor-deeplink/mcp/install?name=tokenbar&config=<base64>` with
+`{"command":"node","args":["${userHome}/.tokenbar/cli/mcp.mjs"]}`. By hand, in `~/.cursor/mcp.json`:
+
+```json
+{ "mcpServers": { "tokenbar": { "command": "node", "args": ["${userHome}/.tokenbar/cli/mcp.mjs"] } } }
+```
+
+### VS Code (one click)
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_TokenBar-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=tokenbar&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22%24%7BuserHome%7D%2F.tokenbar%2Fcli%2Fmcp.mjs%22%5D%7D)
+[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_TokenBar-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=tokenbar&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22%24%7BuserHome%7D%2F.tokenbar%2Fcli%2Fmcp.mjs%22%5D%7D&quality=insiders)
+
+The buttons open `vscode:mcp/install?{"name":"tokenbar","type":"stdio","command":"node","args":["${userHome}/.tokenbar/cli/mcp.mjs"]}`
+(URL-encoded; `vscode-insiders:` for Insiders). From a terminal:
+
+```sh
+code --add-mcp '{"name":"tokenbar","type":"stdio","command":"node","args":["${userHome}/.tokenbar/cli/mcp.mjs"]}'
+```
+
+By hand: *MCP: Open User Configuration* (user `mcp.json`) or `.vscode/mcp.json` in a project. VS Code uses `"servers"`:
+
+```json
+{ "servers": { "tokenbar": { "type": "stdio", "command": "node", "args": ["${userHome}/.tokenbar/cli/mcp.mjs"] } } }
+```
+
+### Claude Desktop without the .mcpb
+
+The `.mcpb` ([Claude Desktop (one click)](#claude-desktop-one-click)) is simplest. To use the CLI's copy instead:
+Settings → Developer → Edit Config (`~/Library/Application Support/Claude/claude_desktop_config.json`,
+Windows `%APPDATA%\Claude\claude_desktop_config.json`), with absolute paths (`which node` prints yours):
+
+```json
+{ "mcpServers": { "tokenbar": { "command": "/opt/homebrew/bin/node", "args": ["/Users/you/.tokenbar/cli/mcp.mjs"] } } }
+```
+
+### Windsurf (Devin Desktop)
+
+Windsurf is now Devin Desktop; there is no one-click install. `~/.config/devin/mcp_config.json`
+(Windows `%APPDATA%\devin\mcp_config.json`; older Windsurf: `~/.codeium/windsurf/mcp_config.json`):
+
+```json
+{ "mcpServers": { "tokenbar": { "command": "node", "args": ["/Users/you/.tokenbar/cli/mcp.mjs"] } } }
+```
+
+### Cline
+
+MCP Servers → Configure → *Configure MCP Servers* opens `cline_mcp_settings.json` (VS Code:
+`…/Code/User/globalStorage/saoudrizwan.claude-dev/settings/`; Cline CLI: `~/.cline/data/settings/`):
+
+```json
+{ "mcpServers": { "tokenbar": { "command": "node", "args": ["/Users/you/.tokenbar/cli/mcp.mjs"], "disabled": false, "autoApprove": [] } } }
+```
+
+### Gemini CLI and Antigravity
+
+```sh
+gemini mcp add --scope user tokenbar node /Users/you/.tokenbar/cli/mcp.mjs
+```
+
+That writes `mcpServers` in `~/.gemini/settings.json`. Antigravity (IDE and `agy` CLI) reads
+`~/.gemini/config/mcp_config.json`, same `mcpServers` shape:
+
+```json
+{ "mcpServers": { "tokenbar": { "command": "node", "args": ["/Users/you/.tokenbar/cli/mcp.mjs"] } } }
+```
+
+### OpenCode
+
+`~/.config/opencode/opencode.json` (the command and its arguments go in one array):
+
+```json
+{ "mcp": { "tokenbar": { "type": "local", "command": ["node", "/Users/you/.tokenbar/cli/mcp.mjs"], "enabled": true } } }
+```
+
+### Continue
+
+`~/.continue/config.yaml`:
+
+```yaml
+mcpServers:
+  - name: tokenbar
+    type: stdio
+    command: node
+    args:
+      - /Users/you/.tokenbar/cli/mcp.mjs
+```
+
+### Goose
+
+`goose configure` → Add Extension → Command-line Extension, command `node /Users/you/.tokenbar/cli/mcp.mjs`.
+Or `~/.config/goose/config.yaml` (Windows `%APPDATA%\Block\goose\config\config.yaml`). Goose's one-click links only
+accept `npx`/`uvx`/`docker`-style commands, so there is no TokenBar button.
+
+```yaml
+extensions:
+  tokenbar:
+    name: TokenBar
+    type: stdio
+    cmd: node
+    args:
+    - /Users/you/.tokenbar/cli/mcp.mjs
+    enabled: true
+    envs: {}
+    timeout: 300
+```
+
+### Zed
+
+`zed: open settings file` (`~/.config/zed/settings.json`, Windows `%APPDATA%\Zed\settings.json`):
+
+```json
+{ "context_servers": { "tokenbar": { "command": "node", "args": ["/Users/you/.tokenbar/cli/mcp.mjs"], "env": {} } } }
+```
+
+### Kiro
+
+`~/.kiro/settings/mcp.json` (Kiro only expands environment variables you approve, so use the absolute path):
+
+```json
+{ "mcpServers": { "tokenbar": { "command": "node", "args": ["/Users/you/.tokenbar/cli/mcp.mjs"], "disabled": false } } }
+```
+
+### Amp
+
+```sh
+amp mcp add tokenbar -- node /Users/you/.tokenbar/cli/mcp.mjs
+```
+
+Or `"amp.mcpServers": { "tokenbar": { … } }` in `~/.config/amp/settings.json`.
+
+### JetBrains AI Assistant and Warp
+
+- **JetBrains** (IntelliJ, PyCharm…): Settings → Tools → AI Assistant → Model Context Protocol (MCP) → `+` → STDIO, and
+  paste the `mcpServers` JSON above (Windsurf). Already in Claude Desktop? *Import from Claude* copies it.
+- **Warp**: Settings → Agents → MCP servers → `+ Add`, and paste the same JSON.
+
+---
+
+## Plugins
+
+Plugins bring TokenBar into an AI coding CLI with one install. Each one ships its own copy of the
+[MCP server](#mcp-server), so you don't need to run `install-cli.sh` first (Node 18+ is still required). The tools
+are the same: `get_usage`, `check_budget`, `time_until_reset`.
+
+| CLI | Install | What it adds |
+|---|---|---|
+| Claude Code | `claude plugin marketplace add ChaconLucas/tokenbar` then `claude plugin install tokenbar@tokenbar` | MCP server, `/tokenbar:tokenbar` command, `usage-budget` skill, a warning at 80% |
+| Codex | `codex plugin marketplace add ChaconLucas/tokenbar` then `codex plugin add tokenbar@tokenbar` | MCP server, `tokenbar` skill |
+| Gemini CLI | `gemini extensions install https://github.com/ChaconLucas/tokenbar` | MCP server, `/tokenbar` command, `GEMINI.md` context |
+
+Already added the MCP server by hand ([MCP server](#mcp-server) or `--add-to`)? Remove that entry after installing
+the plugin, or the agent sees the tools twice: `claude mcp remove tokenbar --scope user`, `codex mcp remove tokenbar`,
+or the `tokenbar` entry in `~/.gemini/settings.json`.
+
+### Claude Code plugin
+
+Inside a session, the same two steps are `/plugin marketplace add ChaconLucas/tokenbar` and
+`/plugin install tokenbar@tokenbar`. The plugin (`plugins/claude-code/`) adds:
+
+- **MCP server** `tokenbar`, started with `node ${CLAUDE_PLUGIN_ROOT}/server/mcp.mjs`.
+- **`/tokenbar:tokenbar [provider]`**: a compact table of every AI's windows, % used and time to reset.
+- **`usage-budget` skill**: tells Claude to call `check_budget` before long or expensive work.
+- **Warning hook** (`UserPromptSubmit`): when a Claude Code window (5h or 7d) is at 80% or more, one line such as
+  `TokenBar: Claude 5h at 86%, resets in 42m — consider postponing long tasks.` is shown to you and passed to Claude.
+  Silent below 80%, at most once every 30 minutes (state in `~/.tokenbar/plugin-hook.json`), takes ≈ 80 ms and never
+  blocks the prompt. Set `TOKENBAR_HOOK_PERCENT` (e.g. `90`) in the environment to change the threshold.
+
+To try it from a clone without installing: `claude --plugin-dir plugins/claude-code`.
+
+### Codex plugin
+
+The plugin (`plugins/codex/`, marketplace in `.agents/plugins/marketplace.json`) adds the MCP server and a `tokenbar`
+skill that shows the usage table and checks the budget before long tasks. Codex plugins have no slash commands: ask
+"how much of my usage is left?" or mention the skill. The Codex warning hook is left out on purpose: plugin hooks only
+run in the Codex desktop app and keep a plugin out of the public directory.
+
+### Gemini CLI extension
+
+The extension (`plugins/gemini/`) adds the MCP server, a `/tokenbar [provider]` command and a `GEMINI.md` with when to
+check the budget. `gemini extensions install <GitHub URL>` downloads the `{darwin,linux,win32}.tokenbar-gemini.tar.gz`
+asset of the latest release (Gemini can't install from a folder of a repository), so it works from the first release
+that has those assets. From source, any version:
+
+```sh
+git clone https://github.com/ChaconLucas/tokenbar
+gemini extensions install ./tokenbar/plugins/gemini   # or `gemini extensions link …` to follow your edits
+```
+
+### Maintainers
+
+The server copies in `plugins/*/server/` are committed, because the CLIs install straight from the repository. After
+changing anything in `cli/`, run `sh plugins/build.sh`; `scripts/release.sh` runs it after the version bump and uploads
+the Gemini archives. Check with `claude plugin validate .`, `claude plugin validate plugins/claude-code` and
+`gemini extensions validate plugins/gemini`.
 
 ---
 
