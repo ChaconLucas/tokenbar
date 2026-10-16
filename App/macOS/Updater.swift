@@ -12,7 +12,10 @@ final class Updater: ObservableObject {
 
     static let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
     private static let latestAPI = URL(string: "https://api.github.com/repos/ChaconLucas/tokenbar/releases/latest")!
-    private static let zipURL = URL(string: "https://github.com/ChaconLucas/tokenbar/releases/latest/download/TokenBar-macOS.zip")!
+    /// Pelo número da versão: o atalho "latest/download" do GitHub leva minutos para apontar para a nova.
+    private static func zipURL(_ version: String) -> URL {
+        URL(string: "https://github.com/ChaconLucas/tokenbar/releases/download/v\(version)/TokenBar-macOS.zip")!
+    }
     private var timer: Timer?
 
     /// Olha logo e depois a cada 6 horas (a API do GitHub aceita 60 consultas por hora sem login).
@@ -54,7 +57,8 @@ final class Updater: ObservableObject {
         error = nil
         Task {
             do {
-                try await Self.downloadAndSwap()
+                guard let v = self.available else { busy = false; return }
+                try await Self.downloadAndSwap(version: v)
             } catch {
                 self.error = error.localizedDescription
                 busy = false
@@ -67,8 +71,8 @@ final class Updater: ObservableObject {
         init(_ s: String) { errorDescription = s }
     }
 
-    private static func downloadAndSwap() async throws {
-        let (zip, _) = try await URLSession.shared.download(from: zipURL)
+    private static func downloadAndSwap(version: String) async throws {
+        let (zip, _) = try await URLSession.shared.download(from: zipURL(version))
         let dir = FileManager.default.temporaryDirectory.appending(path: "tokenbar-update-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         try run("/usr/bin/ditto", ["-x", "-k", zip.path, dir.path])

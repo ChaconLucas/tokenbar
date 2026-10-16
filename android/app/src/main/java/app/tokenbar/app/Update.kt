@@ -75,7 +75,7 @@ class Updater(private val context: Context) {
     private suspend fun download(): File = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "update").apply { mkdirs() }
         val out = File(dir, "TokenBar.apk")
-        val c = (URL(APK).openConnection() as HttpURLConnection).apply {
+        val c = (URL(apk(latest ?: error("Sem versão"))).openConnection() as HttpURLConnection).apply {
             connectTimeout = 15_000; readTimeout = 30_000
             setRequestProperty("User-Agent", "TokenBar-Android")
         }
@@ -105,7 +105,8 @@ class Updater(private val context: Context) {
         private const val DOWNLOADING = "BAIXANDO %d%%"
         private const val EVERY = 6 * 60 * 60 * 1000L
         private const val API = "https://api.github.com/repos/ChaconLucas/tokenbar/releases/latest"
-        private const val APK = "https://github.com/ChaconLucas/tokenbar/releases/latest/download/TokenBar-Android.apk"
+        /** Pelo número da versão: o atalho "latest/download" do GitHub demora a apontar para a nova. */
+        private fun apk(tag: String) = "https://github.com/ChaconLucas/tokenbar/releases/download/$tag/TokenBar-Android.apk"
 
         /** "v0.3.1" > "0.3.0"? Números por posição; o que não for número vale 0. */
         fun newer(tag: String, current: String): Boolean {

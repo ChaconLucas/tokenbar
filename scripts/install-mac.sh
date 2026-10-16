@@ -7,7 +7,11 @@
 set -eu
 
 REPO="ChaconLucas/tokenbar"
-URL="${TB_ZIP_URL:-https://github.com/$REPO/releases/latest/download/TokenBar-macOS.zip}"
+# Pelo número da versão (a API do GitHub responde na hora; o atalho "latest/download" demora minutos a mudar).
+TAG=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)
+if [ -n "$TAG" ]; then DEFAULT_URL="https://github.com/$REPO/releases/download/$TAG/TokenBar-macOS.zip"
+else DEFAULT_URL="https://github.com/$REPO/releases/latest/download/TokenBar-macOS.zip"; fi
+URL="${TB_ZIP_URL:-$DEFAULT_URL}"
 DEST="${TB_DEST:-/Applications}"
 
 say() { printf '\033[1;35m▸\033[0m %s\n' "$1"; }
