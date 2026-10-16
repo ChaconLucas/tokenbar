@@ -98,6 +98,10 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H e 7D juntos">
 <img src="docs/mac-device.png" width="49%" alt="TokenBar no Mac">
 </p>
+<p align="center">
+<img src="docs/iphone-lockscreen.png" width="30%" alt="Atividade ao Vivo na tela bloqueada do iPhone">
+<img src="docs/iphone-island.png" width="66%" alt="Dynamic Island: compacta e aberta">
+</p>
 <p align="center"><img src="docs/mac-notch.png" width="640" alt="A ilha no notch do Mac, aberta"></p>
 <p align="center">
 <img src="docs/mac-settings-ais.png" width="40%" alt="Ajustes">
@@ -105,7 +109,10 @@ O [`INSTALL.md`](INSTALL.md) foi escrito para a IA: ela pergunta quais aparelhos
 </p>
 <p align="center"><img src="docs/mini.png" width="420" alt="O Mini flutuante"></p>
 <p align="center"><img src="docs/widgets.png" width="640" alt="Widgets em todos os tamanhos"></p>
-<p align="center"><img src="docs/watch.jpg" width="420" alt="TokenBar no Apple Watch"></p>
+<p align="center">
+<img src="docs/watch-app.png" width="34%" alt="O app do TokenBar no Apple Watch">
+<img src="docs/watch-smartstack.png" width="34%" alt="A Atividade ao Vivo na Smart Stack do Apple Watch">
+</p>
 
 ---
 

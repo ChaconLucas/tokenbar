@@ -7,7 +7,7 @@ Your <b>Claude Code</b>, <b>Codex</b>, <b>Copilot</b>, <b>Windsurf</b> (or any A
 on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch and Wear OS.
 </p>
 
-<p align="center"><img src="docs/iphone-5h.jpg" width="720" alt="TokenBar on a landscape iPhone"></p>
+<p align="center"><img src="docs/iphone-device.png" width="720" alt="TokenBar on a landscape iPhone"></p>
 
 **English** · [Português](README.pt-BR.md)
 
@@ -98,6 +98,10 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 <img src="docs/iphone-5h-7d.jpg" width="49%" alt="5H and 7D together">
 <img src="docs/mac-device.png" width="49%" alt="TokenBar on the Mac">
 </p>
+<p align="center">
+<img src="docs/iphone-lockscreen.png" width="30%" alt="Live Activity on the iPhone Lock Screen">
+<img src="docs/iphone-island.png" width="66%" alt="Dynamic Island: compact and expanded">
+</p>
 <p align="center"><img src="docs/mac-notch.png" width="640" alt="The notch island on the Mac, open"></p>
 <p align="center">
 <img src="docs/mac-settings-ais.png" width="40%" alt="Settings">
@@ -105,7 +109,10 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 </p>
 <p align="center"><img src="docs/mini.png" width="420" alt="The floating Mini"></p>
 <p align="center"><img src="docs/widgets.png" width="640" alt="Widgets in every size"></p>
-<p align="center"><img src="docs/watch.jpg" width="420" alt="TokenBar on Apple Watch"></p>
+<p align="center">
+<img src="docs/watch-app.png" width="34%" alt="The TokenBar app on Apple Watch">
+<img src="docs/watch-smartstack.png" width="34%" alt="The Live Activity in the Apple Watch Smart Stack">
+</p>
 
 ---
 
