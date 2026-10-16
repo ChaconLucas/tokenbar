@@ -1,7 +1,6 @@
 ---
 description: Show AI usage limits (5h / 7d windows) from TokenBar
 argument-hint: "[provider]"
-allowed-tools: Bash(node:*)
 ---
 
 Show the user's current AI usage limits from TokenBar.
