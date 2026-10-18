@@ -9,7 +9,7 @@ on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch 
 
 <p align="center"><img src="docs/iphone-device.png" width="720" alt="TokenBar on a landscape iPhone"></p>
 
-[![M8ven Score](https://m8ven.ai/badge/mcp/chaconlucas-tokenbar-1xqj8l?v=a0d75fbc9fa65f6ea575897fd964ce98)](https://m8ven.ai/mcp/chaconlucas-tokenbar-1xqj8l?s=readme)
+[![M8ven Score](https://m8ven.ai/badge/mcp/chaconlucas-tokenbar-1xqj8l?v=49e2e02a8dd5ef43229942de4e58a7db)](https://m8ven.ai/mcp/chaconlucas-tokenbar-1xqj8l?s=readme)
 
 **English** · [Português](README.pt-BR.md)
 
