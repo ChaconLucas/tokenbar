@@ -10,6 +10,7 @@ on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch 
 <p align="center"><img src="docs/iphone-device.png" width="720" alt="TokenBar on a landscape iPhone"></p>
 
 [![M8ven Score](https://m8ven.ai/badge/mcp/chaconlucas-tokenbar-1xqj8l?v=49e2e02a8dd5ef43229942de4e58a7db)](https://m8ven.ai/mcp/chaconlucas-tokenbar-1xqj8l?s=readme)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15656/badge)](https://www.bestpractices.dev/projects/15656)
 
 [![Latest Release](https://img.shields.io/github/v/release/ChaconLucas/tokenbar?label=release)](https://github.com/ChaconLucas/tokenbar/releases)
 [![MIT License](https://img.shields.io/github/license/ChaconLucas/tokenbar)](https://github.com/ChaconLucas/tokenbar/blob/main/LICENSE)
