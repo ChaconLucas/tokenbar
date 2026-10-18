@@ -11,6 +11,10 @@ on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch 
 
 [![M8ven Score](https://m8ven.ai/badge/mcp/chaconlucas-tokenbar-1xqj8l?v=49e2e02a8dd5ef43229942de4e58a7db)](https://m8ven.ai/mcp/chaconlucas-tokenbar-1xqj8l?s=readme)
 
+[![Latest Release](https://img.shields.io/github/v/release/ChaconLucas/tokenbar?label=release)](https://github.com/ChaconLucas/tokenbar/releases)
+[![MIT License](https://img.shields.io/github/license/ChaconLucas/tokenbar)](https://github.com/ChaconLucas/tokenbar/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/ChaconLucas/tokenbar?style=flat)](https://github.com/ChaconLucas/tokenbar/stargazers)
+
 **English** · [Português](README.pt-BR.md)
 
 
