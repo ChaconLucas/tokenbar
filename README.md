@@ -9,13 +9,18 @@ on an LED display everywhere: Mac, Windows, Linux, iPhone, Android, Apple Watch 
 
 <p align="center"><img src="docs/iphone-device.png" width="720" alt="TokenBar on a landscape iPhone"></p>
 
-[![M8ven Score](https://m8ven.ai/badge/mcp/chaconlucas-tokenbar-1xqj8l?v=49e2e02a8dd5ef43229942de4e58a7db)](https://m8ven.ai/mcp/chaconlucas-tokenbar-1xqj8l?s=readme)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15656/badge)](https://www.bestpractices.dev/projects/15656)
-[![TokenBar MCP server](https://mcprush.com/badge/tokenbar-mcp/card.svg)](https://mcprush.com/to/tokenbar-mcp?ref=badge)
+<p align="center">
+  <a href="https://m8ven.ai/mcp/chaconlucas-tokenbar-1xqj8l?s=readme"><img src="https://m8ven.ai/badge/mcp/chaconlucas-tokenbar-1xqj8l?v=49e2e02a8dd5ef43229942de4e58a7db" alt="M8ven Score"></a>
+  <a href="https://www.bestpractices.dev/projects/15656"><img src="https://www.bestpractices.dev/projects/15656/badge" alt="OpenSSF Best Practices"></a>
+  <br>
+  <a href="https://github.com/ChaconLucas/tokenbar/releases"><img src="https://img.shields.io/github/v/release/ChaconLucas/tokenbar?label=release" alt="Latest Release"></a>
+  <a href="https://github.com/ChaconLucas/tokenbar/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ChaconLucas/tokenbar" alt="MIT License"></a>
+  <a href="https://github.com/ChaconLucas/tokenbar/stargazers"><img src="https://img.shields.io/github/stars/ChaconLucas/tokenbar?style=flat" alt="GitHub Stars"></a>
+</p>
 
-[![Latest Release](https://img.shields.io/github/v/release/ChaconLucas/tokenbar?label=release)](https://github.com/ChaconLucas/tokenbar/releases)
-[![MIT License](https://img.shields.io/github/license/ChaconLucas/tokenbar)](https://github.com/ChaconLucas/tokenbar/blob/main/LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/ChaconLucas/tokenbar?style=flat)](https://github.com/ChaconLucas/tokenbar/stargazers)
+<p align="center">
+  <a href="https://mcprush.com/to/tokenbar-mcp?ref=badge"><img src="https://mcprush.com/badge/tokenbar-mcp/card.svg" alt="TokenBar MCP server" width="360"></a>
+</p>
 
 **English** · [Português](README.pt-BR.md)
 
