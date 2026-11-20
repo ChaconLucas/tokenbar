@@ -56,13 +56,13 @@ xcode-select -p 2>/dev/null                                     # Xcode installe
 | **Huawei** EMUI/HarmonyOS 2–4 (no Google services) | APK installs, but **Scan QR doesn't work** → paste the link from the computer instead |
 | **Huawei HarmonyOS NEXT**, any **Huawei watch**, Garmin, Amazfit, Fitbit, Galaxy Watch 3 or older (Tizen) | not supported |
 | **Wear OS 3+** (Galaxy Watch 4+, Pixel Watch, …) | `TokenBar-WearOS.apk` via `adb`; with an Android phone it syncs by itself, without a phone type the 6-digit code |
-| Claude Code in the **terminal** | connect via the app's "Connect Claude Code" (statusline) |
-| Claude Code in the **VS Code / Cursor panel** | statusline doesn't run there → turn on "Read from the Claude Code login" (Mac asks Keychain once: Always Allow) |
+| Claude Code in the **terminal** | connect via **Settings → AIS → CLAUDE CODE → CONNECT** on Mac or **⚙ → CONNECT CLAUDE CODE** on Windows/Linux (statusline) |
+| Claude Code in the **VS Code / Cursor panel** | statusline doesn't run there → turn on **VS CODE PANEL** on Mac or **Read from the Claude Code login (for the VS Code panel)** on Windows/Linux (Mac asks Keychain once: Always Allow) |
 | **Codex** (any of terminal / VS Code / app) | automatic |
 | **GitHub Copilot** | opt-in toggle in settings (uses `gh auth token`) |
 | **Windsurf** | automatic |
 | **Cursor** (usage limit of the plan), **Gemini CLI** (Workspace / Code Assist accounts only), **Kiro** (kiro-cli) | opt-in toggles in settings (use the login each one saved) |
-| **GLM / Z.ai, MiniMax, Kimi Code, OpenRouter, Factory Droid, Amp** | paste the API key in Settings → AIs |
+| **GLM / Z.ai, MiniMax, Kimi Code, OpenRouter, Factory Droid, Amp** | paste the API key in **Settings → AIS** on Mac, or under **⚙ → OTHER AIS** on Windows/Linux |
 | Lives in **VS Code** all day | also install the VS Code extension (Marketplace: `chaconlucas.tokenbar`) |
 | Wants it **away from home** | optional free Cloudflare server (README → Optional server) |
 
@@ -116,7 +116,7 @@ Claude Code only exposes its limits (`rate_limits`) to the **statusline** comman
 installs a tiny script that saves a copy of that JSON to `~/.tokenbar/claude.json` and then runs
 the person's previous statusline, so what they see in the terminal doesn't change.
 
-- **Preferred:** ask them to click **Ajustes → IAS → CLAUDE CODE → CONECTAR** in the app (Windows/Linux: ⚙ → CLAUDE CODE).
+- **Preferred:** ask them to click **Settings → AIS → CLAUDE CODE → CONNECT** in the app (Windows/Linux: **⚙ → CONNECT CLAUDE CODE**).
   It backs up `~/.claude/settings.json` to `~/.claude/settings.json.tokenbar-backup` first.
 - Numbers appear the next time a Claude Code session refreshes its statusline (send any message).
 - **Verify:** `cat ~/.tokenbar/claude.json` contains `"rate_limits"`.
@@ -131,9 +131,12 @@ The statusline only runs in the **terminal**. If the person uses Claude Code in 
 extension **panel**, no numbers arrive. Two options — explain both and let them choose:
 
 1. Use `claude` in VS Code's integrated terminal (Ctrl+`) instead of the panel. Works now, nothing to turn on.
-2. Turn on **"Ler pelo login do Claude Code"** (Mac: Ajustes → IAS → PAINEL DO VS CODE, or **LIGAR** on the hint under the device; Windows/Linux: ⚙ → CLAUDE CODE;
-   or the "painel do VS Code" link on the guide's Claude slide). TokenBar then reads the login Claude Code
-   already saved (Mac: Keychain item `Claude Code-credentials` — answer **Always Allow** when macOS asks;
+2. On Mac, turn on **VS CODE PANEL** in **Settings → AIS**, click **TURN ON** on the hint under the device,
+   or click **USE CLAUDE IN THE VS CODE PANEL? CLICK HERE** on the guide's Claude slide. On Windows/Linux,
+   open **⚙ → CLAUDE CODE** and enable **Read from the Claude Code login (for the VS Code panel)**,
+   or click **I USE THE VS CODE PANEL** on the guide's Claude slide.
+   TokenBar then reads the login Claude Code already saved (Mac: Keychain item `Claude Code-credentials` —
+   answer **Always Allow** when macOS asks;
    Windows/Linux: `~/.claude/.credentials.json`) and asks `api.anthropic.com/api/oauth/usage` every 5 minutes.
    Read-only; the token never leaves the computer except to Anthropic. That endpoint is not officially
    documented and may change; the statusline keeps working as a fallback.
@@ -184,7 +187,7 @@ Linux build deps (Debian/Ubuntu):
 `sudo apt install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev build-essential`.
 
 The app lives in the system tray (a ring of 12 LED dots). Click it → the device window.
-Settings (⚙) has **Connect Claude Code**, the QR code for the phone, and the 6-digit code for the watch.
+Settings (⚙) has **CONNECT CLAUDE CODE**, the QR code for the phone, and the 6-digit code for the watch.
 On Windows the Claude hook is a PowerShell script; elsewhere it's `sh`.
 
 ---
@@ -194,8 +197,8 @@ On Windows the Claude hook is a PowerShell script; elsewhere it's `sh`.
 1. On the phone, open https://github.com/ChaconLucas/tokenbar/releases/latest and download
    `TokenBar-Android.apk`.
 2. Open it, allow "install unknown apps" for the browser. If Play Protect warns: **Install anyway**.
-3. Pair: on the computer open **Ajustes → APARELHOS** (Mac) or **⚙** (Windows/Linux) → in the app tap
-   **ESCANEAR QR** and point at the QR code. Same Wi-Fi as the computer.
+3. Pair: on the computer open **Settings → DEVICES** (Mac) or **⚙** (Windows/Linux) → in the app tap
+   **SCAN QR** and point at the QR code. Same Wi-Fi as the computer.
 
 Huawei with HarmonyOS NEXT, and Huawei watches, are **not supported**.
 
@@ -214,7 +217,7 @@ Works with or without the phone.
    ```
 3. With a phone: it gets the numbers from the Android app automatically.
    Without a phone: type on the watch the **6-digit code** from the computer's settings
-   (Mac: *WEAR OS SEM CELULAR* in Ajustes → APARELHOS; Windows/Linux: *RELÓGIO SEM CELULAR (WEAR OS)*). Valid once, changes every 10 minutes, same Wi-Fi.
+   (Mac: *WEAR OS WITHOUT PHONE* in Settings → DEVICES; Windows/Linux: *WATCH WITHOUT A PHONE (WEAR OS)*). Valid once, changes every 10 minutes, same Wi-Fi.
 
 ---
 
@@ -293,7 +296,7 @@ Only suggest this if they ask to see it outside home.
 | Symptom | Fix |
 |---|---|
 | Phone: "Mac not found on Wi-Fi" | Same Wi-Fi? iPhone: Settings → Privacy → Local Network → TokenBar on. Computer firewall allows TokenBar? |
-| Phone: "key refused" | Scan the QR again. |
+| Phone: "The Mac rejected the key (pair again)" | Scan the QR again. |
 | Claude missing | Connect Claude Code, then send a message in a Claude Code session **in the terminal**. Uses the VS Code panel? See "Claude Code in the VS Code panel". Check `~/.tokenbar/claude.json`. |
 | Codex missing | Use Codex once. |
 | Mac: "can't be opened" / "unidentified developer" | Install with the `curl` command above, or Privacy & Security → Open Anyway. |
