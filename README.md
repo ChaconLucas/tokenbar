@@ -76,10 +76,10 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 
 **Mac**
 - An LED **device** window (bigger, smaller or full screen) and a floating **Mini** that stays on top of everything, full-screen apps included.
-- **MOSTRAR A %** (show the %): **BARRA** (little LED bars with the % in the menu bar), **NOTCH** (a black pill around the camera, hover to open) or **OS DOIS** (both).
-- Clicking the menu bar opens a summary with glass buttons (*liquid glass* on macOS 26): device, Mini, **Ajustes** (settings), refresh, quit.
+- **SHOW THE %**: **MENU BAR** (little LED bars with the % in the menu bar), **NOTCH** (a black pill around the camera, hover to open) or **BOTH**.
+- Clicking the menu bar opens a summary with glass buttons (*liquid glass* on macOS 26): device, Mini, **Settings**, refresh, quit.
 - Widgets (small, medium, large) and **Control Center** controls (macOS 26): TokenBar, Claude, Codex, floating and device.
-- **Ajustes** in four tabs: **GERAL** (language, what to show, colors), **IAS** (AIs), **APARELHOS** (phones and watches), **SERVIDOR** (local API, webhook, server). A **Primeiros passos** (getting started) guide connects everything step by step.
+- **Settings** has four tabs: **GENERAL** (language, what to show, colors), **AIS** (AIs), **DEVICES** (phones and watches), **SERVER** (local API, webhook, server). The **Getting started** guide connects everything step by step.
 
 **Windows and Linux** — the same LED device, the floating Mini, a 12-dot ring in the system tray and the getting-started guide (app in [`desktop/`](desktop), built with Tauri).
 
@@ -87,11 +87,11 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 - Opens in landscape, full screen, screen always on: a desk clock for your limits.
 - Widgets on the Home Screen and Lock Screen (presets plus a custom one; "one at a time" switches AI on tap).
 - **Live Activity** on the Lock Screen and in the **Dynamic Island** (on iPhones that have one), with buttons to switch AI and window.
-- Built-in QR scanner (**ESCANEAR QR**) to pair with the computer, and a notice when an update is out or the free-account app is about to expire.
+- Built-in QR scanner (**SCAN QR**) to pair with the computer, and a notice when an update is out or the free-account app is about to expire.
 
-**Apple Watch** — app (TODOS / CLAUDE / CODEX, 5H / 7D, or turn the Digital Crown), watch-face complications, and a **Smart Stack** card (the Live Activity on watchOS 11+, plus widgets that rise when a limit is close or about to reset).
+**Apple Watch** — app (ALL / CLAUDE / CODEX, 5H / 7D, or turn the Digital Crown), watch-face complications, and a **Smart Stack** card (the Live Activity on watchOS 11+, plus widgets that rise when a limit is close or about to reset).
 
-**Android and Wear OS** — phone in landscape with a home-screen widget, alerts and in-app updates. The Wear OS watch works **with or without the phone**: alone, type the 6-digit code from the computer (Mac: **Ajustes → APARELHOS → WEAR OS SEM CELULAR**). Complications on the watch face. Huawei without Google services: the QR scan doesn't work, paste the link instead.
+**Android and Wear OS** — phone in landscape with a home-screen widget, alerts and in-app updates. The Wear OS watch works **with or without the phone**: alone, type the 6-digit code from the computer (Mac: **Settings → DEVICES → WEAR OS WITHOUT PHONE**). Complications on the watch face. Huawei without Google services: the QR scan doesn't work, paste the link instead.
 
 <p align="center">
 <img src="docs/android.jpg" width="62%" alt="TokenBar on Android">
@@ -99,12 +99,12 @@ The prompt *"TokenBar wants to use confidential information stored in Claude Cod
 </p>
 
 **AIs**
-- **Claude Code** through the terminal statusline (one click: **CONECTAR** in **Ajustes → IAS**), or through its login when you use the **VS Code panel**.
+- **Claude Code** through the terminal statusline (one click: **CONNECT** in **Settings → AIS**), or through its login when you use the **VS Code panel**.
 - **Codex**: automatic, from the terminal, VS Code or the Codex app.
 - **GitHub Copilot**: opt-in (monthly premium requests, via `gh auth token`).
 - **Windsurf**: automatic.
 - **Cursor, Gemini CLI, Kiro**: opt-in, using the login each one already saved (Gemini: Workspace / Code Assist accounts only).
-- **GLM (Z.ai), MiniMax, Kimi Code, OpenRouter, Factory Droid, Amp**: paste an API key in **Settings → AIs** (Mac: stored in the Keychain).
+- **GLM (Z.ai), MiniMax, Kimi Code, OpenRouter, Factory Droid, Amp**: paste an API key in **Settings → AIS** on Mac (stored in the Keychain), or under **⚙ → OTHER AIS** on Windows/Linux.
 - **Any other AI** through a small JSON file: [docs/providers.md](docs/providers.md).
 
 **Everything else**
@@ -192,10 +192,10 @@ Schemas and examples (curl, JavaScript, Python, starship, tmux, zsh): [docs/api.
 
 | Symptom | What to do |
 |---|---|
-| Phone: "Mac não encontrado no Wi-Fi" (Mac not found) | Same Wi-Fi? iPhone: **Local Network** on (Settings → Privacy & Security → Local Network → TokenBar)? Computer firewall allowing TokenBar? |
-| Phone: "O Mac recusou a chave" (key refused) | Scan the QR again. |
-| Claude doesn't show up | **Ajustes → IAS → CLAUDE CODE → CONECTAR**, then send a message in Claude Code in the terminal. |
-| Claude in the **VS Code panel** | The statusline doesn't run there. Turn on **PAINEL DO VS CODE** in **Ajustes → IAS**, or click **LIGAR** on the hint under the device. macOS asks once: Always Allow. |
+| Phone: "Mac not found on Wi-Fi" | Same Wi-Fi? iPhone: **Local Network** on (Settings → Privacy & Security → Local Network → TokenBar)? Computer firewall allowing TokenBar? |
+| Phone: "The Mac rejected the key (pair again)" | Scan the QR again. |
+| Claude doesn't show up | **Settings → AIS → CLAUDE CODE → CONNECT**, then send a message in Claude Code in the terminal. |
+| Claude in the **VS Code panel** | The statusline doesn't run there. Turn on **VS CODE PANEL** in **Settings → AIS**, or click **TURN ON** on the hint under the device. macOS asks once: Always Allow. |
 | Codex doesn't show up | Use Codex once; the limits arrive with the first reply. |
 | VS Code extension in Restricted Mode | No longer an issue: the extension runs in untrusted workspaces. |
 | Watch: "integrity could not be verified" | Turn on Developer Mode on the watch (Settings → Privacy & Security). |
@@ -213,7 +213,7 @@ printf 'DEVELOPMENT_TEAM = ABCDE12345\nTB_BUNDLE_PREFIX = com.yourname\n' > Conf
 xcodegen generate && open TokenBar.xcodeproj
 ```
 
-Schemes: **TokenBarMac** (Mac), **TokenBar** (iPhone, brings the watch app), **TokenBarWatch**. iPhone and watch need **Developer Mode**; on first launch allow **Local Network**, then pair with the QR in **Ajustes → APARELHOS**.
+Schemes: **TokenBarMac** (Mac), **TokenBar** (iPhone, brings the watch app), **TokenBarWatch**. iPhone and watch need **Developer Mode**; on first launch allow **Local Network**, then pair with the QR in **Settings → DEVICES**.
 
 **Windows and Linux** (Rust and Node 18+; Linux also `sudo apt install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev build-essential`):
 
@@ -243,7 +243,7 @@ npx wrangler d1 execute tokenbar --remote --file=schema.sql
 npx wrangler deploy                      # prints https://tokenbar.<your-account>.workers.dev
 ```
 
-Paste the address in **Ajustes → SERVIDOR → ENDEREÇO** (Windows/Linux: ⚙) and scan the QR again on the phone. The computer only sends when the number changes, or every 10 minutes.
+Paste the address in **Settings → SERVER → ADDRESS** (Windows/Linux: ⚙) and scan the QR again on the phone. The computer only sends when the number changes, or every 10 minutes.
 
 ## Structure
 
